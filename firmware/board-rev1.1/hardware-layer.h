@@ -533,18 +533,14 @@ void RTCWrite()
 
 const uint16_t key_adc[] PROGMEM =
 {
-	465, 483, 502, 524,
-	547, 573, 601, 630,
-	665, 704, 744, 792,
-	846, 909, 978, 1024
+	147, 182, 221, 269, 324, 383, 442, 505,
+	573, 635, 692, 762, 827, 863, 893, 913
 };
 
 const uint8_t key_code[] PROGMEM = 
 {
-	KEY_D3, KEY_C3, KEY_B3, KEY_A3,
-	KEY_D2, KEY_C2, KEY_B2, KEY_A2,
-	KEY_D1, KEY_C1, KEY_B1, KEY_A1,
-	KEY_D0, KEY_C0, KEY_B0, KEY_A0 
+	KEY_A0, KEY_B0, KEY_C0, KEY_D0, KEY_A1, KEY_B1, KEY_C1, KEY_D1,
+	KEY_A2, KEY_B2, KEY_C2, KEY_D2, KEY_A3, KEY_B3, KEY_C3, KEY_D3
 };
 
 void KeyboardInit()
@@ -559,7 +555,7 @@ void KeyboardInit()
 uint8_t KeyboardRead()
 {
 	uint16_t adcVal = ADCRead(KEYBOARD_ADC, 1);
-	if (adcVal > 450)
+	if (adcVal > 110)
 	{
 		for (uint8_t i = 0; i < 16; ++i)
 		{
