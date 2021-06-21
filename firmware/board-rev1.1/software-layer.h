@@ -1,4 +1,16 @@
 ////////////////////////////////////////////////////////////////////////////////
+// Simple Math Helpers
+////////////////////////////////////////////////////////////////////////////////
+
+template<typename T> static uint8_t _ones(const T & x) { return (uint8_t)(x % 10); }
+template<typename T> static uint8_t _tens(const T & x) { return (uint8_t)((x / 10) % 10); }
+template<typename T> static uint8_t _huns(const T & x) { return (uint8_t)((x / 100) % 10); }
+
+template<typename T> static T _min(const T & a, const T & b) { return a < b ? a : b; }
+template<typename T> static T _max(const T & a, const T & b) { return a > b ? a : b; }
+template<typename T> static T _abs(const T & x) { return x < 0 ? -x : x; }
+
+////////////////////////////////////////////////////////////////////////////////
 // Upate Frame Rate Sync
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -56,7 +68,7 @@ void DeepSleep()
 #define FONT_OFFSET '+'
 #define FONT_WIDTH  5
 
-uint8_t eeprom_font[] EEMEM =
+const uint8_t font[] PROGMEM =
 {
 	// No ascii signs below 43 ('+') to save memory (flash)
 
@@ -218,7 +230,7 @@ void PrintCharAt(uint8_t c, uint8_t x, uint8_t y)
 		DisplayPosition(x, y + cy);
 		for (uint8_t i = 0; i < FONT_WIDTH; ++i)
 		{
-			uint8_t bitmap = eeprom_read_byte(&eeprom_font[FONT_WIDTH * c + i]);
+			uint8_t bitmap = pgm_read_byte(&font[FONT_WIDTH * c + i]);
 			if (ch == CHAR_SIZE_M)
 				bitmap = expand4bit((bitmap >> (cy << 2)) & 0x0f); // Expand 0000abcd
 			else if (ch == CHAR_SIZE_L)
