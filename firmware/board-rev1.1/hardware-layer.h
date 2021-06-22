@@ -513,23 +513,23 @@ void RTCWrite()
 // A2 B2 C2 D2
 // A3 B3 C3 D3
 
-#define KEY_A0 0x00   
-#define KEY_B0 0x01
-#define KEY_C0 0x02
-#define KEY_D0 0x03
-#define KEY_A1 0x04
-#define KEY_B1 0x05
-#define KEY_C1 0x06
-#define KEY_D1 0x07
-#define KEY_A2 0x08
-#define KEY_B2 0x09
-#define KEY_C2 0x0A
-#define KEY_D2 0x0B
-#define KEY_A3 0x0C
-#define KEY_B3 0x0D
-#define KEY_C3 0x0E
-#define KEY_D3 0x0F
 #define KEY_NO 0xFF
+#define KEY_A0 0x0F // F
+#define KEY_B0 0x07 // 7
+#define KEY_C0 0x08 // 8
+#define KEY_D0 0x09 // 9
+#define KEY_A1 0x0E // E
+#define KEY_B1 0x04 // 4
+#define KEY_C1 0x05 // 5
+#define KEY_D1 0x06 // 6
+#define KEY_A2 0x0D // S
+#define KEY_B2 0x01 // 1
+#define KEY_C2 0x02 // 2
+#define KEY_D2 0x03 // 3
+#define KEY_A3 0x0C // C
+#define KEY_B3 0x00 // 0
+#define KEY_C3 0x0A // D
+#define KEY_D3 0x0B // P
 
 const uint16_t key_adc[] PROGMEM =
 {
