@@ -26,6 +26,7 @@ typedef int16_t  s16;
 typedef int32_t  s32;
 typedef float    f32;
 
-#include "hw-layer.h"
-#include "sw-layer.h"
-#include "calculator.h"
+#include "hw_support.h"
+#include "sw_support.h"
+#include "calc_operations.h"
+#include "calc_mainloop.h"
