@@ -18,6 +18,15 @@ class __FlashStringHelper;
 #define isb_set(sfr, bit) ((sfr) & _BV(bit))
 #define isb_clr(sfr, bit) (!((sfr) & _BV(bit)))
 
+typedef bool     b08;
+typedef uint8_t  u08;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef int8_t   s08;
+typedef int16_t  s16;
+typedef int32_t  s32;
+typedef float    f32;
+
 #include "hw-layer.h"
 #include "sw-layer.h"
 #include "calculator.h"
