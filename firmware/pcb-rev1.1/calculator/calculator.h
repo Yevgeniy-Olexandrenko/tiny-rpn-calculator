@@ -1,7 +1,4 @@
 
-#define M_E  2.7182818284590452354
-#define M_PI 3.1415926535897932384
-
 b08 isFunc = false;
 b08 isMenu = false;
 
@@ -21,13 +18,14 @@ b08 isDot = false;   // True if dot was pressed and decimals will be entered
 // Key Codes (0x00-0x09 numbers, 0x0A-0x0F special keys)
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum {
+enum 
+{
 	KEY_FUNC = KEY_A0, KEY_NUM7 = KEY_B0, KEY_NUM8 = KEY_C0, KEY_NUM9 = KEY_D0,
 	KEY_EEXP = KEY_A1, KEY_NUM4 = KEY_B1, KEY_NUM5 = KEY_C1, KEY_NUM6 = KEY_D1,
 	KEY_NEG  = KEY_A2, KEY_NUM1 = KEY_B2, KEY_NUM2 = KEY_C2, KEY_NUM3 = KEY_D2,
 	KEY_DROP = KEY_A3, KEY_NUM0 = KEY_B3, KEY_DOT  = KEY_C3, KEY_DUP  = KEY_D3,
 	KEY_NONE = KEY_NO
-} Key;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Strings
@@ -45,9 +43,42 @@ const char PROGMEM strMonth[] =
 	"JUL" "AUG" "SEP" "OCT" "NOV" "DEC";
 
 ////////////////////////////////////////////////////////////////////////////////
-// Data Stack Operations
+// Operations
 ////////////////////////////////////////////////////////////////////////////////
 
+/* Operation codes */
+enum 
+{
+	// basic operations
+	OpNum0, OpNum1, OpNum2, OpNum3, OpNum4, OpNum5, OpNum6, OpNum7,
+	OpNum8, OpNum9, OpDot,  OpDup,  OpDrop, OpNeg,  OpEExp, AcFunc,
+
+	// shifted operations
+	OpC10,  OpRcl, OpSto,  OpSub, OpC14,  OpC15,  OpMul,  AcTrig,
+	AcProg, OpDiv, OpSwap, OpAdd, OpAClr, OpRotD, OpRotU, AcMath,
+
+	// alternative and hidden operations
+	OpNop,   OpNeg_,  OpC22,   OpC23,   OpC24,   OpSwap_, OpC26,   OpC27,
+	OpRotU_, OpRotD_, OpMul_,  OpAdd_,  OpC2C,   OpSub_,  OpDot_,  OpDiv_,
+	OpNum0_, OpNum1_, OpNum2_, OpNum3_, OpNum4_, OpNum5_, OpNum6_, OpNum7_,
+	OpNum8_, OpNum9_, OpC3A,   OpC3B,   OpDup_,  OpC3D,   OpDrop_, OpC3F,
+
+	SHIFTED_OPS = OpC10
+};
+
+/* Forward declarations */
+void FnNop();
+
+void FnNum0(); void FnNum1(); void FnNum2(); void FnNum3(); void FnNum4(); void FnNum5(); void FnNum6(); void FnNum7();
+void FnNum8(); void FnNum9(); void FnDot();  void FnDup();  void FnDrop(); void FnNeg();  void FnEExp(); void FnFunc();
+
+void FnRcl();  void FnSto();  void FnSub();  void FnMul();  void FnTrig(); void FnProg(); void FnDiv();  void FnSwap();
+void FnAdd();  void FnAClr(); void FnRotD(); void FnRotU(); void FnMath();
+
+void FnInv();
+void FnInt();
+
+/* Data Stack Operations */
 f32 dpush(f32 d) 
 {
 	if (dp >= DATA_STACK_SIZE) 
@@ -91,10 +122,30 @@ void rotateStack(b08 isUp)
 	}
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Enter and Clear the number in X Register of Data Stack
-////////////////////////////////////////////////////////////////////////////////
+/* Helping Functions */
+f32 pow10(s08 e) 
+{ 
+	f32 f = 1.f;
+	if (e > 0) 
+		while (e--) f *= 10.f;
+	else 
+		while (e++) f /= 10.f;
+	return f;
+}
 
+void storageAccess(b08 isWrite) 
+{
+	u08 i;
+	if (dpopChecked(i, 0, 9))
+	{
+		if (isWrite)
+			eeprom_write_float(&eeprom_storage[i], dpop());
+		else
+			dpush(eeprom_read_float(&eeprom_storage[i]));
+	}
+}
+
+/* Enter and Clear the number in X Register of Data Stack */
 void enterDigit(u08 digit)
 {
 	if (isDot) 
@@ -124,73 +175,22 @@ void clearEntry()
 	{
 		if (decimals) 
 		{
-#if 0			
-			dpush(pow10(--decimals));
-			FnDup();
-			FnInv();
-			FnRotU();
-			FnMul();
-			FnInt();
-			FnMul();
-#else
 			f32 a = pow10(--decimals);
-			f32 d = s32(dpop() * a) / a;
-			dpush(d);
-#endif
+			f32 b = s32(dpop() * a) / a;
+			dpush(b);
 		}
-		else isDot = false;
+		else 
+			isDot = false;
 	}
 	else 
 	{
-		s32 a = s32(dpop() / 10.f);
-		if (a) dpush(a); else isNewNum = true;
+		s32 a = dpop() / 10.f;
+		if (a) dpush(a); 
+		else isNewNum = true;
 	}
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Helping Math Functions
-////////////////////////////////////////////////////////////////////////////////
-
-f32 pow10(s08 e) 
-{ 
-	f32 f = 1.f;
-	if (e > 0) 
-		while (e--) f *= 10.f;
-	else 
-		while (e++) f /= 10.f;
-	return f;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//
-////////////////////////////////////////////////////////////////////////////////
-
-void storageAccess(b08 isWrite) 
-{
-	u08 i;
-	if (dpopChecked(i, 0, 9))
-	{
-		if (isWrite)
-			eeprom_write_float(&eeprom_storage[i], dpop());
-		else
-			dush(eeprom_read_float(&eeprom_storage[i]));
-	}
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Operations Implementations
-////////////////////////////////////////////////////////////////////////////////
-
-typedef enum {
-	// basic operations
-	OpNum0, OpNum1, OpNum2, OpNum3, OpNum4, OpNum5, OpNum6, OpNum7,
-	OpNum8, OpNum9, OpDot,  OpDup,  OpDrop, OpNeg,  OpEExp, AcFunc,
-
-	// shifted operations
-	AcNop,  OpRcl, OpSto,  OpSub, AcNop,  AcNop,  OpMul,  AcTrig,
-	AcProg, OpDiv, OpSwap, OpAdd, OpAClr, OpRotD, OpRotU, AcMath
-} Operation;
-
+/* Operations Implementation */
 void FnNop()  { /* do nothing */ }
 void FnNum0() { enterDigit(0); }
 void FnNum1() { enterDigit(1); }
@@ -202,7 +202,7 @@ void FnNum6() { enterDigit(6); }
 void FnNum7() { enterDigit(7); }
 void FnNum8() { enterDigit(8); }
 void FnNum9() { enterDigit(9); }
-void FnDot()  { if (isNewNum) { dpush(decimals = 0); isNewNum = false; } isDot = true; }
+void FnDot() { if (isNewNum) { dpush(decimals = 0); isNewNum = false; } isDot = true; }
 void FnDup()  { if (isNewNum && dp) dpush(ds[dp - 1]); }
 void FnDrop() { if (!isNewNum) clearEntry(); else if (dp) --dp; }
 void FnNeg()  { dpush(-dpop()); }
@@ -213,22 +213,20 @@ void FnRcl()  { storageAccess(false); }
 void FnSto()  { storageAccess(true); }
 void FnSub()  { FnNeg(); FnAdd(); }
 void FnMul()  { dpush(dpop() * dpop()); }
-void FnTrig() { /* TODO */ }
-void FnProg() { /* TODO */ }
+void FnTrig() { isMenu = true; /* TODO */ }
+void FnProg() { isMenu = true; /* TODO */ }
 void FnDiv()  { FnInv(); FnMul(); }
 void FnSwap() { if (dp > 1) { f32 a = dpop(), b = dpop(); dpush(a); dpush(b); }}
 void FnAdd()  { dpush(dpop() + dpop()); }
 void FnAClr() { dp = 0; /* clear anything else */ }
 void FnRotD() { rotateStack(false); }
 void FnRotU() { rotateStack(true); }
-void FnMath() { /* TODO */ }
+void FnMath() { isMenu = true; /* TODO */ }
 
 void FnInv()  { dpush(1.f / dpop()); }
 void FnInt()  { dpush(s32(dpop())); }
 
-////////////////////////////////////////////////////////////////////////////////
-// Operations Execution
-////////////////////////////////////////////////////////////////////////////////
+/* Operations Execution */
 
 void (*dispatch[])() = 
 {
@@ -266,7 +264,7 @@ void (*dispatch[])() =
 	/* 1E */ &FnRotU,
 	/* 1F */ &FnMath, // Action
 
-	/* 20 */ &FnNop,
+	/* 20 */ &FnNop,  // True NOP
 	/* 21 */ &FnNeg,  // ASCII '!'
 	/* 22 */ &FnNop,
 	/* 23 */ &FnNop,
@@ -300,22 +298,30 @@ void (*dispatch[])() =
 	/* 3F */ &FnNop,
 };
 
-void ExecuteOperation(Operation operation)
+void ExecuteOperation(u08 op)
 {
-	(*dispatch[operation])();
+	isFunc = false;
+	isMenu = false;
 
-	if (operation >= OpDot && operation != OpDrop)
+	(*dispatch[op])();
+
+	b08 isNumInput = ((op >= OpNum0 && op <= OpNum9) || op == OpDot || op == OpDrop);
+	b08 isNumInputAlt = ((op >= OpNum0_ && op <= OpNum9_) || op == OpDot_ || op == OpDrop_);
+
+	if (!isNumInput && !isNumInputAlt)
 	{
 		isNewNum = true;
 		isDot = false;
 		decimals = 0;
 	}
-
-	isFunc = false;
-	isMenu = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+#define CHAR_SHIFT  '='
+#define CHAR_REC    '@'
+#define CHAR_PLAY   '<'
 
 #define DIGITS      (6)
 #define DIGIT_WIDTH (FONT_WIDTH * CHAR_SIZE_M + 1)
@@ -333,27 +339,27 @@ void ExecuteOperation(Operation operation)
 
 #define MODE_CHAR   (128 - (DIGIT_WIDTH - 1))
 
-static void PrintStack(uint8_t i, int8_t d, uint8_t s, uint8_t y)
+void PrintStack(u08 i, u08 s, u08 y)
 {
-	float f = stack.arr[i];
+	f32 f = dp - 1 - i < 0 ? 0.f : ds[dp - 1 - i];
 	PrintCharSize(CHAR_SIZE_M, s);
 
-	if (isnan(f)) { PrintStringAt(FPSTR(message_str), MSG_ERR, M_DIGIT_FST, y);	}
+	if (isnan(f)) { PrintStringAt(FPSTR(strMessage), MSG_ERR, M_DIGIT_FST, y);	}
 	else
 	{
 		if (f < 0) { f = -f; PrintCharAt('-', M_SIGN, y); }
-		if (isinf(f)) {	PrintStringAt(FPSTR(message_str), MSG_INF, M_DIGIT_FST, y); }
+		if (isinf(f)) {	PrintStringAt(FPSTR(strMessage), MSG_INF, M_DIGIT_FST, y); }
 		else
 		{
-			int8_t e = (int8_t)(log(f) / log(10.f));
-			uint32_t m = (uint32_t)(f / MathPow10(e - (DIGITS - 1)) + 0.5f);
+			s08 e = (s08)(log(f) / log(10.f));
+			u32 m = (u32)(f / pow10(e - (DIGITS - 1)) + 0.5f);
 
-			if (m > 0 && m < MathPow10(DIGITS - 1))
+			if (m > 0 && m < pow10(DIGITS - 1))
 			{
-				m = (uint32_t)(f / MathPow10(--e - (DIGITS - 1)) + 0.5f);
+				m = (u32)(f / pow10(--e - (DIGITS - 1)) + 0.5f);
 			}
 
-			int8_t int_dig = 1, lead_z = 0;
+			s08 int_dig = 1, lead_z = 0;
 			if (_abs(e) < DIGITS)
 			{
 				if (e >= 0)
@@ -364,16 +370,16 @@ static void PrintStack(uint8_t i, int8_t d, uint8_t s, uint8_t y)
 				{
 					int_dig = 0;
 					lead_z -= e;
-					for (uint8_t n = lead_z; n--; m /= 10);
+					for (u08 n = lead_z; n--; m /= 10);
 				}
 				e = 0;
 			}
-			int8_t fra_dig = DIGITS - lead_z - int_dig;
+			s08 fra_dig = DIGITS - lead_z - int_dig;
 
-			uint8_t x = M_DIGIT_LST, nonzero = false;
+			u08 x = M_DIGIT_LST, nonzero = false;
 			for (; fra_dig--; m /= 10, x -= DIGIT_WIDTH)
 			{
-				uint8_t ones = _ones(m);
+				u08 ones = _ones(m);
 				if (ones || nonzero)
 				{
 					PrintCharAt('0' + ones, x, y);
@@ -400,7 +406,7 @@ static void PrintStack(uint8_t i, int8_t d, uint8_t s, uint8_t y)
 	}
 }
 
-static void PrintClock()
+void PrintClock()
 {
 	DisplayClear();
 
@@ -412,7 +418,7 @@ static void PrintClock()
 	PrintTwoDigitAt(rtc_seconds, 54, 0);
 
 	PrintCharSize(CHAR_SIZE_S, CHAR_SIZE_S);
-	PrintStringAt(FPSTR(month_str), rtc_month - 1, 85, 0);
+	PrintStringAt(FPSTR(strMonth), rtc_month - 1, 85, 0);
 
 	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_S);
 	PrintTwoDigitAt(rtc_date, 107, 0);
@@ -422,34 +428,33 @@ static void PrintClock()
 	DisplayRefresh();
 }
 
-static void PrintCalculator()
+void PrintCalculator()
 {
 	DisplayClear();
 
 	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_M);
-	if (isTypeRecording) PrintCharAt(CHAR_REC, MODE_CHAR, 2);
-	if (isTypePlaying) PrintCharAt(CHAR_PLAY, MODE_CHAR, 2);
-	if (isShift) PrintCharAt(CHAR_SHIFT, MODE_CHAR, 0);
-
-	uint8_t d = isNewNumber ? 0 : decimals;
+//	if (isTypeRecording) PrintCharAt(CHAR_REC, MODE_CHAR, 2);
+//	if (isTypePlaying) PrintCharAt(CHAR_PLAY, MODE_CHAR, 2);
+	if (isFunc) PrintCharAt(CHAR_SHIFT, MODE_CHAR, 0);
 	
 	if (isMenu)
 	{
 		
-		for (uint8_t i = 0; i < MENU_OPS_PER_LINE; ++i)
-		{
-			PrintStringAt(FPSTR(menu_str), select * MENU_OPS_PER_LINE + i, 48 * i, 2);
-		}
-		PrintStack(Stack::X, d, CHAR_SIZE_M, 0);
+//		for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
+//		{
+//			PrintStringAt(FPSTR(menu_str), select * MENU_OPS_PER_LINE + i, 48 * i, 2);
+//		}
+		PrintCharAt('M', 0, 2);
+		PrintStack(0, CHAR_SIZE_M, 0);
 	}
-	else if (isShift)
+	else if (isFunc)
 	{
-		PrintStack(Stack::Y, 0, CHAR_SIZE_M, 0);
-		PrintStack(Stack::X, d, CHAR_SIZE_M, 2);
+		PrintStack(1, CHAR_SIZE_M, 0);
+		PrintStack(0, CHAR_SIZE_M, 2);
 	}
 	else
 	{
-		PrintStack(Stack::X, d, CHAR_SIZE_L, 0);
+		PrintStack(0, CHAR_SIZE_L, 0);
 	}
 
 	DisplayRefresh();
@@ -461,8 +466,8 @@ static void PrintCalculator()
 #define POWEROFF_FRAMES 469 // Frames before power off (about 30 sec)
 
 b08 isfirstrun; // Allows first run of loop and printscreen without key query
-Key key; // Holds entered key
-Key oldkey; // Use for debouncing
+u08 key; // Holds entered key
+u08 oldkey; // Use for debouncing
 b08 inCalcMode;
 u08 brightness;
 
@@ -489,6 +494,7 @@ int main()
 		if (isfirstrun)
 		{
 			RTCWrite();
+
 			// TODO
 		}
 		else
@@ -519,12 +525,13 @@ int main()
 				if (isMenu)
 				{
 					// TODO
-					isMenu = false;
+					u08 op = OpNop;
+					ExecuteOperation(op);
 				}
 				else
 				{
-					Operation operation = (isFunc ? 0x10 + key : key);
-					ExecuteOperation(operation);
+					u08 op = (isFunc ? SHIFTED_OPS + key : key);
+					ExecuteOperation(op);
 				}
 
 				PrintCalculator();
@@ -539,4 +546,3 @@ int main()
 	}
 	return 0;
 }
-
