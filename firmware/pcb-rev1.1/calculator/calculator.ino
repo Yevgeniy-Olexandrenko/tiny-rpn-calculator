@@ -5,6 +5,7 @@
 #include <avr/power.h>   // Needed for power management
 #include <avr/sleep.h>   // Needed for sleeping
 #include <util/delay.h>  // Needed for delays
+#include <math.h>        // Needed for some math constants
 
 #undef  FPSTR
 #undef  F
