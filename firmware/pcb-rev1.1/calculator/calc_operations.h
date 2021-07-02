@@ -7,7 +7,6 @@ f32 EEMEM eeprom_storage[10];
 u08 EEMEM eeprom_brightness = 0xFF;
 
 b08 isNewNum = true; // True if stack has to be lifted before entering a new number
-b08 isDot = false;   // True if dot was pressed and decimals will be entered
 u08 decimals = 0;    // Number of decimals entered (input after decimal dot)
 
 b08 isFunc;
@@ -90,6 +89,11 @@ f32 dget(u08 i)
 	return (dp - i > 0 ? ds[dp - 1 - i] : 0.f);
 }
 
+f32 dtop()
+{
+	return dget(0);
+}
+
 b08 dpopByte(u08& dest, u08 min, u08 max)
 {
 	u08 b = dpop();
@@ -131,50 +135,42 @@ void storageAccess(b08 isWrite)
 	if (dpopByte(i, 0, 9))
 	{
 		if (isWrite)
-			eeprom_write_float(&eeprom_storage[i], dget(0));
+			eeprom_write_float(&eeprom_storage[i], dtop());
 		else
 			dpush(eeprom_read_float(&eeprom_storage[i]));
 	}
 }
 
 /* Edit the number in X Register of Data Stack */
+void checkNewNum()
+{
+	if (isNewNum)
+	{
+		isNewNum = false;
+		if (isPushed) dpop();
+		dpush(0);
+	}
+}
+
 void enterDigit(u08 digit)
 {
-	if (isDot) 
-	{
-		dpush(digit);
-		dpush(pow10(++decimals));
-		FnDiv();
-		FnAdd();
-	}
-	else if (isNewNum)
-	{
-		if (isPushed) dpop();
-		dpush(digit);
-	}
-	else 
-	{
-		dpush(10.f);
-		FnMul();
-		dpush(digit);
-		FnAdd();
-	}
-	isNewNum = false;
+	checkNewNum();
+	dpush(dtop() < 0 ? -digit : digit);
+	if (decimals)
+		{ dpush(pow10(decimals++)); FnDiv(); }
+	else
+		{ FnSwap(); dpush(10); FnMul(); }
+	FnAdd();
 	isEdit = true;
 }
 
-void clearDigit()
+void clearDigit() // TODO: check!
 {
-	if (isDot) 
+	if (decimals) 
 	{
-		if (decimals) 
-		{
-			f32 a = pow10(--decimals);
-			f32 b = s32(dpop() * a) / a;
-			dpush(b);
-		}
-		else 
-			isDot = false;
+		f32 a = pow10(--decimals);
+		f32 b = s32(dpop() * a) / a;
+		dpush(b);
 	}
 	else 
 	{
@@ -197,10 +193,10 @@ void FnNum6() { enterDigit(6); }
 void FnNum7() { enterDigit(7); }
 void FnNum8() { enterDigit(8); }
 void FnNum9() { enterDigit(9); }
-void FnDot()  { if (isNewNum) enterDigit(0); isDot = isEdit = true; }
-void FnDup()  { dpush(dget(0)); }
+void FnDot()  {	if (!decimals) { checkNewNum(); decimals = 1; }	isEdit = true; }
+void FnDup()  { dpush(dtop()); }
 void FnDrop() { if (isNewNum) dpop(); else clearDigit(); }
-void FnNeg()  { dpush(-dpop()); isEdit = true; }
+void FnNeg()  { dpush(-dpop()); isEdit = !isNewNum; }
 void FnEExp() { FnPw10(); FnMul(); }
 void FnFunc() { isFunc = true; }
 
@@ -312,7 +308,6 @@ void ExecuteOperation(Operation op)
 	if (!isEdit)
 	{
 		isNewNum = true;
-		isDot = false;
 		decimals = 0;
 	}
 }
