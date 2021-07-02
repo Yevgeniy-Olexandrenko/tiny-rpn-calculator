@@ -18,13 +18,52 @@ enum
 #define MSG_ERR 0
 #define MSG_INF 1
 
-const char PROGMEM strMessage[] =
+const char strMessage[] PROGMEM =
 	"\03" "ERR" "INF";
 
-const char PROGMEM strMonth[] = 
+const char strMonth[] PROGMEM = 
 	"\03"
 	"JAN" "FEB" "MAR" "APR" "MAY" "JUN"
 	"JUL" "AUG" "SEP" "OCT" "NOV" "DEC";
+
+#define MENU_OPS_PER_LINE 3
+
+const char strMenuMath[] PROGMEM = 
+	"\03"
+	",X+" "Y;+" "1/X"  // Squareroot, Raise to the power of, Reciprocal
+	"EXP" "LN+" "X?+"  // Exponential, Natural logarithm, Gamma function (due to Nemes)
+	"R>P" "P>R" "PV+"  // Rectangular to polar coordinates, Polar to rectangular coordinates, Present value (annuity)
+	"ND+" "STA" "LR+"; // Normal distribution (CDF/PDF), Statistics, Linear regression
+
+const char strMenuTrig[] PROGMEM = 
+	"\03"
+	"SIN" "COS" "TAN"  // Sine, Cosine, Tangent
+	"ASN" "ACS" "ATN"  // Inverse sine, Inverse cosine, Inverse tangent
+	"SNH" "CSH" "TNH"  // Hyperbolic sine, Hyperbolic cosine,  Hyperbolic tangent
+	"ASH" "ACH" "ATH"; // Inverse hyperbolic sine, Inverse hyperbolic cosine, Inverse hyperbolic tangent
+
+const char strMenuProg[] PROGMEM = 
+	"\03"
+	"OP1" "OP2" "OP3";
+
+const char strMenuSets[] PROGMEM = 
+	"\03"
+	"OP1" "OP2" "OP3";
+
+struct Menu
+{
+	const char* string;
+	u08 lastIdx;
+	u08 opsBase;
+};
+
+const Menu menus[] PROGMEM =
+{
+	{ strMenuMath, 3, MATH_OPS },
+	{ strMenuTrig, 3, TRIG_OPS },
+	{ strMenuProg, 0, PROG_OPS },
+	{ strMenuSets, 0, SETS_OPS },
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -50,7 +89,7 @@ const char PROGMEM strMonth[] =
 
 void PrintStack(u08 i, u08 s, u08 y)
 {
-	f32 f = dp - 1 - i < 0 ? 0.f : ds[dp - 1 - i];
+	f32 f = dget(i);
 	PrintCharSize(CHAR_SIZE_M, s);
 
 	if (isnan(f)) { PrintStringAt(FPSTR(strMessage), MSG_ERR, M_DIGIT_FST, y);	}
@@ -141,7 +180,7 @@ void PrintCalculator()
 {
 	DisplayClear();
 
-#if 1
+#if 0
 	if (isFunc) PrintCharAt(CHAR_SHIFT, MODE_CHAR, 0);
 
 	PrintStack(3, CHAR_SIZE_S, 0);
@@ -156,12 +195,10 @@ void PrintCalculator()
 	
 	if (isMenu)
 	{
-		
-//		for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
-//		{
-//			PrintStringAt(FPSTR(menu_str), select * MENU_OPS_PER_LINE + i, 48 * i, 2);
-//		}
-		PrintCharAt('M', 0, 2);
+		for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
+		{
+			PrintStringAt(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 48 * i, 2);
+		}
 		PrintStack(0, CHAR_SIZE_M, 0);
 	}
 	else if (isFunc)
@@ -189,13 +226,23 @@ u08 oldkey; // Use for debouncing
 b08 inCalcMode;
 u08 brightness;
 
+Menu menu;
+u08  select;
+
+void enterMenu(u08 type)
+{
+	isMenu = true;
+	memcpy_P(&menu, &menus[type], sizeof(Menu));
+	select = 0;
+}
+
 int main() 
 {
 	ADCInit();
 	I2CBusInit();
 	DisplayInit();
 	KeyboardInit();
-    sei();
+	sei();
 
 	DisplayTurnOn();
 	FrameSyncEnable();
@@ -242,14 +289,28 @@ int main()
 			{
 				if (isMenu)
 				{
-					// TODO
-					u08 op = OpNop;
-					ExecuteOperation(op);
+					if (key == KEY_EEXP)
+					{
+						if (select > 0) select--; else select = menu.lastIdx;
+					}
+					else if (key == KEY_NEG)
+					{
+						if (select < menu.lastIdx) select++; else select = 0;
+					}
+					else if (key >= KEY_NUM1 && key <= KEY_NUM3)
+					{
+						u08 index = select * MENU_OPS_PER_LINE + (key - KEY_NUM1);
+						ExecuteOperation(menu.opsBase + index);
+					}
+					else
+					{
+						// execute 'No Operation' and exit the menu
+						ExecuteOperation(OpNop);
+					}
 				}
 				else
 				{
-					u08 op = (isFunc ? SHIFTED_OPS + key : key);
-					ExecuteOperation(op);
+					ExecuteOperation(isFunc ? FUNC_OPS + key : key);
 				}
 
 				PrintCalculator();

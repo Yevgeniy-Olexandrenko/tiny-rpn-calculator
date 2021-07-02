@@ -14,6 +14,9 @@ b08 isDot = false;   // True if dot was pressed and decimals will be entered
 u08 decimals = 0;    // Number of decimals entered (input after decimal dot)
 b08 isEdit = false;  // True if last operation was number editing operation
 
+enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS, MENU_SETS_OPS };
+void enterMenu(u08 type);
+
 ////////////////////////////////////////////////////////////////////////////////
 // Operations
 ////////////////////////////////////////////////////////////////////////////////
@@ -30,7 +33,30 @@ enum
 	OpC10,  OpRcl, OpSto,  OpSub, OpC14,  OpC15,  OpMul,  AcTrig,
 	AcProg, OpDiv, OpSwap, OpAdd, OpAClr, OpRotD, OpRotU, AcMath,
 
-	SHIFTED_OPS = OpC10
+	// math menu operations
+	OpC20, OpC21, OpC22,
+	OpC23, OpC24, OpC25,
+	OpC26, OpC27, OpC28,
+	OpC29, OpC2A, OpC2B,
+
+	// trig menu operatons
+	OpC2C, OpC2D, OpC2E,
+	OpC2F, OpC30, OpC31,
+	OpC32, OpC33, OpC34,
+	OpC35, OpC36, OpC37,
+
+	// prog menu operations
+	OpC38, OpC39, OpC3A,
+
+	// sets menu operations
+	OpC3B, OpC3C, OpC3D,
+
+	FUNC_OPS = OpC10,
+	MATH_OPS = OpC20,
+	TRIG_OPS = OpC2C,
+	PROG_OPS = OpC38,
+	SETS_OPS = OpC3B,
+	OpNop = 0xFF
 };
 
 /* Forward declarations */
@@ -58,9 +84,9 @@ f32 dpop()
 	return (dp ? ds[--dp] : 0.f);
 }
 
-f32 dtop()
+f32 dget(u08 i)
 {
-	return dpush(dpop());
+	return (dp - i > 0 ? ds[dp - 1 - i] : 0.f);
 }
 
 b08 dpopByte(u08& dest, u08 min, u08 max)
@@ -104,7 +130,7 @@ void storageAccess(b08 isWrite)
 	if (dpopByte(i, 0, 9))
 	{
 		if (isWrite)
-			eeprom_write_float(&eeprom_storage[i], dtop());
+			eeprom_write_float(&eeprom_storage[i], dget(0));
 		else
 			dpush(eeprom_read_float(&eeprom_storage[i]));
 	}
@@ -188,15 +214,15 @@ void FnRcl()  { storageAccess(false); }
 void FnSto()  { storageAccess(true); }
 void FnSub()  { FnNeg(); FnAdd(); }
 void FnMul()  { dpush(dpop() * dpop()); }
-void FnTrig() { isMenu = true; /* TODO */ }
-void FnProg() { isMenu = true; /* TODO */ }
+void FnTrig() { enterMenu(MENU_TRIG_OPS); }
+void FnProg() { enterMenu(MENU_PROG_OPS); }
 void FnDiv()  { FnInv(); FnMul(); }
 void FnSwap() { f32 a = dpop(), b = dpop(); dpush(a); dpush(b); }
 void FnAdd()  { dpush(dpop() + dpop()); }
 void FnAClr() { dp = 0; /* clear anything else */ }
 void FnRotD() { rotateStack(false); }
 void FnRotU() { rotateStack(true); }
-void FnMath() { isMenu = true; /* TODO */ }
+void FnMath() { enterMenu(MENU_MATH_OPS); }
 
 void FnInv()  { dpush(1.f / dpop()); }
 void FnInt()  { dpush(s32(dpop())); }
@@ -238,6 +264,40 @@ void (*dispatch[])() =
 	/* 1D */ &FnRotD,
 	/* 1E */ &FnRotU,
 	/* 1F */ &FnMath, // Action
+
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnNop,  // TODO
 };
 
 void ExecuteOperation(Operation op)
@@ -246,7 +306,12 @@ void ExecuteOperation(Operation op)
 	isMenu = false;
 	isEdit = false;
 
-	(*dispatch[op])();
+	if (op != OpNop)
+	{
+		(*dispatch[op])();
+
+		// TODO: save op to program
+	}
 
 	if (!isEdit)
 	{
