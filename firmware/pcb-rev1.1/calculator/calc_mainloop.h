@@ -67,6 +67,11 @@ const Menu menus[] PROGMEM =
 
 ////////////////////////////////////////////////////////////////////////////////
 
+Menu menu;
+u08  select;
+
+////////////////////////////////////////////////////////////////////////////////
+
 #define CHAR_SHIFT  '='
 #define CHAR_REC    '@'
 #define CHAR_PLAY   '<'
@@ -226,9 +231,6 @@ u08 oldkey; // Use for debouncing
 b08 inCalcMode;
 u08 brightness;
 
-Menu menu;
-u08  select;
-
 void enterMenu(u08 type)
 {
 	isMenu = true;
@@ -289,23 +291,19 @@ int main()
 			{
 				if (isMenu)
 				{
-					if (key == KEY_EEXP)
+					switch(key)
 					{
-						if (select > 0) select--; else select = menu.lastIdx;
-					}
-					else if (key == KEY_NEG)
-					{
-						if (select < menu.lastIdx) select++; else select = 0;
-					}
-					else if (key >= KEY_NUM1 && key <= KEY_NUM3)
-					{
+					default: isMenu = false; break;
+					case KEY_EEXP: if (select > 0) select--; else select = menu.lastIdx; break;
+					case KEY_NEG:  if (select < menu.lastIdx) select++; else select = 0; break;
+					case KEY_FUNC: enterMenu(MENU_MATH_OPS); break;
+					case KEY_NUM7: enterMenu(MENU_TRIG_OPS); break;
+					case KEY_NUM8: enterMenu(MENU_PROG_OPS); break;
+					case KEY_DOT:  enterMenu(MENU_SETS_OPS); break;
+					case KEY_NUM1: case KEY_NUM2: case KEY_NUM3:
 						u08 index = select * MENU_OPS_PER_LINE + (key - KEY_NUM1);
 						ExecuteOperation(menu.opsBase + index);
-					}
-					else
-					{
-						// execute 'No Operation' and exit the menu
-						ExecuteOperation(OpNop);
+						break;
 					}
 				}
 				else
