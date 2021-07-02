@@ -185,7 +185,7 @@ void PrintCalculator()
 {
 	DisplayClear();
 
-#if 0
+#if 1
 	if (isFunc) PrintCharAt(CHAR_SHIFT, MODE_CHAR, 0);
 
 	PrintStack(3, CHAR_SIZE_S, 0);

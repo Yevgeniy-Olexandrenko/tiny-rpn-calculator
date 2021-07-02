@@ -1,7 +1,4 @@
 
-b08 isFunc = false;
-b08 isMenu = false;
-
 #define DS_CAPACITY 24
 f32 ds[DS_CAPACITY];
 u08 dp = 0;
@@ -12,7 +9,11 @@ u08 EEMEM eeprom_brightness = 0xFF;
 b08 isNewNum = true; // True if stack has to be lifted before entering a new number
 b08 isDot = false;   // True if dot was pressed and decimals will be entered
 u08 decimals = 0;    // Number of decimals entered (input after decimal dot)
-b08 isEdit = false;  // True if last operation was number editing operation
+
+b08 isFunc;
+b08 isMenu;
+b08 isEdit;  // True if last operation was number editing operation
+b08 isPushed;
 
 enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS, MENU_SETS_OPS };
 void enterMenu(u08 type);
@@ -148,6 +149,7 @@ void enterDigit(u08 digit)
 	}
 	else if (isNewNum)
 	{
+		if (isPushed) dpop();
 		dpush(digit);
 	}
 	else 
@@ -195,16 +197,8 @@ void FnNum6() { enterDigit(6); }
 void FnNum7() { enterDigit(7); }
 void FnNum8() { enterDigit(8); }
 void FnNum9() { enterDigit(9); }
-void FnDot()  { if (isNewNum) enterDigit(0); isDot = true; }
-
-void FnDup() // has wrong behavior
-{
-	if (isNewNum && dp)
-	{
-		dpush(ds[dp - 1]);
-	}
-}
-
+void FnDot()  { if (isNewNum) enterDigit(0); isDot = isEdit = true; }
+void FnDup()  { dpush(dget(0)); }
 void FnDrop() { if (isNewNum) dpop(); else clearDigit(); }
 void FnNeg()  { dpush(-dpop()); isEdit = true; }
 void FnEExp() { FnPw10(); FnMul(); }
@@ -305,13 +299,15 @@ void ExecuteOperation(Operation op)
 	isFunc = false;
 	isMenu = false;
 	isEdit = false;
-
+	
 	if (op != OpNop)
 	{
 		(*dispatch[op])();
 
 		// TODO: save op to program
 	}
+
+	isPushed = (op == OpDup);
 
 	if (!isEdit)
 	{
