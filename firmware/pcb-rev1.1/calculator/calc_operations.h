@@ -219,7 +219,8 @@ void FnInt()  { dpush(s32(dpop())); }
 void FnPw10() { dpush(pow10(dpop())); }
 
 /* Operations Execution */
-void (*dispatch[])() = 
+typedef void (*OpHandler_t)();
+const OpHandler_t opHandlers[] PROGMEM = 
 {
 	/* 00 */ &FnNum0, // Edit
 	/* 01 */ &FnNum1, // Edit
@@ -298,7 +299,8 @@ void ExecuteOperation(Operation op)
 	
 	if (op != OpNop)
 	{
-		(*dispatch[op])();
+		OpHandler_t opHandler = (OpHandler_t)pgm_read_word(&opHandlers[op]);
+		opHandler();
 
 		// TODO: save op to program
 	}
