@@ -3,6 +3,11 @@
 f32 ds[DS_CAPACITY];
 u08 dp = 0;
 
+#define AS_CAPACITY 24
+u16 as[AS_CAPACITY];
+u08 ap = 0;
+u16 pp = 0;
+
 f32 EEMEM eeprom_storage[10];
 u08 EEMEM eeprom_brightness = 0xFF;
 
@@ -18,12 +23,13 @@ enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS, MENU_SETS_OPS };
 void enterMenu(u08 type);
 
 ////////////////////////////////////////////////////////////////////////////////
-// Operations
+// Operations Declarations
 ////////////////////////////////////////////////////////////////////////////////
 
-/* Operation codes */
-typedef const char Operation;
-enum 
+typedef uint8_t Operation;
+typedef uint8_t OpScript;
+
+enum /* Operation codes */
 {
 	// basic operations
 	OpNum0, OpNum1, OpNum2, OpNum3, OpNum4, OpNum5, OpNum6, OpNum7,
@@ -34,16 +40,16 @@ enum
 	AcProg, OpDiv, OpSwap, OpAdd, OpAClr, OpRotD, OpRotU, AcMath,
 
 	// math menu operations
-	OpC20, OpC21, OpC22,
-	OpC23, OpC24, OpC25,
-	OpC26, OpC27, OpC28,
-	OpC29, OpC2A, OpC2B,
+	OpSqrt, OpPow, OpInv,
+	OpExp,  OpLn,  OpC25,
+	OpC26,  OpC27, OpC28,
+	OpC29,  OpC2A, OpC2B,
 
 	// trig menu operatons
-	OpC2C, OpC2D, OpC2E,
-	OpC2F, OpC30, OpC31,
-	OpC32, OpC33, OpC34,
-	OpC35, OpC36, OpC37,
+	OpSin,  OpCos,  OpTan,
+	OpASin, OpACos, OpATan,
+	OpC32,  OpC33,  OpC34,
+	OpC35,  OpC36,  OpC37,
 
 	// prog menu operations
 	OpC38, OpC39, OpC3A,
@@ -51,12 +57,38 @@ enum
 	// sets menu operations
 	OpC3B, OpC3C, OpC3D,
 
+	//---------
+	OpNe, OpIf, OpThen,
+	//---------
+
+	OpEnd,
 	FUNC_OPS = OpC10,
-	MATH_OPS = OpC20,
-	TRIG_OPS = OpC2C,
+	MATH_OPS = OpSqrt,
+	TRIG_OPS = OpSin,
 	PROG_OPS = OpC38,
 	SETS_OPS = OpC3B,
-	OpNop = 0xFF
+};
+
+enum /* Scripted Operations */
+{
+	SoSin, SoTan, SoASin, SoACos, SoSqrt, SoPow,
+};
+
+const Operation scripts[] PROGMEM =
+{
+	OpEnd,
+	// SoSin:  SIN = cos(90-x)
+	OpNum9, OpNum0, OpSwap, OpSub, OpCos, OpEnd,
+	// SoTan:  TAN = sin/cos
+	OpDup, OpSin, OpSwap, OpCos, OpDiv, OpEnd,
+	// SoASin: ASIN = atan(1/(sqrt(1/x/x-1))
+	OpDup, OpMul, OpInv, OpNum1, OpSub, OpSqrt, OpInv, OpATan, OpEnd,
+	// SoACos: ACOS = atan(sqrt(1/x/x-1))
+	OpDup, OpMul, OpInv, OpNum1, OpSub, OpSqrt, OpATan, OpEnd,
+	// SoSqrt: SQRT = exp(ln(x)/2)
+	OpDup, OpNum0, OpNe, OpIf, OpLn, OpNum2, OpDiv, OpExp, OpThen, OpEnd,
+	// SoPow:  POW a^b = exp(b*ln(a))
+	OpSwap, OpLn, OpMul, OpExp, OpEnd,
 };
 
 /* Forward declarations */
@@ -68,37 +100,37 @@ void FnNum8(); void FnNum9(); void FnDot();  void FnDup();  void FnDrop(); void 
 void FnRcl();  void FnSto();  void FnSub();  void FnMul();  void FnTrig(); void FnProg(); void FnDiv();  void FnSwap();
 void FnAdd();  void FnAClr(); void FnRotD(); void FnRotU(); void FnMath();
 
+void FnSqrt();
+void FnPow();
 void FnInv();
+void FnExp();
+void FnLn();
 void FnInt();
 void FnPw10();
 
+void FnSin();  void FnCos();  void FnTan();
+void FnASin(); void FnACos(); void FnATan();
+
+void FnEnd();
+
+////////////////////////////////////////////////////////////////////////////////
+// Data and Address Stacks
+////////////////////////////////////////////////////////////////////////////////
+
+void onError();
+
 /* Data Stack Operations */
-f32 dpush(f32 d) 
-{
-	if (dp >= DS_CAPACITY) { memcpy(ds, ds + 1, (DS_CAPACITY - 1) * sizeof(f32)); --dp; }
-	return (ds[dp++] = d);
-}
-
-f32 dpop()
-{
-	return (dp ? ds[--dp] : 0.f);
-}
-
-f32 dget(u08 i)
-{
-	return (dp - i > 0 ? ds[dp - 1 - i] : 0.f);
-}
-
-f32 dtop()
-{
-	return dget(0);
-}
+void dmove()      { memcpy(ds, ds + 1, (DS_CAPACITY - 1) * sizeof(f32)); }
+void dpush(f32 d) { if (dp >= DS_CAPACITY) { dmove(); --dp; } ds[dp++] = d; }
+f32  dpop()       { return (dp ? ds[--dp] : 0.f); }
+f32  dget(u08 i)  { return (dp - i > 0 ? ds[dp - 1 - i] : 0.f); }
+f32  dtop()       { return dget(0); }
 
 b08 dpopByte(u08& dest, u08 min, u08 max)
 {
 	u08 b = dpop();
 	if (b >= min && b <= max) { dest = b; return true; }
-	dpush(NAN); return false;
+	onError(); return false;
 }
 
 void rotateStack(b08 isUp)
@@ -118,7 +150,17 @@ void rotateStack(b08 isUp)
 	}
 }
 
-/* Helping Functions */
+/* Address Stack Operations */
+void apush() { if (ap < AS_CAPACITY) as[ap++] = pp; else onError(); }
+void apop()  { if (ap) pp = as[--ap]; else onError(); }
+
+////////////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////////////
+
+#define _to_rad(x) ((x) * (PI / 180))
+#define _to_deg(x) ((x) * (180 / PI))
+
 f32 pow10(s08 e) 
 { 
 	f32 f = 1.f;
@@ -141,7 +183,21 @@ void storageAccess(b08 isWrite)
 	}
 }
 
-/* Edit the number in X Register of Data Stack */
+void callScript(OpScript script)
+{
+	apush();
+	for(pp = 0, ++script; script;)
+	{
+		if (pgm_read_byte(&scripts[pp++]) == OpEnd) --script;
+	}
+}
+
+void onError() { ap = 0; dpush(NAN); }
+
+////////////////////////////////////////////////////////////////////////////////
+// Edit the number in X Register of Data Stack
+////////////////////////////////////////////////////////////////////////////////
+
 void checkNewNum()
 {
 	if (isNewNum)
@@ -181,7 +237,10 @@ void clearDigit() // TODO: check!
 	isEdit = true;
 }
 
-/* Operations Implementation */
+////////////////////////////////////////////////////////////////////////////////
+// Operations Implementations
+////////////////////////////////////////////////////////////////////////////////
+
 void FnNop()  { /* do nothing */ }
 void FnNum0() { enterDigit(0); }
 void FnNum1() { enterDigit(1); }
@@ -214,13 +273,31 @@ void FnRotD() { rotateStack(false); }
 void FnRotU() { rotateStack(true); }
 void FnMath() { enterMenu(MENU_MATH_OPS); }
 
+void FnSqrt() { callScript(SoSqrt); }
+void FnPow()  { callScript(SoSqrt); }
 void FnInv()  { dpush(1.f / dpop()); }
+void FnExp()  { /* TODO */ }
+void FnLn()   { dpush(log(dpop())); }
 void FnInt()  { dpush(s32(dpop())); }
 void FnPw10() { dpush(pow10(dpop())); }
 
-/* Operations Execution */
-typedef void (*OpHandler_t)();
-const OpHandler_t opHandlers[] PROGMEM = 
+void FnSin()  { callScript(SoSin); }
+void FnCos()  { dpush(cos(_to_rad(dpop()))); }
+void FnTan()  { callScript(SoTan); }
+void FnASin() { callScript(SoASin); }
+void FnACos() { callScript(SoACos); }
+void FnATan() { dpush(_to_deg(atan(dpop()))); }
+
+//
+
+void FnEnd()  { apop(); }
+
+////////////////////////////////////////////////////////////////////////////////
+// Operations Execution
+////////////////////////////////////////////////////////////////////////////////
+
+typedef void (*OpHandler)();
+const OpHandler opHandlers[] PROGMEM = 
 {
 	/* 00 */ &FnNum0, // Edit
 	/* 01 */ &FnNum1, // Edit
@@ -256,11 +333,11 @@ const OpHandler_t opHandlers[] PROGMEM =
 	/* 1E */ &FnRotU,
 	/* 1F */ &FnMath, // Action
 
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnSqrt,
+	/* 10 */ &FnPow,
+	/* 10 */ &FnInv,
+	/* 10 */ &FnExp,
+	/* 10 */ &FnLn,
 	/* 10 */ &FnNop,  // TODO
 	/* 10 */ &FnNop,  // TODO
 	/* 10 */ &FnNop,  // TODO
@@ -269,12 +346,12 @@ const OpHandler_t opHandlers[] PROGMEM =
 	/* 10 */ &FnNop,  // TODO
 	/* 10 */ &FnNop,  // TODO
 
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnSin,
+	/* 10 */ &FnCos,
+	/* 10 */ &FnTan,
+	/* 10 */ &FnASin,
+	/* 10 */ &FnACos,
+	/* 10 */ &FnATan,
 	/* 10 */ &FnNop,  // TODO
 	/* 10 */ &FnNop,  // TODO
 	/* 10 */ &FnNop,  // TODO
@@ -289,6 +366,8 @@ const OpHandler_t opHandlers[] PROGMEM =
 	/* 10 */ &FnNop,  // TODO
 	/* 10 */ &FnNop,  // TODO
 	/* 10 */ &FnNop,  // TODO
+
+	/* 10 */ &FnEnd,  // Last Operation
 };
 
 void ExecuteOperation(Operation op)
@@ -297,16 +376,12 @@ void ExecuteOperation(Operation op)
 	isMenu = false;
 	isEdit = false;
 	
-	if (op != OpNop)
-	{
-		OpHandler_t opHandler = (OpHandler_t)pgm_read_word(&opHandlers[op]);
-		opHandler();
+	OpHandler opHandler = (OpHandler)pgm_read_word(&opHandlers[op]);
+	opHandler();
 
-		// TODO: save op to program
-	}
+	// TODO: save op to program
 
 	isPushed = (op == OpDup);
-
 	if (!isEdit)
 	{
 		isNewNum = true;
