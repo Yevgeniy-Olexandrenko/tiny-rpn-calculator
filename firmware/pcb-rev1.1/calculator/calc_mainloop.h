@@ -238,6 +238,12 @@ void enterMenu(u08 type)
 	select = 0;
 }
 
+void switchToCalcMode(bool yes)
+{
+	inCalcMode = yes;
+	FrameSyncEnable();
+}
+
 int main() 
 {
 	ADCInit();
@@ -246,18 +252,15 @@ int main()
 	KeyboardInit();
 	sei();
 
+	switchToCalcMode(false);
 	DisplayTurnOn();
-	FrameSyncEnable();
 
 	// reset
 	isfirstrun = true;
-	inCalcMode = false;
 	brightness = eeprom_read_byte(&eeprom_brightness);
 	
 	for (;;)
 	{
-		FrameSyncWait();
-
 		if (isfirstrun)
 		{
 			RTCWrite();
@@ -272,15 +275,18 @@ int main()
 
 		if (key != KEY_NONE)
 		{
-			ResetFrameCounter();
-			inCalcMode = true;
+			switchToCalcMode(true);
 		}
 
 		if (frameCounter >= POWEROFF_FRAMES)
 		{
-			DeepSleep();
+			DisplayTurnOff();
+			FrameSyncDisable();
+			PowerDown();
+
 			oldkey = KeyboardRead();
-			inCalcMode = !RTCRead();
+			switchToCalcMode(!RTCRead());
+			DisplayTurnOn();
 		}
 
 		DisplayBrightness(frameCounter < DIMOUT_FRAMES ? brightness : 0);
@@ -320,6 +326,7 @@ int main()
 			RTCRead();
 			PrintClock();
 		}
+		FrameSyncWait();
 	}
 	return 0;
 }

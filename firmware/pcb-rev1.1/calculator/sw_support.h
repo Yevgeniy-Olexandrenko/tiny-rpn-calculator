@@ -14,19 +14,14 @@ template<typename T> static T _abs(const T & x) { return x < 0 ? -x : x; }
 // Upate Frame Rate Sync
 ////////////////////////////////////////////////////////////////////////////////
 
-volatile uint8_t frameWaiting;
+volatile uint8_t  frameWaiting;
 volatile uint16_t frameCounter;
-
-void ResetFrameCounter()
-{
-	frameCounter = 0;
-}
 
 void FrameSyncEnable()
 {
 	// frame rate is about 15 FPS
 	WDTInit(WDT_MODE_INT, WDT_TIMEOUT_64MS);
-	ResetFrameCounter();
+	frameCounter = 0;
 }
 
 void FrameSyncDisable()
@@ -44,21 +39,6 @@ ISR(WDT_vect)
 {
 	frameWaiting = false;
 	frameCounter++;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Power Saving
-////////////////////////////////////////////////////////////////////////////////
-
-void DeepSleep()
-{
-	_delay_ms(250);
-
-	DisplayTurnOff();
-	FrameSyncDisable();
-	PowerDown();
-	FrameSyncEnable();
-	DisplayTurnOn();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

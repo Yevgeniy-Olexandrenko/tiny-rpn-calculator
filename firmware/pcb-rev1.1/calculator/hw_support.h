@@ -33,31 +33,44 @@ void WDTInit(uint8_t mode, uint8_t prescaler)
 // Power Saving
 ///////////////////////////////////////////////////////////////////////////////
 
-void execute_sleeping(uint8_t mode)
+void executeSleeping(uint8_t mode)
 {
 	set_sleep_mode(mode);
-	power_all_disable();
 	sleep_enable();
 	sleep_cpu();
-
 	sleep_disable();
+}
+
+void executePowerSaving(uint8_t mode)
+{
+	clr_bit(ADCSRA,ADEN);
+	power_all_disable();
+	executeSleeping(mode);
 	power_usi_enable();
 	power_adc_enable();
+	set_bit(ADCSRA,ADEN);
 }
 
  void PowerIdle()
 { 	
-	execute_sleeping(SLEEP_MODE_IDLE);
+	executePowerSaving(SLEEP_MODE_IDLE);
 }
 
 void PowerDown()
 {
-	execute_sleeping(SLEEP_MODE_PWR_DOWN);
+	executePowerSaving(SLEEP_MODE_PWR_DOWN);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // ADC
 ////////////////////////////////////////////////////////////////////////////////
+
+#define ADC_0_PB5 (0b0000)
+#define ADC_1_PB2 (0b0001)
+#define ADC_2_PB4 (0b0010)
+#define ADC_3_PB3 (0b0011)
+#define ADC_VCC   (0b1100)
+#define ADC_TEMP  (0b1111 | _BV(REFS1))
 
 void ADCInit()
 {
@@ -66,13 +79,27 @@ void ADCInit()
 
 uint16_t ADCRead(uint8_t channel, uint8_t delay)
 {
-	ADMUX = channel & 0xF;
+	ADMUX = channel;
 	while (delay--) _delay_ms(1);
+
 	set_bit(ADCSRA, ADSC);
 	while (isb_set(ADCSRA, ADSC));
+
 	uint8_t adcl = ADCL;
 	uint8_t adch = ADCH;
 	return (adcl | adch << 8);
+}
+
+float ADCReadVcc()
+{
+	return 1125.3f / ADCRead(ADC_VCC, 10);
+}
+
+float ADCReadTemp()
+{
+	const float chipTempOffset = 286.0f; // TODO
+	const float chipTempCoeff  = 1.0f;   // TODO
+	return((ADCRead(ADC_TEMP, 10) - chipTempOffset) / chipTempCoeff);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -505,7 +532,7 @@ void RTCWrite()
 //////////////////////////////////////////////////////////////////////////////// 
 
 #define KEYBOARD_PIN PORTB3
-#define KEYBOARD_ADC (_BV(MUX1) | _BV(MUX0))
+#define KEYBOARD_ADC ADC_3_PB3
 
 // Keyboard layout on PCB:
 // A0 B0 C0 D0
@@ -570,14 +597,4 @@ ISR(PCINT0_vect)
 {
 	// do nothing
 	// just interrupt sleeping
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Battery Level
-////////////////////////////////////////////////////////////////////////////////
-
-float BatteryRead()
-{
-	uint16_t adcVal = ADCRead(_BV(MUX3) | _BV(MUX2), 10);
-	return 1125.3f / adcVal;
 }
