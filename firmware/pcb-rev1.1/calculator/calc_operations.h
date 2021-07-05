@@ -183,6 +183,21 @@ void storageAccess(b08 isWrite)
 	}
 }
 
+void enterConstant()
+{
+	u08 i;
+	if (dpopByte(i, 0, 9))
+	{
+		switch(i)
+		{
+			case 0: dpush(ADCReadVcc() ); return;
+			case 1: dpush(ADCReadTemp()); return;
+			case 2: dpush(M_E ); return;
+			case 3: dpush(M_PI); return;
+		}
+	}
+}
+
 void callScript(OpScript script)
 {
 	apush();
@@ -259,6 +274,7 @@ void FnNeg()  { dpush(-dpop()); isEdit = !isNewNum; }
 void FnEExp() { FnPw10(); FnMul(); }
 void FnFunc() { isFunc = true; }
 
+void FnCst()  { enterConstant(); }
 void FnRcl()  { storageAccess(false); }
 void FnSto()  { storageAccess(true); }
 void FnSub()  { FnNeg(); FnAdd(); }
@@ -316,7 +332,7 @@ const OpHandler opHandlers[] PROGMEM =
 	/* 0E */ &FnEExp,
 	/* 0F */ &FnFunc, // Action
 
-	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnCst,
 	/* 11 */ &FnRcl,
 	/* 12 */ &FnSto,
 	/* 13 */ &FnSub,
