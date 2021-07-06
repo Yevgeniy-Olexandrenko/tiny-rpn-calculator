@@ -128,7 +128,7 @@ f32  dpop()       { return (dp ? ds[--dp] : 0.f); }
 f32  dget(u08 i)  { return (dp - i > 0 ? ds[dp - 1 - i] : 0.f); }
 f32  dtop()       { return dget(0); }
 
-b08 dpopByte(u08& dest, u08 min, u08 max)
+b08 dpop(u08& dest, u08 min, u08 max)
 {
 	u08 b = dpop();
 	if (b >= min && b <= max) { dest = b; return true; }
@@ -176,7 +176,7 @@ f32 pow10(s08 e)
 void storageAccess(b08 isWrite) 
 {
 	u08 i;
-	if (dpopByte(i, 0, 9))
+	if (dpop(i, 0, 9))
 	{
 		if (isWrite)
 			eeprom_write_float(&eeprom_storage[i], dtop());
@@ -188,7 +188,7 @@ void storageAccess(b08 isWrite)
 void enterConstant()
 {
 	u08 i;
-	if (dpopByte(i, 0, 9))
+	if (dpop(i, 0, 9))
 	{
 		switch(i)
 		{
@@ -310,7 +310,7 @@ void FnStm()
 {
 	if (RTCRead())
 	{
-		if (dpopByte(rtc_seconds, 0, 59) && dpopByte(rtc_minutes, 0, 59) && dpopByte(rtc_hours, 0, 23))
+		if (dpop(rtc_seconds, 0, 59) && dpop(rtc_minutes, 0, 59) && dpop(rtc_hours, 0, 23))
 		{
 			setupRTC();
 		}
@@ -320,7 +320,7 @@ void FnSdt()
 {
 	if (RTCRead())
 	{
-		if (dpopByte(rtc_year, 0, 99) && dpopByte(rtc_month, 1, 12) && dpopByte(rtc_date, 1, 31))
+		if (dpop(rtc_year, 0, 99) && dpop(rtc_month, 1, 12) && dpop(rtc_date, 1, 31))
 		{
 			setupRTC();
 		}

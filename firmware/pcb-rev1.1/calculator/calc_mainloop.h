@@ -225,9 +225,9 @@ void PrintCalculator()
 #define DIMOUT_FRAMES 156   // Frames before display dim out (about 10 sec)
 #define POWEROFF_FRAMES 469 // Frames before power off (about 30 sec)
 
-u08 key; // Holds entered key
-u08 oldkey; // Use for debouncing
-b08 inCalcMode;
+u08 key;
+u08 oldkey;
+b08 calcMode;
 
 void enterMenu(u08 type)
 {
@@ -238,14 +238,14 @@ void enterMenu(u08 type)
 
 void switchToCalcMode(bool yes)
 {
-	inCalcMode = yes;
+	calcMode = yes;
 	FrameSyncStart();
 }
 
 void switchToRTCMode()
 {
-	switchToCalcMode(!RTCRead());
 	oldkey = KeyboardRead();
+	switchToCalcMode(!RTCRead());
 }
 
 void setupRTC()
@@ -268,12 +268,8 @@ int main()
 	while (true)
 	{
 		key = KeyboardRead();
-		if (key == oldkey) key = KEY_NONE; else oldkey = key;
-
-		if (key != KEY_NONE)
-		{
-			switchToCalcMode(true);
-		}
+		if (key != oldkey) oldkey = key; else key = KEY_NONE;
+		if (key != KEY_NONE) switchToCalcMode(true);
 
 		if (frameCounter >= POWEROFF_FRAMES)
 		{
@@ -285,9 +281,9 @@ int main()
 			switchToRTCMode();
 		}
 
-		DisplayBrightness(inCalcMode && frameCounter < DIMOUT_FRAMES ? 0xFF : 0x00);
+		DisplayBrightness(calcMode && frameCounter < DIMOUT_FRAMES ? 0xFF : 0x00);
 
-		if (inCalcMode)
+		if (calcMode)
 		{
 			if (key != KEY_NONE)
 			{
