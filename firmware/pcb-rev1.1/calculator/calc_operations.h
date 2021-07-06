@@ -20,7 +20,9 @@ b08 isEdit;  // True if last operation was number editing operation
 b08 isPushed;
 
 enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS, MENU_SETS_OPS };
+
 void enterMenu(u08 type);
+void setupRTC();
 
 ////////////////////////////////////////////////////////////////////////////////
 // Operations Declarations
@@ -55,7 +57,7 @@ enum /* Operation codes */
 	OpC38, OpC39, OpC3A,
 
 	// sets menu operations
-	OpC3B, OpC3C, OpC3D,
+	OpC3B, OpStm, OpSdt,
 
 	//---------
 	OpNe, OpIf, OpThen,
@@ -304,6 +306,26 @@ void FnASin() { callScript(SoASin); }
 void FnACos() { callScript(SoACos); }
 void FnATan() { dpush(_to_deg(atan(dpop()))); }
 
+void FnStm()
+{
+	if (RTCRead())
+	{
+		if (dpopByte(rtc_seconds, 0, 59) && dpopByte(rtc_minutes, 0, 59) && dpopByte(rtc_hours, 0, 23))
+		{
+			setupRTC();
+		}
+	}
+}
+void FnSdt()
+{
+	if (RTCRead())
+	{
+		if (dpopByte(rtc_year, 0, 99) && dpopByte(rtc_month, 1, 12) && dpopByte(rtc_date, 1, 31))
+		{
+			setupRTC();
+		}
+	}
+}
 //
 
 void FnEnd()  { apop(); }
@@ -380,8 +402,8 @@ const OpHandler opHandlers[] PROGMEM =
 	/* 10 */ &FnNop,  // TODO
 	
 	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnStm,  // TODO
+	/* 10 */ &FnSdt,  // TODO
 
 	/* 10 */ &FnEnd,  // Last Operation
 };

@@ -48,7 +48,7 @@ const char strMenuProg[] PROGMEM =
 
 const char strMenuSets[] PROGMEM = 
 	"\03"
-	"OP1" "OP2" "OP3";
+	"D/R" "STM" "SDT";
 
 struct Menu
 {
@@ -225,11 +225,9 @@ void PrintCalculator()
 #define DIMOUT_FRAMES 156   // Frames before display dim out (about 10 sec)
 #define POWEROFF_FRAMES 469 // Frames before power off (about 30 sec)
 
-b08 isfirstrun; // Allows first run of loop and printscreen without key query
 u08 key; // Holds entered key
 u08 oldkey; // Use for debouncing
 b08 inCalcMode;
-u08 brightness;
 
 void enterMenu(u08 type)
 {
@@ -241,7 +239,19 @@ void enterMenu(u08 type)
 void switchToCalcMode(bool yes)
 {
 	inCalcMode = yes;
-	FrameSyncEnable();
+	FrameSyncStart();
+}
+
+void switchToRTCMode()
+{
+	switchToCalcMode(!RTCRead());
+	oldkey = KeyboardRead();
+}
+
+void setupRTC()
+{
+	RTCWrite();
+	switchToRTCMode();
 }
 
 int main() 
@@ -252,26 +262,13 @@ int main()
 	KeyboardInit();
 	sei();
 
-	switchToCalcMode(false);
 	DisplayTurnOn();
+	setupRTC();
 
-	// reset
-	isfirstrun = true;
-	brightness = eeprom_read_byte(&eeprom_brightness);
-	
-	for (;;)
+	while (true)
 	{
-		if (isfirstrun)
-		{
-			RTCWrite();
-
-			// TODO
-		}
-		else
-		{
-			key = KeyboardRead();
-			if (key == oldkey) key = KEY_NONE; else oldkey = key;
-		}
+		key = KeyboardRead();
+		if (key == oldkey) key = KEY_NONE; else oldkey = key;
 
 		if (key != KEY_NONE)
 		{
@@ -280,20 +277,19 @@ int main()
 
 		if (frameCounter >= POWEROFF_FRAMES)
 		{
+			FrameSyncStop();
 			DisplayTurnOff();
-			FrameSyncDisable();
 			PowerDown();
 
-			oldkey = KeyboardRead();
-			switchToCalcMode(!RTCRead());
 			DisplayTurnOn();
+			switchToRTCMode();
 		}
 
-		DisplayBrightness(frameCounter < DIMOUT_FRAMES ? brightness : 0);
+		DisplayBrightness(inCalcMode && frameCounter < DIMOUT_FRAMES ? 0xFF : 0x00);
 
 		if (inCalcMode)
 		{
-			if (key != KEY_NONE || isfirstrun)
+			if (key != KEY_NONE)
 			{
 				if (isMenu)
 				{
@@ -316,9 +312,7 @@ int main()
 				{
 					ExecuteOperation(isFunc ? FUNC_OPS + key : key);
 				}
-
 				PrintCalculator();
-				isfirstrun = false;
 			}
 		}
 		else

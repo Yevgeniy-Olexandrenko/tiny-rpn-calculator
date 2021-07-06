@@ -1,6 +1,9 @@
 #undef  F_CPU
 #define F_CPU 16000000UL // 16 MHz
 
+// Hardware configuration
+#define RTC_SUPPORT 1
+
 #include <avr/eeprom.h>  // Needed for saving data to EEPROM
 #include <avr/power.h>   // Needed for power management
 #include <avr/sleep.h>   // Needed for sleeping

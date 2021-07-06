@@ -17,14 +17,14 @@ template<typename T> static T _abs(const T & x) { return x < 0 ? -x : x; }
 volatile uint8_t  frameWaiting;
 volatile uint16_t frameCounter;
 
-void FrameSyncEnable()
+void FrameSyncStart()
 {
 	// frame rate is about 15 FPS
 	WDTInit(WDT_MODE_INT, WDT_TIMEOUT_64MS);
 	frameCounter = 0;
 }
 
-void FrameSyncDisable()
+void FrameSyncStop()
 {
 	WDTInit(WDT_MODE_DISABLED, 0);
 }

@@ -485,6 +485,7 @@ uint8_t encode_bcd(uint8_t num)
 
 bool RTCRead()
 {
+#if RTC_SUPPORT
 	// Day of the week is not used!
 	// Century flag is not supported!
 	if (I2CBusStart(DS1337_ADDR, 0))
@@ -505,11 +506,13 @@ bool RTCRead()
 		I2CBusStop();
 		return true;
 	}
+#endif
 	return false;
 }
 
 void RTCWrite()
 {
+#if RTC_SUPPORT
 	// Time always stored in 24-hour format!
 	// Day of the week is not used!
 	// Century flag is not supported!
@@ -525,6 +528,7 @@ void RTCWrite()
 		I2CBusWrite(encode_bcd(rtc_year));
 		I2CBusStop();
 	}
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////
