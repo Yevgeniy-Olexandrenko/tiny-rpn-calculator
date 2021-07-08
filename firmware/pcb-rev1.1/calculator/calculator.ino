@@ -1,14 +1,16 @@
 #undef  F_CPU
 #define F_CPU 16000000UL // 16 MHz
 
-// Hardware configuration
-#define RTC_SUPPORT 1
+// Firmware configuration
+#define RTC_SUPPORT   1
+#define FONT_IN_EEMEM 0
+
 
 #include <avr/eeprom.h>  // Needed for saving data to EEPROM
 #include <avr/power.h>   // Needed for power management
 #include <avr/sleep.h>   // Needed for sleeping
 #include <util/delay.h>  // Needed for delays
-#include <math.h>        // Needed for some math constants
+#include <math.h>        // Needed for some math
 
 #undef  FPSTR
 #undef  F
@@ -29,6 +31,7 @@ typedef int16_t  s16;
 typedef int32_t  s32;
 typedef float    f32;
 
+#include "calc_textfont.h"
 #include "hw_support.h"
 #include "sw_support.h"
 #include "calc_operations.h"

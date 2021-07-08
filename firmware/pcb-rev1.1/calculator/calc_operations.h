@@ -1,22 +1,26 @@
+typedef uint8_t Operation;
+typedef uint8_t OpScript;
 
 #define DS_CAPACITY 24
 f32 ds[DS_CAPACITY];
 u08 dp = 0;
 
+f32 memory[10];
+
 #define AS_CAPACITY 24
 u16 as[AS_CAPACITY];
 u08 ap = 0;
-u16 pp = 0;
 
-f32 EEMEM eeprom_storage[10];
-u08 EEMEM eeprom_brightness = 0xFF;
+Operation programs[3][90] EEMEM;
+u16 pp = 0;
+u08 cl = 0;
 
 b08 isNewNum = true; // True if stack has to be lifted before entering a new number
 u08 decimals = 0;    // Number of decimals entered (input after decimal dot)
 
 b08 isFunc;
 b08 isMenu;
-b08 isEdit;  // True if last operation was number editing operation
+b08 isEdit;
 b08 isPushed;
 
 enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS, MENU_SETS_OPS };
@@ -27,9 +31,6 @@ void setupRTC();
 ////////////////////////////////////////////////////////////////////////////////
 // Operations Declarations
 ////////////////////////////////////////////////////////////////////////////////
-
-typedef uint8_t Operation;
-typedef uint8_t OpScript;
 
 enum /* Operation codes */
 {
@@ -54,14 +55,13 @@ enum /* Operation codes */
 	OpC35,  OpC36,  OpC37,
 
 	// prog menu operations
-	OpC38, OpC39, OpC3A,
+	OpC38,  OpC39,  OpC3A,
+	OpEq,   OpNe,   OpC3D,
+	OpGt,   OpLt,   OpC40,
+	OpIf,   OpElse, OpThen,
 
 	// sets menu operations
 	OpC3B, OpStm, OpSdt,
-
-	//---------
-	OpNe, OpIf, OpThen,
-	//---------
 
 	OpEnd,
 	FUNC_OPS = OpC10,
@@ -173,22 +173,22 @@ f32 pow10(s08 e)
 	return f;
 }
 
-void storageAccess(b08 isWrite) 
+void memoryAccess(b08 isWrite) 
 {
 	u08 i;
 	if (dpop(i, 0, 9))
 	{
 		if (isWrite)
-			eeprom_write_float(&eeprom_storage[i], dtop());
+			memory[i] = dtop();
 		else
-			dpush(eeprom_read_float(&eeprom_storage[i]));
+			dpush(memory[i]);
 	}
 }
 
 void enterConstant()
 {
 	u08 i;
-	if (dpop(i, 0, 9))
+	if (dpop(i, 0, 3))
 	{
 		switch(i)
 		{
@@ -203,9 +203,33 @@ void enterConstant()
 void callScript(OpScript script)
 {
 	apush();
-	for(pp = 0, ++script; script;)
+	for (pp = 0, ++script; script;)
 	{
 		if (pgm_read_byte(&scripts[pp++]) == OpEnd) --script;
+	}
+}
+
+bool isScript()
+{
+	return pp < sizeof(scripts);
+}
+
+void conditionSeek()
+{
+	u08 cl = 0;
+	while (true)
+	{
+		Operation op = OpEnd;
+		if (isScript())
+			op = pgm_read_byte(&scripts[pp++]);
+
+		//else if (mp < sizeof(mem) + EEU)
+		//	c = EEPROM[mp++ - sizeof(mem) + EEUSTART];
+		
+		if (op == OpEnd) { pp--; break; }
+		else if (op == OpIf) cl++; // nested IF found
+		else if (cl && op == OpThen) cl--; // nested IF ended
+		else if (!cl && (op == OpElse || op == OpThen)) break;
 	}
 }
 
@@ -276,10 +300,11 @@ void FnNeg()  { dpush(-dpop()); isEdit = !isNewNum; }
 void FnEExp() { FnPw10(); FnMul(); }
 void FnFunc() { isFunc = true; }
 
-void FnCst()  { enterConstant(); }
-void FnRcl()  { storageAccess(false); }
-void FnSto()  { storageAccess(true); }
+void FnRcl()  { memoryAccess(false); }
+void FnSto()  { memoryAccess(true); }
 void FnSub()  { FnNeg(); FnAdd(); }
+void FnCst()  { enterConstant(); }
+void FnMAdd() { FnRcl(); FnAdd(); FnSto(); } // TODO: Script?
 void FnMul()  { dpush(dpop() * dpop()); }
 void FnTrig() { enterMenu(MENU_TRIG_OPS); }
 void FnProg() { enterMenu(MENU_PROG_OPS); }
@@ -294,7 +319,19 @@ void FnMath() { enterMenu(MENU_MATH_OPS); }
 void FnSqrt() { callScript(SoSqrt); }
 void FnPow()  { callScript(SoSqrt); }
 void FnInv()  { dpush(1.f / dpop()); }
-void FnExp()  { /* TODO */ }
+void FnExp()
+{
+	b08 isNeg = false;
+	if (dtop() < 0) { FnNeg(); isNeg = true; }
+	dpush(1);
+	for (u08 i = 255; i; i--)
+	{
+		FnSwap(); FnDup(); FnRotU(); dpush(i);
+		FnDiv();  FnMul(); dpush(1); FnAdd();
+	}
+	if (isNeg) FnInv();
+	FnSwap(); FnDrop();
+}
 void FnLn()   { dpush(log(dpop())); }
 void FnInt()  { dpush(s32(dpop())); }
 void FnPw10() { dpush(pow10(dpop())); }
@@ -306,27 +343,30 @@ void FnASin() { callScript(SoASin); }
 void FnACos() { callScript(SoACos); }
 void FnATan() { dpush(_to_deg(atan(dpop()))); }
 
+void FnEq()   { dpush(dpop() == dpop()); }
+void FnGt()   { dpush(dpop() < dpop()); }
+void FnLt()   { FnGt(); dpush(!dpop()); }
+void FnNe()   { FnEq(); dpush(!dpop()); }
+void FnIf()   { cl++; if (!dpop()) conditionSeek(); }
+void FnElse() { cl--; conditionSeek(); }
+void FnThen() { cl--; }
+
 void FnStm()
 {
-	if (RTCRead())
-	{
-		if (dpop(rtc_seconds, 0, 59) && dpop(rtc_minutes, 0, 59) && dpop(rtc_hours, 0, 23))
-		{
-			setupRTC();
-		}
-	}
+	if (RTCRead()
+		&& dpop(rtc_seconds, 0, 59)
+		&& dpop(rtc_minutes, 0, 59)
+		&& dpop(rtc_hours, 0, 23))
+	setupRTC();
 }
 void FnSdt()
 {
-	if (RTCRead())
-	{
-		if (dpop(rtc_year, 0, 99) && dpop(rtc_month, 1, 12) && dpop(rtc_date, 1, 31))
-		{
-			setupRTC();
-		}
-	}
+	if (RTCRead()
+		&& dpop(rtc_year, 0, 99)
+		&& dpop(rtc_month, 1, 12)
+		&& dpop(rtc_date, 1, 31))
+	setupRTC();
 }
-//
 
 void FnEnd()  { apop(); }
 
@@ -354,12 +394,12 @@ const OpHandler opHandlers[] PROGMEM =
 	/* 0E */ &FnEExp,
 	/* 0F */ &FnFunc, // Action
 
-	/* 10 */ &FnCst,
+	/* 10 */ &FnNop,
 	/* 11 */ &FnRcl,
 	/* 12 */ &FnSto,
 	/* 13 */ &FnSub,
-	/* 14 */ &FnNop,  // TODO
-	/* 15 */ &FnNop,  // TODO
+	/* 14 */ &FnCst,
+	/* 15 */ &FnMAdd,
 	/* 16 */ &FnMul,
 	/* 17 */ &FnTrig, // Action
 	/* 18 */ &FnProg, // Action
@@ -400,10 +440,19 @@ const OpHandler opHandlers[] PROGMEM =
 	/* 10 */ &FnNop,  // TODO
 	/* 10 */ &FnNop,  // TODO
 	/* 10 */ &FnNop,  // TODO
-	
+	/* 10 */ &FnEq,
+	/* 10 */ &FnNe,
 	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnStm,  // TODO
-	/* 10 */ &FnSdt,  // TODO
+	/* 10 */ &FnGt,
+	/* 10 */ &FnLt,
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnIf,
+	/* 10 */ &FnElse,
+	/* 10 */ &FnThen,
+
+	/* 10 */ &FnNop,  // TODO
+	/* 10 */ &FnStm,
+	/* 10 */ &FnSdt,
 
 	/* 10 */ &FnEnd,  // Last Operation
 };

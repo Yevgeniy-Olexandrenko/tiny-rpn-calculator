@@ -44,11 +44,14 @@ const char strMenuTrig[] PROGMEM =
 
 const char strMenuProg[] PROGMEM = 
 	"\03"
-	"OP1" "OP2" "OP3";
+	"---" "---" "---"
+	"EQ+" "NE+" "---"
+	"GT+" "LT+" "---"
+	"IF+" "ELS" "THN";
 
 const char strMenuSets[] PROGMEM = 
 	"\03"
-	"D/R" "STM" "SDT";
+	"---" "STM" "SDT";
 
 struct Menu
 {
@@ -61,7 +64,7 @@ const Menu menus[] PROGMEM =
 {
 	{ strMenuMath, 3, MATH_OPS },
 	{ strMenuTrig, 3, TRIG_OPS },
-	{ strMenuProg, 0, PROG_OPS },
+	{ strMenuProg, 3, PROG_OPS },
 	{ strMenuSets, 0, SETS_OPS },
 };
 
@@ -285,6 +288,18 @@ int main()
 
 		if (calcMode)
 		{
+			// execute scripted operations
+			while (ap && isScript())
+			{
+				ExecuteOperation(pgm_read_byte(&scripts[pp++]));
+			}
+
+			// execute user program
+			if (ap)
+			{
+				// TODO
+			}
+
 			if (key != KEY_NONE)
 			{
 				if (isMenu)
