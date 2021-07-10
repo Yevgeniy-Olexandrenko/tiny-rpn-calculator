@@ -30,10 +30,9 @@ const char strMonth[] PROGMEM =
 
 const char strMenuMath[] PROGMEM = 
 	"\03"
-	",X+" "Y;+" "1/X"  // Squareroot, Raise to the power of, Reciprocal
-	"EXP" "LN+" "X?+"  // Exponential, Natural logarithm, Gamma function (due to Nemes)
-	"R>P" "P>R" "PV+"  // Rectangular to polar coordinates, Polar to rectangular coordinates, Present value (annuity)
-	"ND+" "STA" "LR+"; // Normal distribution (CDF/PDF), Statistics, Linear regression
+	"X2+" ",X+" "1/X"
+	"10;" "LOG" "Y;+"
+	"E;+" "LN+" ";,Y";
 
 const char strMenuTrig[] PROGMEM = 
 	"\03"
@@ -62,7 +61,7 @@ struct Menu
 
 const Menu menus[] PROGMEM =
 {
-	{ strMenuMath, 3, MATH_OPS },
+	{ strMenuMath, 2, MATH_OPS },
 	{ strMenuTrig, 3, TRIG_OPS },
 	{ strMenuProg, 3, PROG_OPS },
 	{ strMenuSets, 0, SETS_OPS },

@@ -5,6 +5,7 @@ typedef uint8_t OpScript;
 f32 ds[DS_CAPACITY];
 u08 dp = 0;
 
+f32 lastx = 0;
 f32 memory[10];
 
 #define AS_CAPACITY 24
@@ -22,6 +23,7 @@ b08 isFunc;
 b08 isMenu;
 b08 isEdit;
 b08 isPushed;
+b08 isLast;
 
 enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS, MENU_SETS_OPS };
 
@@ -39,36 +41,35 @@ enum /* Operation codes */
 	OpNum8, OpNum9, OpDot,  OpDup,  OpDrop, OpNeg,  OpEExp, AcFunc,
 
 	// shifted operations
-	OpC10,  OpRcl, OpSto,  OpSub, OpC14,  OpC15,  OpMul,  AcTrig,
+	OpLast, OpRcl, OpSto,  OpSub, OpCst,  OpMAdd, OpMul,  AcTrig,
 	AcProg, OpDiv, OpSwap, OpAdd, OpAClr, OpRotD, OpRotU, AcMath,
 
 	// math menu operations
-	OpSqrt, OpPow, OpInv,
-	OpExp,  OpLn,  OpC25,
-	OpC26,  OpC27, OpC28,
-	OpC29,  OpC2A, OpC2B,
-
+	OpSqr,  OpSqrt, OpInv,
+	OpPw10, OpLg,  OpPow,
+	OpExp,  OpLn,   OpC25,
+	
 	// trig menu operatons
 	OpSin,  OpCos,  OpTan,
 	OpASin, OpACos, OpATan,
-	OpC32,  OpC33,  OpC34,
-	OpC35,  OpC36,  OpC37,
+	OpC2C,  OpC2D,  OpC2E,
+	OpC2F,  OpC30,  OpC31,
 
 	// prog menu operations
-	OpC38,  OpC39,  OpC3A,
-	OpEq,   OpNe,   OpC3D,
-	OpGt,   OpLt,   OpC40,
+	OpC32,  OpC33,  OpC34,
+	OpEq,   OpNe,   OpC37,
+	OpGt,   OpLt,   OpC3A,
 	OpIf,   OpElse, OpThen,
 
 	// sets menu operations
-	OpC3B, OpStm, OpSdt,
+	OpC3E, OpStm, OpSdt,
 
 	OpEnd,
-	FUNC_OPS = OpC10,
+	FUNC_OPS = OpLast,
 	MATH_OPS = OpSqrt,
 	TRIG_OPS = OpSin,
-	PROG_OPS = OpC38,
-	SETS_OPS = OpC3B,
+	PROG_OPS = OpC32,
+	SETS_OPS = OpC3E,
 };
 
 enum /* Scripted Operations */
@@ -127,6 +128,8 @@ void dpush(f32 d) { if (dp >= DS_CAPACITY) { dmove(); --dp; } ds[dp++] = d; }
 f32  dpop()       { return (dp ? ds[--dp] : 0.f); }
 f32  dget(u08 i)  { return (dp - i > 0 ? ds[dp - 1 - i] : 0.f); }
 f32  dtop()       { return dget(0); }
+f32  dtopx()      { if (isLast) { lastx = dtop(); isLast = false; } return dtop(); }
+f32  dpopx()      { dtopx(); return dpop(); }
 
 b08 dpop(u08& dest, u08 min, u08 max)
 {
@@ -137,18 +140,18 @@ b08 dpop(u08& dest, u08 min, u08 max)
 
 void rotateStack(b08 isUp)
 {
-	f32 a = dpop(), b = dpop(), c = dpop();
+	f32 x = dpop(), y = dpop(), z = dpop();
 	if (isUp)
 	{	// 2 z -> y
 		// 1 y -> x
 		// 0 x -> z
-		dpush(b); dpush(a); dpush(c);
+		dpush(y); dpush(x); dpush(z);
 	}
 	else
 	{	// 2 z -> x
 		// 1 y -> z
 		// 0 x -> y
-		dpush(a); dpush(c); dpush(b);
+		dpush(x); dpush(z); dpush(y);
 	}
 }
 
@@ -295,34 +298,38 @@ void FnNum8() { enterDigit(8); }
 void FnNum9() { enterDigit(9); }
 void FnDot()  {	if (!decimals) { checkNewNum(); decimals = 1; }	isEdit = true; }
 void FnDup()  { dpush(dtop()); }
-void FnDrop() { if (isNewNum) dpop(); else clearDigit(); }
-void FnNeg()  { dpush(-dpop()); isEdit = !isNewNum; }
-void FnEExp() { FnPw10(); FnMul(); }
+void FnDrop() { if (isNewNum) dpopx(); else clearDigit(); }
+void FnNeg()  { dpush(-dpopx()); isEdit = !isNewNum; }
+void FnEExp() { isLast = false; FnPw10(); FnMul(); }
 void FnFunc() { isFunc = true; }
 
+void FnLast() { dpush(lastx); }
 void FnRcl()  { memoryAccess(false); }
 void FnSto()  { memoryAccess(true); }
 void FnSub()  { FnNeg(); FnAdd(); }
 void FnCst()  { enterConstant(); }
-void FnMAdd() { FnRcl(); FnAdd(); FnSto(); } // TODO: Script?
-void FnMul()  { dpush(dpop() * dpop()); }
+void FnMAdd() { FnRcl(); FnAdd(); FnSto(); }
+void FnMul()  { dpush(dpopx() * dpop()); }
 void FnTrig() { enterMenu(MENU_TRIG_OPS); }
 void FnProg() { enterMenu(MENU_PROG_OPS); }
 void FnDiv()  { FnInv(); FnMul(); }
 void FnSwap() { f32 a = dpop(), b = dpop(); dpush(a); dpush(b); }
-void FnAdd()  { dpush(dpop() + dpop()); }
-void FnAClr() { dp = 0; /* clear anything else */ }
+void FnAdd()  { dpush(dpopx() + dpop()); }
+void FnAClr() { dp = 0; lastx = 0; /* clear anything else */ }
 void FnRotD() { rotateStack(false); }
 void FnRotU() { rotateStack(true); }
 void FnMath() { enterMenu(MENU_MATH_OPS); }
 
+void FnSqr()  { FnDup(); FnMul(); }
 void FnSqrt() { callScript(SoSqrt); }
-void FnPow()  { callScript(SoSqrt); }
-void FnInv()  { dpush(1.f / dpop()); }
+void FnInv()  { dpush(1.f / dpopx()); }
+void FnPw10() { dpush(pow10(dpopx())); }
+void FnLg()   { FnLn(); dpush(M_LOG10E); FnMul(); }
+void FnPow()  { callScript(SoPow); }
 void FnExp()
 {
 	b08 isNeg = false;
-	if (dtop() < 0) { FnNeg(); isNeg = true; }
+	if (dtopx() < 0) { FnNeg(); isNeg = true; }
 	dpush(1);
 	for (u08 i = 255; i; i--)
 	{
@@ -332,16 +339,15 @@ void FnExp()
 	if (isNeg) FnInv();
 	FnSwap(); FnDrop();
 }
-void FnLn()   { dpush(log(dpop())); }
-void FnInt()  { dpush(s32(dpop())); }
-void FnPw10() { dpush(pow10(dpop())); }
+void FnLn()   { dpush(log(dpopx())); }
+void FnInt()  { dpush(s32(dpopx())); } // TODO
 
 void FnSin()  { callScript(SoSin); }
-void FnCos()  { dpush(cos(_to_rad(dpop()))); }
+void FnCos()  { dpush(cos(_to_rad(dpopx()))); }
 void FnTan()  { callScript(SoTan); }
 void FnASin() { callScript(SoASin); }
 void FnACos() { callScript(SoACos); }
-void FnATan() { dpush(_to_deg(atan(dpop()))); }
+void FnATan() { dpush(_to_deg(atan(dpopx()))); }
 
 void FnEq()   { dpush(dpop() == dpop()); }
 void FnGt()   { dpush(dpop() < dpop()); }
@@ -392,37 +398,34 @@ const OpHandler opHandlers[] PROGMEM =
 	/* 0C */ &FnDrop, // Edit
 	/* 0D */ &FnNeg,
 	/* 0E */ &FnEExp,
-	/* 0F */ &FnFunc, // Action
+	/* 0F */ &FnFunc, // Shift
 
-	/* 10 */ &FnNop,
+	/* 10 */ &FnLast,
 	/* 11 */ &FnRcl,
 	/* 12 */ &FnSto,
 	/* 13 */ &FnSub,
 	/* 14 */ &FnCst,
 	/* 15 */ &FnMAdd,
 	/* 16 */ &FnMul,
-	/* 17 */ &FnTrig, // Action
-	/* 18 */ &FnProg, // Action
+	/* 17 */ &FnTrig, // Menu
+	/* 18 */ &FnProg, // Menu
 	/* 19 */ &FnDiv,
 	/* 1A */ &FnSwap,
 	/* 1B */ &FnAdd,
 	/* 1C */ &FnAClr,
 	/* 1D */ &FnRotD,
 	/* 1E */ &FnRotU,
-	/* 1F */ &FnMath, // Action
+	/* 1F */ &FnMath, // Menu
 
-	/* 10 */ &FnSqrt,
-	/* 10 */ &FnPow,
-	/* 10 */ &FnInv,
-	/* 10 */ &FnExp,
-	/* 10 */ &FnLn,
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
+	/* 20 */ &FnSqr,
+	/* 21 */ &FnSqrt,
+	/* 22 */ &FnInv,
+	/* 23 */ &FnPw10,
+	/* 24 */ &FnLg,
+	/* 25 */ &FnPow,
+	/* 26 */ &FnExp,
+	/* 27 */ &OpLn,
+	/* 28 */ &OpNop,  // TODO
 
 	/* 10 */ &FnSin,
 	/* 10 */ &FnCos,
@@ -462,6 +465,7 @@ void ExecuteOperation(Operation op)
 	isFunc = false;
 	isMenu = false;
 	isEdit = false;
+	isLast = isNewNum;
 	
 	OpHandler opHandler = (OpHandler)pgm_read_word(&opHandlers[op]);
 	opHandler();
