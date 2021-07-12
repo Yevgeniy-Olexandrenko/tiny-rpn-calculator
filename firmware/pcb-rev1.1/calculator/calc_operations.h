@@ -46,8 +46,8 @@ enum /* Operation codes */
 
 	// math menu operations
 	OpSqr,  OpSqrt, OpInv,
-	OpPw10, OpLg,  OpPow,
-	OpExp,  OpLn,   OpC25,
+	OpPw10, OpLg,   OpPow,
+	OpExp,  OpLn,   OpNRT,
 	
 	// trig menu operatons
 	OpSin,  OpCos,  OpTan,
@@ -88,9 +88,9 @@ const Operation scripts[] PROGMEM =
 	OpDup, OpMul, OpInv, OpNum1, OpSub, OpSqrt, OpInv, OpATan, OpEnd,
 	// SoACos: ACOS = atan(sqrt(1/x/x-1))
 	OpDup, OpMul, OpInv, OpNum1, OpSub, OpSqrt, OpATan, OpEnd,
-	// SoSqrt: SQRT = exp(ln(x)/2)
+	// SoSqrt: SQRT = exp(ln(x)/2) may be replaced with POW
 	OpDup, OpNum0, OpNe, OpIf, OpLn, OpNum2, OpDiv, OpExp, OpThen, OpEnd,
-	// SoPow:  POW a^b = exp(b*ln(a))
+	// SoPow:  POW y^x = exp(x*ln(y))
 	OpSwap, OpLn, OpMul, OpExp, OpEnd,
 };
 
@@ -340,7 +340,7 @@ void FnExp()
 	FnSwap(); FnDrop();
 }
 void FnLn()   { dpush(log(dpopx())); }
-void FnInt()  { dpush(s32(dpopx())); } // TODO
+void FnNRT()  { FnInv(); FnPow(); }
 
 void FnSin()  { callScript(SoSin); }
 void FnCos()  { dpush(cos(_to_rad(dpopx()))); }
@@ -374,6 +374,7 @@ void FnSdt()
 	setupRTC();
 }
 
+void FnInt()  { dpush(s32(dpopx())); } // TODO
 void FnEnd()  { apop(); }
 
 ////////////////////////////////////////////////////////////////////////////////

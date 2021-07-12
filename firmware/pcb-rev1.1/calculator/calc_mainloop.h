@@ -30,8 +30,8 @@ const char strMonth[] PROGMEM =
 
 const char strMenuMath[] PROGMEM = 
 	"\03"
-	"X2+" ",X+" "1/X"
-	"10;" "LOG" "Y;+"
+	"X?+" "?,X" "1/X"
+	"10;" "LG+" "Y;+"
 	"E;+" "LN+" ";,Y";
 
 const char strMenuTrig[] PROGMEM = 
@@ -75,7 +75,7 @@ u08  select;
 ////////////////////////////////////////////////////////////////////////////////
 
 #define CHAR_SHIFT  '='
-#define CHAR_REC    '@'
+#define CHAR_RECORD '@'
 #define CHAR_PLAY   '<'
 
 #define DIGITS      (6)
