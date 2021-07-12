@@ -47,7 +47,7 @@ enum /* Operation codes */
 	// math menu operations
 	OpSqr,  OpSqrt, OpInv,
 	OpPw10, OpLg,   OpPow,
-	OpExp,  OpLn,   OpNRT,
+	OpExp,  OpLn,   OpNrt,
 	
 	// trig menu operatons
 	OpSin,  OpCos,  OpTan,
@@ -340,7 +340,7 @@ void FnExp()
 	FnSwap(); FnDrop();
 }
 void FnLn()   { dpush(log(dpopx())); }
-void FnNRT()  { FnInv(); FnPow(); }
+void FnNrt()  { FnInv(); FnPow(); }
 
 void FnSin()  { callScript(SoSin); }
 void FnCos()  { dpush(cos(_to_rad(dpopx()))); }
@@ -426,7 +426,7 @@ const OpHandler opHandlers[] PROGMEM =
 	/* 25 */ &FnPow,
 	/* 26 */ &FnExp,
 	/* 27 */ &OpLn,
-	/* 28 */ &OpNop,  // TODO
+	/* 28 */ &OpNrt,
 
 	/* 10 */ &FnSin,
 	/* 10 */ &FnCos,
