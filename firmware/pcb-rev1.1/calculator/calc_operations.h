@@ -25,6 +25,8 @@ b08 isEdit;
 b08 isPushed;
 b08 isLast;
 
+b08 isDeg = true;
+
 enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS, MENU_SETS_OPS };
 
 void enterMenu(u08 type);
@@ -52,45 +54,45 @@ enum /* Operation codes */
 	// trig menu operatons
 	OpSin,  OpCos,  OpTan,
 	OpASin, OpACos, OpATan,
-	OpC2C,  OpC2D,  OpC2E,
 	OpC2F,  OpC30,  OpC31,
+	OpC32,  OpC33,  OpC34,
 
 	// prog menu operations
-	OpC32,  OpC33,  OpC34,
-	OpEq,   OpNe,   OpC37,
-	OpGt,   OpLt,   OpC3A,
+	OpC35,  OpC36,  OpC37,
+	OpEq,   OpNe,   OpC3A,
+	OpGt,   OpLt,   OpC3D,
 	OpIf,   OpElse, OpThen,
 
 	// sets menu operations
-	OpC3E, OpStm, OpSdt,
+	OpSwDR, OpTime, OpDate,
 
 	OpEnd,
 	FUNC_OPS = OpLast,
-	MATH_OPS = OpSqrt,
+	MATH_OPS = OpSqr,
 	TRIG_OPS = OpSin,
-	PROG_OPS = OpC32,
-	SETS_OPS = OpC3E,
+	PROG_OPS = OpC35,
+	SETS_OPS = OpSwDR,
 };
 
 enum /* Scripted Operations */
 {
-	SoSin, SoTan, SoASin, SoACos, SoSqrt, SoPow,
+	SoMAdd, SoSin, SoTan, SoASin, SoACos, SoPow,
 };
 
 const Operation scripts[] PROGMEM =
 {
 	OpEnd,
-	// SoSin:  SIN = cos(90-x)
+	// [ok] SoMAdd:
+	OpDup, OpRotD, OpRcl, OpAdd, OpSwap, OpSto, OpEnd,
+	// [ok] SoSin:  SIN = cos(90-x)
 	OpNum9, OpNum0, OpSwap, OpSub, OpCos, OpEnd,
-	// SoTan:  TAN = sin/cos
+	// [ok] SoTan:  TAN = sin/cos
 	OpDup, OpSin, OpSwap, OpCos, OpDiv, OpEnd,
 	// SoASin: ASIN = atan(1/(sqrt(1/x/x-1))
 	OpDup, OpMul, OpInv, OpNum1, OpSub, OpSqrt, OpInv, OpATan, OpEnd,
 	// SoACos: ACOS = atan(sqrt(1/x/x-1))
 	OpDup, OpMul, OpInv, OpNum1, OpSub, OpSqrt, OpATan, OpEnd,
-	// SoSqrt: SQRT = exp(ln(x)/2) may be replaced with POW
-	OpDup, OpNum0, OpNe, OpIf, OpLn, OpNum2, OpDiv, OpExp, OpThen, OpEnd,
-	// SoPow:  POW y^x = exp(x*ln(y))
+	// [ok] SoPow:  POW y^x = exp(x*ln(y))
 	OpSwap, OpLn, OpMul, OpExp, OpEnd,
 };
 
@@ -100,20 +102,18 @@ void FnNop();
 void FnNum0(); void FnNum1(); void FnNum2(); void FnNum3(); void FnNum4(); void FnNum5(); void FnNum6(); void FnNum7();
 void FnNum8(); void FnNum9(); void FnDot();  void FnDup();  void FnDrop(); void FnNeg();  void FnEExp(); void FnFunc();
 
-void FnRcl();  void FnSto();  void FnSub();  void FnMul();  void FnTrig(); void FnProg(); void FnDiv();  void FnSwap();
-void FnAdd();  void FnAClr(); void FnRotD(); void FnRotU(); void FnMath();
+void FnLast(); void FnRcl();  void FnSto();  void FnSub();  void FnCst();  void FnMAdd(); void FnMul();  void FnTrig();
+void FnProg(); void FnDiv();  void FnSwap(); void FnAdd();  void FnAClr(); void FnRotD(); void FnRotU(); void FnMath();
 
-void FnSqrt();
-void FnPow();
-void FnInv();
-void FnExp();
-void FnLn();
-void FnInt();
-void FnPw10();
+void FnSqr();  void FnSqrt(); void FnInv();
+void FnPw10(); void FnLg();   void FnPow();
+void FnExp();  void FnLn();   void FnNrt();
 
 void FnSin();  void FnCos();  void FnTan();
 void FnASin(); void FnACos(); void FnATan();
 
+void FnD2R();
+void FnR2D();
 void FnEnd();
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -163,8 +163,12 @@ void apop()  { if (ap) pp = as[--ap]; else onError(); }
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
 
-#define _to_rad(x) ((x) * (PI / 180))
-#define _to_deg(x) ((x) * (180 / PI))
+#define _to_rad(x) ((x) * (M_PI / 180.f))
+#define _to_deg(x) ((x) * (180.f / M_PI))
+
+#define _log(x)  log(x)
+#define _cos(x)  cos(x)
+#define _atan(x) atan(x)
 
 f32 pow10(s08 e) 
 { 
@@ -286,6 +290,7 @@ void clearDigit() // TODO: check!
 ////////////////////////////////////////////////////////////////////////////////
 
 void FnNop()  { /* do nothing */ }
+
 void FnNum0() { enterDigit(0); }
 void FnNum1() { enterDigit(1); }
 void FnNum2() { enterDigit(2); }
@@ -308,7 +313,7 @@ void FnRcl()  { memoryAccess(false); }
 void FnSto()  { memoryAccess(true); }
 void FnSub()  { FnNeg(); FnAdd(); }
 void FnCst()  { enterConstant(); }
-void FnMAdd() { FnRcl(); FnAdd(); FnSto(); }
+void FnMAdd() { callScript(SoMAdd); }
 void FnMul()  { dpush(dpopx() * dpop()); }
 void FnTrig() { enterMenu(MENU_TRIG_OPS); }
 void FnProg() { enterMenu(MENU_PROG_OPS); }
@@ -321,11 +326,14 @@ void FnRotU() { rotateStack(true); }
 void FnMath() { enterMenu(MENU_MATH_OPS); }
 
 void FnSqr()  { FnDup(); FnMul(); }
-void FnSqrt() { callScript(SoSqrt); }
+void FnSqrt() { dpush(2); FnNrt(); }
 void FnInv()  { dpush(1.f / dpopx()); }
 void FnPw10() { dpush(pow10(dpopx())); }
 void FnLg()   { FnLn(); dpush(M_LOG10E); FnMul(); }
-void FnPow()  { callScript(SoPow); }
+void FnPow()
+{
+	callScript(SoPow);
+}
 void FnExp()
 {
 	b08 isNeg = false;
@@ -339,15 +347,15 @@ void FnExp()
 	if (isNeg) FnInv();
 	FnSwap(); FnDrop();
 }
-void FnLn()   { dpush(log(dpopx())); }
+void FnLn()   { dpush(_log(dpopx())); }
 void FnNrt()  { FnInv(); FnPow(); }
 
 void FnSin()  { callScript(SoSin); }
-void FnCos()  { dpush(cos(_to_rad(dpopx()))); }
+void FnCos()  { dpush(_cos(_to_rad(dpopx()))); }
 void FnTan()  { callScript(SoTan); }
 void FnASin() { callScript(SoASin); }
 void FnACos() { callScript(SoACos); }
-void FnATan() { dpush(_to_deg(atan(dpopx()))); }
+void FnATan() { dpush(_to_deg(_atan(dpopx()))); }
 
 void FnEq()   { dpush(dpop() == dpop()); }
 void FnGt()   { dpush(dpop() < dpop()); }
@@ -357,7 +365,8 @@ void FnIf()   { cl++; if (!dpop()) conditionSeek(); }
 void FnElse() { cl--; conditionSeek(); }
 void FnThen() { cl--; }
 
-void FnStm()
+void FnSwDR() { isDeg ^= true; }
+void FnTime()
 {
 	if (RTCRead()
 		&& dpop(rtc_seconds, 0, 59)
@@ -365,7 +374,7 @@ void FnStm()
 		&& dpop(rtc_hours, 0, 23))
 	setupRTC();
 }
-void FnSdt()
+void FnDate()
 {
 	if (RTCRead()
 		&& dpop(rtc_year, 0, 99)
@@ -374,6 +383,8 @@ void FnSdt()
 	setupRTC();
 }
 
+void FnD2R()  { if ( isDeg) dpush(dpop() * PI / 180); }
+void FnR2D()  { if (!isDeg) dpush(dpop() * 180 / PI); }
 void FnInt()  { dpush(s32(dpopx())); } // TODO
 void FnEnd()  { apop(); }
 
@@ -425,38 +436,38 @@ const OpHandler opHandlers[] PROGMEM =
 	/* 24 */ &FnLg,
 	/* 25 */ &FnPow,
 	/* 26 */ &FnExp,
-	/* 27 */ &OpLn,
-	/* 28 */ &OpNrt,
+	/* 27 */ &FnLn,
+	/* 28 */ &FnNrt,
 
-	/* 10 */ &FnSin,
-	/* 10 */ &FnCos,
-	/* 10 */ &FnTan,
-	/* 10 */ &FnASin,
-	/* 10 */ &FnACos,
-	/* 10 */ &FnATan,
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
+	/* 29 */ &FnSin,
+	/* 2A */ &FnCos,
+	/* 2B */ &FnTan,
+	/* 2C */ &FnASin,
+	/* 2D */ &FnACos,
+	/* 2E */ &FnATan,
+	/* 2F */ &FnNop,  // TODO
+	/* 30 */ &FnNop,  // TODO
+	/* 31 */ &FnNop,  // TODO
+	/* 32 */ &FnNop,  // TODO
+	/* 33 */ &FnNop,  // TODO
+	/* 34 */ &FnNop,  // TODO
 
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnEq,
-	/* 10 */ &FnNe,
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnGt,
-	/* 10 */ &FnLt,
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnIf,
-	/* 10 */ &FnElse,
-	/* 10 */ &FnThen,
+	/* 35 */ &FnNop,  // TODO
+	/* 36 */ &FnNop,  // TODO
+	/* 37 */ &FnNop,  // TODO
+	/* 38 */ &FnEq,
+	/* 39 */ &FnNe,
+	/* 3A */ &FnNop,  // TODO
+	/* 3B */ &FnGt,
+	/* 3C */ &FnLt,
+	/* 3D */ &FnNop,  // TODO
+	/* 3E */ &FnIf,
+	/* 3F */ &FnElse,
+	/* 40 */ &FnThen,
 
-	/* 10 */ &FnNop,  // TODO
-	/* 10 */ &FnStm,
-	/* 10 */ &FnSdt,
+	/* 41 */ &FnSwDR,
+	/* 42 */ &FnTime,
+	/* 43 */ &FnDate,
 
 	/* 10 */ &FnEnd,  // Last Operation
 };

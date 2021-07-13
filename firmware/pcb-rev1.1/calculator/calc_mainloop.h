@@ -1,3 +1,6 @@
+
+#define debug
+
 ////////////////////////////////////////////////////////////////////////////////
 // Key Codes (0x00-0x09 numbers, 0x0A-0x0F special keys)
 ////////////////////////////////////////////////////////////////////////////////
@@ -50,7 +53,7 @@ const char strMenuProg[] PROGMEM =
 
 const char strMenuSets[] PROGMEM = 
 	"\03"
-	"---" "STM" "SDT";
+	"D/R" "TIM" "DAT";
 
 struct Menu
 {
@@ -79,20 +82,17 @@ u08  select;
 #define CHAR_PLAY   '<'
 
 #define DIGITS      (6)
-#define DIGIT_WIDTH (FONT_WIDTH * CHAR_SIZE_M + 1)
+#define DIGIT_WIDTH ((FONT_WIDTH * CHAR_SIZE_M) + 1)
 #define POINT_WIDTH (DIGIT_WIDTH - 6)
-
-#define MODE_CHAR   (128 - (DIGIT_WIDTH - 1))
 
 #define M_SIGN      (0)
 #define M_DIGIT_FST (M_SIGN + DIGIT_WIDTH)
 #define M_DIGIT_LST (M_DIGIT_FST + ((DIGITS - 1) * DIGIT_WIDTH) + POINT_WIDTH)
 
-#define E_DIGIT2    (MODE_CHAR - DIGIT_WIDTH)
+#define MODE_CHAR   (127 - FONT_WIDTH)
+#define E_DIGIT2    (MODE_CHAR - 1 - DIGIT_WIDTH)
 #define E_DIGIT1    (E_DIGIT2 - DIGIT_WIDTH)
 #define E_SIGN      (E_DIGIT1 - DIGIT_WIDTH)
-
-#define MODE_CHAR   (128 - (DIGIT_WIDTH - 1))
 
 void PrintStack(u08 i, u08 s, u08 y)
 {
@@ -186,38 +186,40 @@ void PrintClock()
 void PrintCalculator()
 {
 	DisplayClear();
-
-#if 0
-	if (isFunc) PrintCharAt(CHAR_SHIFT, MODE_CHAR, 0);
-
-	PrintStack(3, CHAR_SIZE_S, 0);
-	PrintStack(2, CHAR_SIZE_S, 1);
-	PrintStack(1, CHAR_SIZE_S, 2);
-	PrintStack(0, CHAR_SIZE_S, 3);
-#else
-	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_M);
-//	if (isTypeRecording) PrintCharAt(CHAR_REC, MODE_CHAR, 2);
-//	if (isTypePlaying) PrintCharAt(CHAR_PLAY, MODE_CHAR, 2);
-	if (isFunc) PrintCharAt(CHAR_SHIFT, MODE_CHAR, 0);
-	
-	if (isMenu)
+#ifdef debug
+	if (ap)
 	{
-		for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
-		{
-			PrintStringAt(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 48 * i, 2);
-		}
-		PrintStack(0, CHAR_SIZE_M, 0);
-	}
-	else if (isFunc)
-	{
-		PrintStack(1, CHAR_SIZE_M, 0);
-		PrintStack(0, CHAR_SIZE_M, 2);
+		PrintStack(3, CHAR_SIZE_S, 0);
+		PrintStack(2, CHAR_SIZE_S, 1);
+		PrintStack(1, CHAR_SIZE_S, 2);
+		PrintStack(0, CHAR_SIZE_S, 3);
 	}
 	else
-	{
-		PrintStack(0, CHAR_SIZE_L, 0);
-	}
 #endif
+	{
+		PrintCharSize(CHAR_SIZE_S, CHAR_SIZE_S);
+		PrintCharAt(isFunc ? CHAR_SHIFT : (isDeg ? 'D' : 'R'), MODE_CHAR, 0);
+		if (ap) PrintCharAt(CHAR_PLAY, MODE_CHAR, 1);
+
+		if (isMenu)
+		{
+			PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_M);
+			for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
+			{
+				PrintStringAt(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 48 * i, 2);
+			}
+			PrintStack(0, CHAR_SIZE_M, 0);
+		}
+		else if (isFunc)
+		{
+			PrintStack(1, CHAR_SIZE_M, 0);
+			PrintStack(0, CHAR_SIZE_M, 2);
+		}
+		else
+		{
+			PrintStack(0, CHAR_SIZE_L, 0);
+		}
+	}
 
 	DisplayRefresh();
 }
@@ -287,19 +289,27 @@ int main()
 
 		if (calcMode)
 		{
-			// execute scripted operations
-			while (ap && isScript())
-			{
-				ExecuteOperation(pgm_read_byte(&scripts[pp++]));
-			}
-
-			// execute user program
 			if (ap)
 			{
-				// TODO
+#ifdef debug
+				if (ap && isScript() && key != KEY_NONE)
+					ExecuteOperation(pgm_read_byte(&scripts[pp++]));
+#else
+				while (ap && isScript())
+				{
+					// execute scripted operations
+					ExecuteOperation(pgm_read_byte(&scripts[pp++]));
+				}
+#endif
+				if (ap)
+				{
+					// execute user program
+					// TODO
+				}
+				PrintCalculator();
 			}
 
-			if (key != KEY_NONE)
+			else if (key != KEY_NONE)
 			{
 				if (isMenu)
 				{
