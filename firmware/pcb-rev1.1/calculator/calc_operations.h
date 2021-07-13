@@ -76,22 +76,28 @@ enum /* Operation codes */
 
 enum /* Scripted Operations */
 {
-	SoMAdd, SoSin, SoTan, SoASin, SoACos, SoPow,
+	SoMAdd, SoCos, SoTan, SoACos, SoATan, SoPow,
 };
 
 const Operation scripts[] PROGMEM =
 {
 	OpEnd,
+
 	// [ok] SoMAdd:
 	OpDup, OpRotD, OpRcl, OpAdd, OpSwap, OpSto, OpEnd,
-	// [ok] SoSin:  SIN = cos(90-x)
-	OpNum9, OpNum0, OpSwap, OpSub, OpCos, OpEnd,
-	// [ok] SoTan:  TAN = sin/cos
+
+	// [  ] SoCos:  COS = sin(x+90)
+	OpNum9, OpNum0, OpAdd, OpSin, OpEnd,
+
+	// [  ] SoTan:  TAN = sin/cos
 	OpDup, OpSin, OpSwap, OpCos, OpDiv, OpEnd,
-	// SoASin: ASIN = atan(1/(sqrt(1/x/x-1))
-	OpDup, OpMul, OpInv, OpNum1, OpSub, OpSqrt, OpInv, OpATan, OpEnd,
-	// SoACos: ACOS = atan(sqrt(1/x/x-1))
-	OpDup, OpMul, OpInv, OpNum1, OpSub, OpSqrt, OpATan, OpEnd,
+
+	// [  ] SoACos: ACOS = ???
+	OpASin, OpNeg, OpNum9, OpNum0, OpAdd, OpEnd,
+
+	// [  ] SoATan: ATAN = ???
+	OpDup, OpDup, OpDup, OpMul, OpNum1, OpAdd, OpSqrt, OpInv, OpMul, OpASin, OpEnd,
+
 	// [ok] SoPow:  POW y^x = exp(x*ln(y))
 	OpSwap, OpLn, OpMul, OpExp, OpEnd,
 };
@@ -160,17 +166,39 @@ void apush() { if (ap < AS_CAPACITY) as[ap++] = pp; else onError(); }
 void apop()  { if (ap) pp = as[--ap]; else onError(); }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Helpers
+// Basic Internal Math
 ////////////////////////////////////////////////////////////////////////////////
 
-#define _to_rad(x) ((x) * (M_PI / 180.f))
-#define _to_deg(x) ((x) * (180.f / M_PI))
+enum { EXP, SIN, ASIN };
+f32 taylorExpSinASin(f32 f, u08 op)
+{
+	f32 result, frac, ff = f * f;
+	result = frac = ((op == EXP) ? 1 : f);
 
-#define _log(x)  log(x)
-#define _cos(x)  cos(x)
-#define _atan(x) atan(x)
+	for (u16 i = 1; i < 129; i++)
+	{
+		u16 i2 = 2 * i;
+		u16 i2p = i2 + 1;
+		u16 i2m = i2 - 1;
+		u16 i2m2 = i2m * i2m;
+		f32 ffi2i2p = ff / (i2 * i2p);
 
-f32 pow10(s08 e) 
+		switch(op)
+		{
+			case EXP: frac *= f / i; break;
+			case SIN: frac *= -ffi2i2p; break;
+			default:  frac *= ffi2i2p * i2m2; break;
+		}
+		result += frac;
+	}
+	return result;
+}
+
+f32 _log (f32 f) { return log(f); }
+f32 _exp (f32 f) { return taylorExpSinASin(f, EXP);  }
+f32 _sin (f32 f) { return taylorExpSinASin(f, SIN);  }
+f32 _asin(f32 f) { return taylorExpSinASin(f, ASIN); }
+f32 _p10 (s08 e) 
 { 
 	f32 f = 1.f;
 	if (e > 0) 
@@ -179,6 +207,13 @@ f32 pow10(s08 e)
 		while (e++) f /= 10.f;
 	return f;
 }
+
+#define _to_rad(x) ((x) * (M_PI / 180.f))
+#define _to_deg(x) ((x) * (180.f / M_PI))
+
+////////////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////////////
 
 void memoryAccess(b08 isWrite) 
 {
@@ -261,7 +296,7 @@ void enterDigit(u08 digit)
 	checkNewNum();
 	dpush(dtop() < 0 ? -digit : digit);
 	if (decimals)
-		{ dpush(pow10(decimals++)); FnDiv(); }
+		{ dpush(_p10(decimals++)); FnDiv(); }
 	else
 		{ FnSwap(); dpush(10); FnMul(); }
 	FnAdd();
@@ -272,7 +307,7 @@ void clearDigit() // TODO: check!
 {
 	if (decimals) 
 	{
-		f32 a = pow10(--decimals);
+		f32 a = _p10(--decimals);
 		f32 b = s32(dpop() * a) / a;
 		dpush(b);
 	}
@@ -328,34 +363,19 @@ void FnMath() { enterMenu(MENU_MATH_OPS); }
 void FnSqr()  { FnDup(); FnMul(); }
 void FnSqrt() { dpush(2); FnNrt(); }
 void FnInv()  { dpush(1.f / dpopx()); }
-void FnPw10() { dpush(pow10(dpopx())); }
+void FnPw10() { dpush(_p10(dpopx())); }
 void FnLg()   { FnLn(); dpush(M_LOG10E); FnMul(); }
-void FnPow()
-{
-	callScript(SoPow);
-}
-void FnExp()
-{
-	b08 isNeg = false;
-	if (dtopx() < 0) { FnNeg(); isNeg = true; }
-	dpush(1);
-	for (u08 i = 255; i; i--)
-	{
-		FnSwap(); FnDup(); FnRotU(); dpush(i);
-		FnDiv();  FnMul(); dpush(1); FnAdd();
-	}
-	if (isNeg) FnInv();
-	FnSwap(); FnDrop();
-}
+void FnPow()  {	callScript(SoPow); }
+void FnExp()  {	dpush(_exp(dpopx())); }
 void FnLn()   { dpush(_log(dpopx())); }
 void FnNrt()  { FnInv(); FnPow(); }
 
-void FnSin()  { callScript(SoSin); }
-void FnCos()  { dpush(_cos(_to_rad(dpopx()))); }
+void FnSin()  { dpush(_sin(_to_rad(dpopx())));  }
+void FnCos()  { callScript(SoCos); }
 void FnTan()  { callScript(SoTan); }
-void FnASin() { callScript(SoASin); }
+void FnASin() { dpush(_to_deg(_asin(dpopx()))); }
 void FnACos() { callScript(SoACos); }
-void FnATan() { dpush(_to_deg(_atan(dpopx()))); }
+void FnATan() { callScript(SoATan); }
 
 void FnEq()   { dpush(dpop() == dpop()); }
 void FnGt()   { dpush(dpop() < dpop()); }

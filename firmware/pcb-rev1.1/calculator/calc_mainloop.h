@@ -107,11 +107,11 @@ void PrintStack(u08 i, u08 s, u08 y)
 		else
 		{
 			s08 e = (s08)(log(f) / log(10.f));
-			u32 m = (u32)(f / pow10(e - (DIGITS - 1)) + 0.5f);
+			u32 m = (u32)(f / _p10(e - (DIGITS - 1)) + 0.5f);
 
-			if (m > 0 && m < pow10(DIGITS - 1))
+			if (m > 0 && m < _p10(DIGITS - 1))
 			{
-				m = (u32)(f / pow10(--e - (DIGITS - 1)) + 0.5f);
+				m = (u32)(f / _p10(--e - (DIGITS - 1)) + 0.5f);
 			}
 
 			s08 int_dig = 1, lead_z = 0;
