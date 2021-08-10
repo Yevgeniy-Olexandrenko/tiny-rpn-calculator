@@ -4,7 +4,7 @@
 // Firmware configuration
 #define RTC_SUPPORT   1
 #define FONT_IN_EEMEM 0
-
+#define SOFTWARE_I2C  0
 
 #include <avr/eeprom.h>  // Needed for saving data to EEPROM
 #include <avr/power.h>   // Needed for power management

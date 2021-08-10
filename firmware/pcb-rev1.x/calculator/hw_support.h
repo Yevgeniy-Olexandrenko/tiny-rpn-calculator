@@ -64,6 +64,110 @@ uint16_t ADC_Read(uint8_t channel, uint8_t delay)
 // I2C Bus
 ////////////////////////////////////////////////////////////////////////////////
 
+#if SOFTWARE_I2C
+
+#define I2C_DDR DDRB
+#define I2C_PIN PINB
+#define I2C_SDA PB0
+#define I2C_SCL PB2
+
+#define I2C_SDA_H() (I2C_DDR &= ~(1 << I2C_SDA))
+#define I2C_SDA_L() (I2C_DDR |=  (1 << I2C_SDA))
+#define I2C_SDA_I() (I2C_PIN &   (1 << I2C_SDA))
+
+#define I2C_SCL_H() (I2C_DDR &= ~(1 << I2C_SCL))
+#define I2C_SCL_L() (I2C_DDR |=  (1 << I2C_SCL))
+#define I2C_SCL_I() (I2C_PIN &   (1 << I2C_SCL))
+
+#define I2C_DELAY() _delay_us(1)
+
+void i2c_scl_h_wait()
+{
+	I2C_SCL_H();
+	while (!I2C_SCL_I());
+}
+
+void i2c_start()
+{
+	i2c_scl_h_wait();
+	I2C_SDA_L();
+	I2C_DELAY();
+	I2C_SCL_L();
+}
+
+uint8_t i2c_start_write(uint8_t addr)
+{
+	i2c_start();
+	return i2c_write(addr << 1);
+}
+
+uint8_t i2c_start_read(uint8_t addr)
+{
+	i2c_start();
+	return i2c_write(addr << 1 | 1);
+}
+
+uint8_t i2c_read_write(uint8_t data)
+{
+	for (uint8_t sda_i, i = 8; i > 0; --i)
+	{
+		I2C_SDA_H();
+		if (!(data & 0x80)) I2C_SDA_L();
+		i2c_scl_h_wait();
+
+		sda_i = I2C_SDA_I();
+		I2C_SCL_L();
+
+		data <<= 1;
+		if (sda_i) data |= 0x01;
+	}
+	I2C_SDA_H();
+	return data;
+}
+
+uint8_t i2c_write(uint8_t data)
+{
+	i2c_read_write(data);
+	i2c_scl_h_wait();
+
+	uint8_t ack = 1;
+	if (I2C_SDA_I()) ack = 0;
+
+	I2C_SCL_L();
+	return ack;
+}
+
+uint8_t i2c_read(uint8_t ack)
+{
+	uint8_t data = i2c_read_write(0xFF);
+	if (ack) I2C_SDA_L();
+	i2c_scl_h_wait();
+	I2C_DELAY();
+
+	I2C_SCL_L();
+	return data;
+}
+
+uint8_t i2c_read_ack()
+{ 
+	return i2c_read(1);
+}
+
+uint8_t i2c_read_nack()
+{
+	return i2c_read(0);
+}
+
+void i2c_stop()
+{
+	I2C_SDA_L();
+	I2C_SCL_H();
+	I2C_DELAY();
+	I2C_SDA_H();
+}
+
+#else
+
 #define DDR_USI       DDRB
 #define PORT_USI      PORTB
 #define PIN_USI       PINB
@@ -221,6 +325,8 @@ void I2C_Stop()
 	PORT_USI |= 1<<PIN_USI_SDA;                  // Release SDA.
 	DELAY_T2TWI;
 }
+
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // SSD1306 128x32 Display on I2C Bus
