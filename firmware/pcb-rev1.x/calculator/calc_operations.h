@@ -235,7 +235,7 @@ void enterConstant()
 		switch(i)
 		{
 			case 0: dpush(ADCReadVcc() ); return;
-			case 1: dpush(ADCReadTemp()); return;
+			case 1: dpush(RTCTemp()); return;
 			case 2: dpush(M_E ); return;
 			case 3: dpush(M_PI); return;
 		}

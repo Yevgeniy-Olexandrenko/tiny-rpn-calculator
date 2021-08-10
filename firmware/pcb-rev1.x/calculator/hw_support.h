@@ -534,6 +534,22 @@ void RTCWrite()
 #endif
 }
 
+float RTCTemp()
+{
+#if RTC_SUPPORT
+	if (I2CBusStart(RTC_ADDR, 0))
+	{
+		I2CBusWrite(RTC_REG_TEMP_MSB);
+		I2CBusRestart(RTC_ADDR, 2);
+		uint8_t msb = I2CBusRead();
+		uint8_t lsb = I2CBusRead();
+		I2CBusStop();
+		return 0.25f * (msb << 2 | lsb >> 6);
+	}
+#endif
+	return 0;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // One Pin Analog 16-Key Keyboard
 //////////////////////////////////////////////////////////////////////////////// 
