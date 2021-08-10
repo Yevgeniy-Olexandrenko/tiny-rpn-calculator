@@ -544,7 +544,7 @@ float RTCTemp()
 		uint8_t msb = I2CBusRead();
 		uint8_t lsb = I2CBusRead();
 		I2CBusStop();
-		return 0.25f * (msb << 2 | lsb >> 6);
+		return int16_t(msb << 8 | lsb) / 256.f;
 	}
 #endif
 	return 0;
