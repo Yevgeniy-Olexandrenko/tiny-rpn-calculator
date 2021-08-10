@@ -1,3 +1,5 @@
+#pragma once
+
 ////////////////////////////////////////////////////////////////////////////////
 // Watch Dog Timer
 ////////////////////////////////////////////////////////////////////////////////
@@ -18,7 +20,7 @@
 #define WDT_TIMEOUT_4S     0x08 // (4096 ± 409.6) ms
 #define WDT_TIMEOUT_8S     0x09 // (8192 ± 819.2) ms
 
-void WDTInit(uint8_t mode, uint8_t prescaler)
+void WDT_Init(uint8_t mode, uint8_t prescaler)
 {
 	// does not change global interrupts enable flag
 	uint8_t wdtr = mode | ((prescaler > 7) ? 0x20 | (prescaler - 8) : prescaler);
@@ -30,39 +32,7 @@ void WDTInit(uint8_t mode, uint8_t prescaler)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Power Saving
-///////////////////////////////////////////////////////////////////////////////
-
-void executeSleeping(uint8_t mode)
-{
-	set_sleep_mode(mode);
-	sleep_enable();
-	sleep_cpu();
-	sleep_disable();
-}
-
-void executePowerSaving(uint8_t mode)
-{
-	clr_bit(ADCSRA,ADEN);
-	power_all_disable();
-	executeSleeping(mode);
-	power_usi_enable();
-	power_adc_enable();
-	set_bit(ADCSRA,ADEN);
-}
-
- void PowerIdle()
-{ 	
-	executePowerSaving(SLEEP_MODE_IDLE);
-}
-
-void PowerDown()
-{
-	executePowerSaving(SLEEP_MODE_PWR_DOWN);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// ADC
+// Analog to Digital Converter
 ////////////////////////////////////////////////////////////////////////////////
 
 #define ADC_0_PB5 (0b0000)
@@ -72,12 +42,12 @@ void PowerDown()
 #define ADC_VCC   (0b1100)
 #define ADC_TEMP  (0b1111 | _BV(REFS1))
 
-void ADCInit()
+void ADC_Init()
 {
 	ADCSRA = _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
 }
 
-uint16_t ADCRead(uint8_t channel, uint8_t delay)
+uint16_t ADC_Read(uint8_t channel, uint8_t delay)
 {
 	ADMUX = channel;
 	while (delay--) _delay_ms(1);
@@ -88,18 +58,6 @@ uint16_t ADCRead(uint8_t channel, uint8_t delay)
 	uint8_t adcl = ADCL;
 	uint8_t adch = ADCH;
 	return (adcl | adch << 8);
-}
-
-float ADCReadVcc()
-{
-	return 1125.3f / ADCRead(ADC_VCC, 10);
-}
-
-float ADCReadTemp()
-{
-	const float chipTempOffset = 286.0f; // TODO
-	const float chipTempCoeff  = 1.0f;   // TODO
-	return((ADCRead(ADC_TEMP, 10) - chipTempOffset) / chipTempCoeff);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -162,7 +120,7 @@ uint8_t i2c_transfer(uint8_t data)
 	return data;                                 // Return the data from the USIDR
 }
 
-void I2CBusInit()
+void I2C_Init()
 {
 	PORT_USI |= 1<<PIN_USI_SDA;                  // Enable pullup on SDA.
 	PORT_USI_CL |= 1<<PIN_USI_SCL;               // Enable pullup on SCL.
@@ -179,7 +137,7 @@ void I2CBusInit()
 			1<<USIDC  |	0<<USICNT0;              // and reset counter.
 }
 
-uint8_t I2CBusRead()
+uint8_t I2C_Read()
 {
 	if ((I2Ccount != 0) && (I2Ccount != -1)) I2Ccount--;
 
@@ -194,13 +152,13 @@ uint8_t I2CBusRead()
 	return data;                                 // Read successfully completed
 }
 
-uint8_t I2CBusReadLast()
+uint8_t I2C_ReadLast()
 {
 	I2Ccount = 0;
-	return I2CBusRead();
+	return I2C_Read();
 }
 
-bool I2CBusWrite(uint8_t data)
+bool I2C_Write(uint8_t data)
 {
 	/* Write a byte */
 	PORT_USI_CL &= ~(1<<PIN_USI_SCL);            // Pull SCL LOW.
@@ -214,7 +172,7 @@ bool I2CBusWrite(uint8_t data)
 	return true;                                 // Write successfully completed
 }
 
-bool I2CBusStart(uint8_t address, int readcount)
+bool I2C_Start(uint8_t address, int readcount)
 {
 	/* Start transmission by sending address */
 	if (readcount != 0) { I2Ccount = readcount; readcount = 1; }
@@ -249,12 +207,12 @@ bool I2CBusStart(uint8_t address, int readcount)
 	return true;                                 // Start successfully completed
 }
 
-bool I2CBusRestart(uint8_t address, int readcount) 
+bool I2C_Restart(uint8_t address, int readcount) 
 {
-	return I2CBusStart(address, readcount);
+	return I2C_Start(address, readcount);
 }
 
-void I2CBusStop() 
+void I2C_Stop() 
 {
 	PORT_USI &= ~(1<<PIN_USI_SDA);               // Pull SDA low.
 	PORT_USI_CL |= 1<<PIN_USI_SCL;               // Release SCL.
@@ -265,16 +223,17 @@ void I2CBusStop()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// I2C SSD1306 128x32 Display
+// SSD1306 128x32 Display on I2C Bus
 ////////////////////////////////////////////////////////////////////////////////
 
-#define DISPLAY_ADDRESS 0x3C
-#define DISPLAY_COMMAND 0x00
-#define DISPLAY_DATA    0x40
-#define DISPLAY_WIDTH   128 
-#define DISPLAY_PAGES   4
+#define LCD_ADDR  0x3C
+#define LCD_COMM  0x00
+#define LCD_DATA  0x40
+#define LCD_WIDTH 128 
+#define LCD_PAGES 4
 
-uint8_t renderRAM = 0xB4, drawRAM = 0x40;
+uint8_t renderRAM = 0xB4;
+uint8_t drawRAM = 0x40;
 
 const uint8_t ssd1306_init_sequence[] PROGMEM =
 {
@@ -291,29 +250,29 @@ const uint8_t ssd1306_init_sequence[] PROGMEM =
 
 void ssd1306_send_start()
 { 
-	I2CBusStart(DISPLAY_ADDRESS, 0);
+	I2C_Start(LCD_ADDR, 0);
 }
 
 uint8_t ssd1306_send_byte(uint8_t b)
 { 
-	return I2CBusWrite(b);
+	return I2C_Write(b);
 }
 
 void ssd1306_send_stop()
 { 
-	I2CBusStop();
+	I2C_Stop();
 }
 
 void ssd1306_command_start()
 { 
 	ssd1306_send_start();
-	ssd1306_send_byte(DISPLAY_COMMAND);
+	ssd1306_send_byte(LCD_COMM);
 }
 
 void ssd1306_data_start()
 { 
 	ssd1306_send_start();
-	ssd1306_send_byte(DISPLAY_DATA);
+	ssd1306_send_byte(LCD_DATA);
 }
 
 void ssd1306_send_command(uint8_t cmd)
@@ -333,7 +292,7 @@ void ssd1306_send_data(uint8_t b)
 	}
 }
 
-void DisplayInit()
+void LCD_Init()
 {
 	ssd1306_command_start();
 	for (uint8_t i = 0; i < sizeof(ssd1306_init_sequence); i++)
@@ -343,17 +302,17 @@ void DisplayInit()
 	ssd1306_send_stop();
 }
 
-void DisplayTurnOn()
+void LCD_TurnOn()
 {
 	ssd1306_send_command(0xAF);
 }
 
-void DisplayTurnOff()
+void LCD_TurnOff()
 { 
 	ssd1306_send_command(0xAE);
 }
 
-void DisplayBrightness(uint8_t brightness)
+void LCD_Brightness(uint8_t brightness)
 { 
 	ssd1306_command_start();
 	ssd1306_send_byte(0x81);
@@ -361,7 +320,7 @@ void DisplayBrightness(uint8_t brightness)
 	ssd1306_send_stop();
 }
 
-void DisplayPosition(uint8_t x, uint8_t y)
+void LCD_Position(uint8_t x, uint8_t y)
 { 
 	ssd1306_command_start();
 	ssd1306_send_byte(renderRAM | (y & 0x07));
@@ -370,23 +329,23 @@ void DisplayPosition(uint8_t x, uint8_t y)
 	ssd1306_send_stop();
 }
 
-void DisplayWrite(uint8_t b, uint8_t s)
+void LCD_Write(uint8_t b, uint8_t s)
 {
 	ssd1306_data_start();
 	while (s--) ssd1306_send_data(b);
 	ssd1306_send_stop();
 }
 
-void DisplayClear()
+void LCD_Clear()
 {
-	DisplayPosition(0, 0);
-	for (uint8_t i = DISPLAY_PAGES; i > 0; --i)
+	LCD_Position(0, 0);
+	for (uint8_t i = LCD_PAGES; i > 0; --i)
 	{
-		DisplayWrite(0x00, DISPLAY_WIDTH);
+		LCD_Write(0x00, LCD_WIDTH);
 	}
 }
 
-void DisplayRefresh()
+void LCD_Flip()
 {
 	drawRAM ^= 0x20;
 	ssd1306_send_command(drawRAM);
@@ -394,7 +353,7 @@ void DisplayRefresh()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// I2C DS3231M Real Time Clock
+// DS3231M Real Time Clock on I2C Bus
 ////////////////////////////////////////////////////////////////////////////////
 
 // Device address
@@ -486,64 +445,64 @@ uint8_t encode_bcd(uint8_t num)
   return (num / 10 * 16) + (num % 10);
 }
 
-bool RTCRead()
+bool RTC_ReadDateAndTime()
 {
 #if RTC_SUPPORT
 	// Day of the week is not used!
 	// Century flag is not supported!
-	if (I2CBusStart(RTC_ADDR, 0))
+	if (I2C_Start(RTC_ADDR, 0))
 	{
-		I2CBusWrite(RTC_REG_SECONDS);
-		I2CBusRestart(RTC_ADDR, 7);
-		rtc_seconds = decode_bcd(I2CBusRead());
-		rtc_minutes = decode_bcd(I2CBusRead());
-		uint8_t tmp = I2CBusRead();
+		I2C_Write(RTC_REG_SECONDS);
+		I2C_Restart(RTC_ADDR, 7);
+		rtc_seconds = decode_bcd(I2C_Read());
+		rtc_minutes = decode_bcd(I2C_Read());
+		uint8_t tmp = I2C_Read();
 		if (tmp & RTC_HOUR_12) 
 			rtc_hours = ((tmp >> 4) & 0x01) * 12 + ((tmp >> 5) & 0x01) * 12;
 		else 
 			rtc_hours = decode_bcd(tmp);
-		tmp = I2CBusRead();
-		rtc_date  = decode_bcd(I2CBusRead());
-		rtc_month = decode_bcd(I2CBusRead() & 0x1F);
-		rtc_year  = decode_bcd(I2CBusRead() % 100);
-		I2CBusStop();
+		tmp = I2C_Read();
+		rtc_date  = decode_bcd(I2C_Read());
+		rtc_month = decode_bcd(I2C_Read() & 0x1F);
+		rtc_year  = decode_bcd(I2C_Read() % 100);
+		I2C_Stop();
 		return true;
 	}
 #endif
 	return false;
 }
 
-void RTCWrite()
+void RTC_WriteDateAndTime()
 {
 #if RTC_SUPPORT
 	// Time always stored in 24-hour format!
 	// Day of the week is not used!
 	// Century flag is not supported!
-	if(I2CBusStart(RTC_ADDR, 0))
+	if(I2C_Start(RTC_ADDR, 0))
 	{
-		I2CBusWrite(RTC_REG_SECONDS);
-		I2CBusWrite(encode_bcd(rtc_seconds));
-		I2CBusWrite(encode_bcd(rtc_minutes));
-		I2CBusWrite(encode_bcd(rtc_hours));
-		I2CBusWrite(1);
-		I2CBusWrite(encode_bcd(rtc_date));
-		I2CBusWrite(encode_bcd(rtc_month));
-		I2CBusWrite(encode_bcd(rtc_year));
-		I2CBusStop();
+		I2C_Write(RTC_REG_SECONDS);
+		I2C_Write(encode_bcd(rtc_seconds));
+		I2C_Write(encode_bcd(rtc_minutes));
+		I2C_Write(encode_bcd(rtc_hours));
+		I2C_Write(1);
+		I2C_Write(encode_bcd(rtc_date));
+		I2C_Write(encode_bcd(rtc_month));
+		I2C_Write(encode_bcd(rtc_year));
+		I2C_Stop();
 	}
 #endif
 }
 
-float RTCTemp()
+float RTC_ReadTemperature()
 {
 #if RTC_SUPPORT
-	if (I2CBusStart(RTC_ADDR, 0))
+	if (I2C_Start(RTC_ADDR, 0))
 	{
-		I2CBusWrite(RTC_REG_TEMP_MSB);
-		I2CBusRestart(RTC_ADDR, 2);
-		uint8_t msb = I2CBusRead();
-		uint8_t lsb = I2CBusRead();
-		I2CBusStop();
+		I2C_Write(RTC_REG_TEMP_MSB);
+		I2C_Restart(RTC_ADDR, 2);
+		uint8_t msb = I2C_Read();
+		uint8_t lsb = I2C_Read();
+		I2C_Stop();
 		return int16_t(msb << 8 | lsb) / 256.f;
 	}
 #endif
@@ -554,8 +513,8 @@ float RTCTemp()
 // One Pin Analog 16-Key Keyboard
 //////////////////////////////////////////////////////////////////////////////// 
 
-#define KEYBOARD_PIN PORTB4
-#define KEYBOARD_ADC ADC_2_PB4
+#define KBD_PIN PORTB4
+#define KBD_ADC ADC_2_PB4
 
 // Keyboard layout on PCB:
 // A0 B0 C0 D0
@@ -593,18 +552,18 @@ const uint8_t key_code[] PROGMEM =
 	KEY_A2, KEY_B2, KEY_C2, KEY_D2, KEY_A3, KEY_B3, KEY_C3, KEY_D3
 };
 
-void KeyboardInit()
+void KBD_Init()
 {
-	clr_bit(DDRB,  KEYBOARD_PIN);
-	clr_bit(PORTB, KEYBOARD_PIN);
-	set_bit(PCMSK, KEYBOARD_PIN);
+	clr_bit(DDRB,  KBD_PIN);
+	clr_bit(PORTB, KBD_PIN);
+	set_bit(PCMSK, KBD_PIN);
 	set_bit(GIFR,  PCIF);
 	set_bit(GIMSK, PCIE);
 }
 
-uint8_t KeyboardRead()
+uint8_t KBD_Read()
 {
-	uint16_t adcVal = ADCRead(KEYBOARD_ADC, 1);
+	uint16_t adcVal = ADC_Read(KBD_ADC, 1);
 	if (adcVal > 110)
 	{
 		for (uint8_t i = 0; i < 16; ++i)
@@ -620,4 +579,55 @@ ISR(PCINT0_vect)
 {
 	// do nothing
 	// just interrupt sleeping
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Power Management
+///////////////////////////////////////////////////////////////////////////////
+
+#define BAT_FULL  4.1f
+#define BAT_EMPTY 3.3f
+
+void executeSleeping(uint8_t mode)
+{
+	set_sleep_mode(mode);
+	sleep_enable();
+	sleep_cpu();
+	sleep_disable();
+}
+
+void executePowerSaving(uint8_t mode)
+{
+	clr_bit(ADCSRA,ADEN);
+	power_all_disable();
+	executeSleeping(mode);
+	power_usi_enable();
+	power_adc_enable();
+	set_bit(ADCSRA,ADEN);
+}
+
+void PWR_Idle()
+{ 	
+	executePowerSaving(SLEEP_MODE_IDLE);
+}
+
+void PWR_Down()
+{
+	executePowerSaving(SLEEP_MODE_PWR_DOWN);
+}
+
+float PWR_Voltage()
+{
+	return (1125.3f / ADC_Read(ADC_VCC, 10));
+}
+
+float PWR_BatteryLevel()
+{
+	float voltage = PWR_Voltage();
+	return (voltage > BAT_EMPTY ? (voltage - BAT_EMPTY) / (BAT_FULL - BAT_EMPTY) : 0);
+}
+
+float PWR_BatteryEmpty()
+{
+	return (PWR_Voltage() <= BAT_EMPTY);
 }

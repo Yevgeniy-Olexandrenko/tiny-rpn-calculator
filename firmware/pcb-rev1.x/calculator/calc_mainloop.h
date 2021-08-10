@@ -163,7 +163,7 @@ void PrintStack(u08 i, u08 s, u08 y)
 
 void PrintClock()
 {
-	DisplayClear();
+	LCD_Clear();
 
 	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_L);
 	PrintCharAt(':', 20, 0);
@@ -180,12 +180,12 @@ void PrintClock()
 	PrintTwoDigitAt(20, 85, 1);
 	PrintTwoDigitAt(rtc_year, 107, 1);
 
-	DisplayRefresh();
+	LCD_Flip();
 }
 
 void PrintCalculator()
 {
-	DisplayClear();
+	LCD_Clear();
 #ifdef debug
 	if (ap)
 	{
@@ -221,7 +221,7 @@ void PrintCalculator()
 		}
 	}
 
-	DisplayRefresh();
+	LCD_Flip();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -248,44 +248,44 @@ void switchToCalcMode(bool yes)
 
 void switchToRTCMode()
 {
-	oldkey = KeyboardRead();
-	switchToCalcMode(!RTCRead());
+	oldkey = KBD_Read();
+	switchToCalcMode(!RTC_ReadDateAndTime());
 }
 
 void setupRTC()
 {
-	RTCWrite();
+	RTC_WriteDateAndTime();
 	switchToRTCMode();
 }
 
 int main() 
 {
-	ADCInit();
-	I2CBusInit();
-	DisplayInit();
-	KeyboardInit();
+	ADC_Init();
+	I2C_Init();
+	LCD_Init();
+	KBD_Init();
 	sei();
 
-	DisplayTurnOn();
+	LCD_TurnOn();
 	setupRTC();
 
 	while (true)
 	{
-		key = KeyboardRead();
+		key = KBD_Read();
 		if (key != oldkey) oldkey = key; else key = KEY_NONE;
 		if (key != KEY_NONE) switchToCalcMode(true);
 
 		if (frameCounter >= POWEROFF_FRAMES)
 		{
 			FrameSyncStop();
-			DisplayTurnOff();
-			PowerDown();
+			LCD_TurnOff();
+			PWR_Down();
 
-			DisplayTurnOn();
+			LCD_TurnOn();
 			switchToRTCMode();
 		}
 
-		DisplayBrightness(calcMode && frameCounter < DIMOUT_FRAMES ? 0xFF : 0x00);
+		LCD_Brightness(calcMode && frameCounter < DIMOUT_FRAMES ? 0xFF : 0x00);
 
 		if (calcMode)
 		{
@@ -337,7 +337,7 @@ int main()
 		}
 		else
 		{
-			RTCRead();
+			RTC_ReadDateAndTime();
 			PrintClock();
 		}
 		FrameSyncWait();

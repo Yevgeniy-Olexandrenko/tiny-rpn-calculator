@@ -20,19 +20,19 @@ volatile uint16_t frameCounter;
 void FrameSyncStart()
 {
 	// frame rate is about 15 FPS
-	WDTInit(WDT_MODE_INT, WDT_TIMEOUT_64MS);
+	WDT_Init(WDT_MODE_INT, WDT_TIMEOUT_64MS);
 	frameCounter = 0;
 }
 
 void FrameSyncStop()
 {
-	WDTInit(WDT_MODE_DISABLED, 0);
+	WDT_Init(WDT_MODE_DISABLED, 0);
 }
 
 void FrameSyncWait()
 {
 	frameWaiting = true;
-	while (frameWaiting) PowerIdle();
+	while (frameWaiting) PWR_Idle();
 }
 
 ISR(WDT_vect)
@@ -79,7 +79,7 @@ void PrintCharAt(uint8_t c, uint8_t x, uint8_t y)
 	c -= FONT_BEGIN;
 	for (uint8_t cy = 0; cy < ch; ++cy)
 	{
-		DisplayPosition(x, y + cy);
+		LCD_Position(x, y + cy);
 		for (uint8_t i = 0; i < FONT_WIDTH; ++i)
 		{
 			uint8_t bitmap = FONT_READ(&font[FONT_WIDTH * c + i]);
@@ -87,7 +87,7 @@ void PrintCharAt(uint8_t c, uint8_t x, uint8_t y)
 				bitmap = expand4bit((bitmap >> (cy << 2)) & 0x0f); // Expand 0000abcd
 			else if (ch == CHAR_SIZE_L)
 				bitmap = expand2bit((bitmap >> (cy << 1)) & 0x03); // Expand 000000ab
-			DisplayWrite(bitmap, cw);
+			LCD_Write(bitmap, cw);
 		}
 	}
 }
