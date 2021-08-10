@@ -394,32 +394,35 @@ void DisplayRefresh()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// I2C DS1337 Real Time Clock
+// I2C DS3231M Real Time Clock
 ////////////////////////////////////////////////////////////////////////////////
 
 // Device address
-#define DS1337_ADDR            0x68
+#define RTC_ADDR            0x68
 
 // Registers
-#define DS1337_REG_SECONDS     0x00
-#define DS1337_REG_MINUTES     0x01
-#define DS1337_REG_HOURS       0x02
-#define DS1337_REG_DAY         0x03
-#define DS1337_REG_DATE        0x04
-#define DS1337_REG_MONTH       0x05
-#define DS1337_REG_YEAR        0x06
-#define DS1337_REG_A1_SECONDS  0x07
-#define DS1337_REG_A1_MINUTES  0x08
-#define DS1337_REG_A1_HOUR     0x09
-#define DS1337_REG_A1_DAY_DATE 0x0A
-#define DS1337_REG_A2_MINUTES  0x0B
-#define DS1337_REG_A2_HOUR     0x0C
-#define DS1337_REG_A2_DAY_DATE 0x0D
-#define DS1337_REG_CONTROL     0x0E
-#define DS1337_REG_STATUS      0x0F
+#define RTC_REG_SECONDS      0x00
+#define RTC_REG_MINUTES      0x01
+#define RTC_REG_HOURS        0x02
+#define RTC_REG_DAY          0x03
+#define RTC_REG_DATE         0x04
+#define RTC_REG_MONTH        0x05
+#define RTC_REG_YEAR         0x06
+#define RTC_REG_A1_SECONDS   0x07
+#define RTC_REG_A1_MINUTES   0x08
+#define RTC_REG_A1_HOUR      0x09
+#define RTC_REG_A1_DAY_DATE  0x0A
+#define RTC_REG_A2_MINUTES   0x0B
+#define RTC_REG_A2_HOUR      0x0C
+#define RTC_REG_A2_DAY_DATE  0x0D
+#define RTC_REG_CONTROL      0x0E
+#define RTC_REG_STATUS       0x0F
+#define RTC_REG_AGING_OFFSET 0x10
+#define RTC_REG_TEMP_MSB     0x11
+#define RTC_REG_TEMP_LSB     0x12
 
 // Flags
-#define DS1337_HOUR_12         (0x01 << 6)
+#define RTC_HOUR_12         (0x01 << 6)
 
 // Figure out build date and time (Example __DATE__ : "Jul 27 2012" and __TIME__ : "21:06:19")
 #define COMPUTE_BUILD_YEAR ((__DATE__[ 9] - '0') *   10 + (__DATE__[10] - '0'))
@@ -488,14 +491,14 @@ bool RTCRead()
 #if RTC_SUPPORT
 	// Day of the week is not used!
 	// Century flag is not supported!
-	if (I2CBusStart(DS1337_ADDR, 0))
+	if (I2CBusStart(RTC_ADDR, 0))
 	{
-		I2CBusWrite(DS1337_REG_SECONDS);
-		I2CBusRestart(DS1337_ADDR, 7);
+		I2CBusWrite(RTC_REG_SECONDS);
+		I2CBusRestart(RTC_ADDR, 7);
 		rtc_seconds = decode_bcd(I2CBusRead());
 		rtc_minutes = decode_bcd(I2CBusRead());
 		uint8_t tmp = I2CBusRead();
-		if (tmp & DS1337_HOUR_12) 
+		if (tmp & RTC_HOUR_12) 
 			rtc_hours = ((tmp >> 4) & 0x01) * 12 + ((tmp >> 5) & 0x01) * 12;
 		else 
 			rtc_hours = decode_bcd(tmp);
@@ -516,9 +519,9 @@ void RTCWrite()
 	// Time always stored in 24-hour format!
 	// Day of the week is not used!
 	// Century flag is not supported!
-	if(I2CBusStart(DS1337_ADDR, 0))
+	if(I2CBusStart(RTC_ADDR, 0))
 	{
-		I2CBusWrite(DS1337_REG_SECONDS);
+		I2CBusWrite(RTC_REG_SECONDS);
 		I2CBusWrite(encode_bcd(rtc_seconds));
 		I2CBusWrite(encode_bcd(rtc_minutes));
 		I2CBusWrite(encode_bcd(rtc_hours));
@@ -535,8 +538,8 @@ void RTCWrite()
 // One Pin Analog 16-Key Keyboard
 //////////////////////////////////////////////////////////////////////////////// 
 
-#define KEYBOARD_PIN PORTB3
-#define KEYBOARD_ADC ADC_3_PB3
+#define KEYBOARD_PIN PORTB4
+#define KEYBOARD_ADC ADC_2_PB4
 
 // Keyboard layout on PCB:
 // A0 B0 C0 D0
