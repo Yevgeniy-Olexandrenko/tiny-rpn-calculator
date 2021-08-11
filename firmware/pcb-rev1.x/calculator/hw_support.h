@@ -692,9 +692,9 @@ ISR(PCINT0_vect)
 ///////////////////////////////////////////////////////////////////////////////
 
 #define BAT_FULL  4.1f
-#define BAT_EMPTY 3.3f
+#define BAT_EMPTY 3.5f
 
-void executeSleeping(uint8_t mode)
+void pwr_sleeping(uint8_t mode)
 {
 	set_sleep_mode(mode);
 	sleep_enable();
@@ -702,24 +702,16 @@ void executeSleeping(uint8_t mode)
 	sleep_disable();
 }
 
-void executePowerSaving(uint8_t mode)
+void pwr_saving(uint8_t mode)
 {
-	clr_bit(ADCSRA,ADEN);
+	clr_bit(ADCSRA, ADEN);
 	power_all_disable();
-	executeSleeping(mode);
+	pwr_sleeping(mode);
+#if !SOFTWARE_I2C	
 	power_usi_enable();
+#endif	
 	power_adc_enable();
-	set_bit(ADCSRA,ADEN);
-}
-
-void PWR_Idle()
-{ 	
-	executePowerSaving(SLEEP_MODE_IDLE);
-}
-
-void PWR_Down()
-{
-	executePowerSaving(SLEEP_MODE_PWR_DOWN);
+	set_bit(ADCSRA, ADEN);
 }
 
 float PWR_Voltage()
@@ -730,10 +722,18 @@ float PWR_Voltage()
 float PWR_BatteryLevel()
 {
 	float voltage = PWR_Voltage();
-	return (voltage > BAT_EMPTY ? (voltage - BAT_EMPTY) / (BAT_FULL - BAT_EMPTY) : 0);
+	if (voltage > BAT_FULL ) return 1;
+	if (voltage < BAT_EMPTY) return 0;
+	return ((voltage - BAT_EMPTY) / (BAT_FULL - BAT_EMPTY));
 }
 
-float PWR_BatteryEmpty()
+void PWR_Idle()
+{ 	
+	pwr_saving(SLEEP_MODE_IDLE);
+}
+
+void PWR_Down()
 {
-	return (PWR_Voltage() <= BAT_EMPTY);
+	do { pwr_saving(SLEEP_MODE_PWR_DOWN); }
+	while (PWR_Voltage() < BAT_EMPTY);
 }
