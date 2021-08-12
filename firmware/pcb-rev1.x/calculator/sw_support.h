@@ -14,13 +14,20 @@ template<typename T> static T _abs(const T & x) { return x < 0 ? -x : x; }
 // Upate Frame Rate Sync
 ////////////////////////////////////////////////////////////////////////////////
 
-volatile uint8_t  frameWaiting;
-volatile uint16_t frameCounter;
+#define FRAME_TIMEOUT_16MS  WDT_TIMEOUT_16MS  // 60 fps
+#define FRAME_TIMEOUT_32MS  WDT_TIMEOUT_32MS  // 30 fps
+#define FRAME_TIMEOUT_64MS  WDT_TIMEOUT_64MS  // 15 fps
+#define FRAME_TIMEOUT_500MS WDT_TIMEOUT_500MS //  2 fps
+#define FRAME_TIMEOUT_1S    WDT_TIMEOUT_1S    //  1 fps
 
-void FrameSyncStart()
+volatile bool frameWaiting;
+volatile uint16_t frameCounter;
+uint8_t frameTimeout;
+
+void FrameSyncStart(uint8_t timeout)
 {
-	// frame rate is about 15 FPS
-	WDT_Init(WDT_MODE_INT, WDT_TIMEOUT_64MS);
+	WDT_Init(WDT_MODE_INT, timeout);
+	frameTimeout = timeout;
 	frameCounter = 0;
 }
 
@@ -33,6 +40,11 @@ void FrameSyncWait()
 {
 	frameWaiting = true;
 	while (frameWaiting) PWR_Idle();
+}
+
+uint16_t FrameTimePassedMs()
+{
+	return (frameCounter * (16 << frameTimeout));
 }
 
 ISR(WDT_vect)

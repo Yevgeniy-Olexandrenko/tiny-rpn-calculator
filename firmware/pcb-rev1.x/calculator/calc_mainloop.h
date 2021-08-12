@@ -226,8 +226,8 @@ void PrintCalculator()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#define DIMOUT_FRAMES 156   // Frames before display dim out (about 10 sec)
-#define POWEROFF_FRAMES 469 // Frames before power off (about 30 sec)
+#define DIMOUT_MILLIS   10000 // Time before display dim out
+#define POWEROFF_MILLIS 20000 // Time before power off
 
 u08 key;
 u08 oldkey;
@@ -240,16 +240,23 @@ void enterMenu(u08 type)
 	select = 0;
 }
 
-void switchToCalcMode(bool yes)
+void switchToCalcMode()
 {
-	calcMode = yes;
-	FrameSyncStart();
+	calcMode = true;
+	FrameSyncStart(FRAME_TIMEOUT_64MS);
 }
 
 void switchToRTCMode()
 {
-	oldkey = KBD_Read();
-	switchToCalcMode(!RTC_ReadDateAndTime());
+	if (RTC_ReadDateAndTime())
+	{
+		calcMode = false;
+		FrameSyncStart(FRAME_TIMEOUT_500MS);
+	}
+	else
+	{
+		switchToCalcMode();
+	}
 }
 
 void setupAndSwitchToRTCMode()
@@ -328,18 +335,24 @@ int main()
 	{
 		key = KBD_Read();
 		if (key != oldkey) oldkey = key; else key = KEY_NONE;
-		if (key != KEY_NONE) switchToCalcMode(true);
+		if (key != KEY_NONE) switchToCalcMode();
 
-		if (frameCounter > POWEROFF_FRAMES || PWR_BatteryLevel() == 0)
+		uint16_t timePassedMs = FrameTimePassedMs();
+
+		if (timePassedMs >= POWEROFF_MILLIS || PWR_BatteryLevel() == 0)
 		{
 			FrameSyncStop();
 			LCD_TurnOff();
 			PWR_Down();
+
+			/* SLEEPING */
+
+			oldkey = KBD_Read();
 			LCD_TurnOn();
 			switchToRTCMode();
 		}
 
-		LCD_Brightness(calcMode && frameCounter < DIMOUT_FRAMES ? 0xFF : 0x00);
+		LCD_Brightness(calcMode && timePassedMs < DIMOUT_MILLIS ? 0xFF : 0x00);
 
 		if (calcMode) updateCalcMode(); else updateRTCMode();
 		FrameSyncWait();
