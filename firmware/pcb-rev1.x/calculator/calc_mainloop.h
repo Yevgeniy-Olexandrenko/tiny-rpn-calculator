@@ -252,10 +252,65 @@ void switchToRTCMode()
 	switchToCalcMode(!RTC_ReadDateAndTime());
 }
 
-void setupRTC()
+void setupAndSwitchToRTCMode()
 {
 	RTC_WriteDateAndTime();
 	switchToRTCMode();
+}
+
+void updateCalcMode()
+{
+	if (ap)
+	{
+#ifdef debug
+		if (ap && isScript() && key != KEY_NONE)
+			ExecuteOperation(pgm_read_byte(&scripts[pp++]));
+#else
+		while (ap && isScript())
+		{
+			// execute scripted operations
+			ExecuteOperation(pgm_read_byte(&scripts[pp++]));
+		}
+#endif
+		if (ap)
+		{
+			// execute user program
+			// TODO
+		}
+		PrintCalculator();
+	}
+
+	else if (key != KEY_NONE)
+	{
+		if (isMenu)
+		{
+			switch(key)
+			{
+			default: isMenu = false; break;
+			case KEY_EEXP: if (select > 0) select--; else select = menu.lastIdx; break;
+			case KEY_NEG:  if (select < menu.lastIdx) select++; else select = 0; break;
+			case KEY_FUNC: enterMenu(MENU_MATH_OPS); break;
+			case KEY_NUM7: enterMenu(MENU_TRIG_OPS); break;
+			case KEY_NUM8: enterMenu(MENU_PROG_OPS); break;
+			case KEY_DOT:  enterMenu(MENU_SETS_OPS); break;
+			case KEY_NUM1: case KEY_NUM2: case KEY_NUM3:
+				u08 index = select * MENU_OPS_PER_LINE + (key - KEY_NUM1);
+				ExecuteOperation(menu.opsBase + index);
+				break;
+			}
+		}
+		else
+		{
+			ExecuteOperation(isFunc ? FUNC_OPS + key : key);
+		}
+		PrintCalculator();
+	}
+}
+
+void updateRTCMode()
+{
+	RTC_ReadDateAndTime();
+	PrintClock();
 }
 
 int main() 
@@ -267,7 +322,7 @@ int main()
 	sei();
 
 	LCD_TurnOn();
-	setupRTC();
+	setupAndSwitchToRTCMode();
 
 	while (true)
 	{
@@ -275,71 +330,18 @@ int main()
 		if (key != oldkey) oldkey = key; else key = KEY_NONE;
 		if (key != KEY_NONE) switchToCalcMode(true);
 
-		if (frameCounter >= POWEROFF_FRAMES)
+		if (frameCounter > POWEROFF_FRAMES || PWR_BatteryLevel() == 0)
 		{
 			FrameSyncStop();
 			LCD_TurnOff();
 			PWR_Down();
-
 			LCD_TurnOn();
 			switchToRTCMode();
 		}
 
 		LCD_Brightness(calcMode && frameCounter < DIMOUT_FRAMES ? 0xFF : 0x00);
 
-		if (calcMode)
-		{
-			if (ap)
-			{
-#ifdef debug
-				if (ap && isScript() && key != KEY_NONE)
-					ExecuteOperation(pgm_read_byte(&scripts[pp++]));
-#else
-				while (ap && isScript())
-				{
-					// execute scripted operations
-					ExecuteOperation(pgm_read_byte(&scripts[pp++]));
-				}
-#endif
-				if (ap)
-				{
-					// execute user program
-					// TODO
-				}
-				PrintCalculator();
-			}
-
-			else if (key != KEY_NONE)
-			{
-				if (isMenu)
-				{
-					switch(key)
-					{
-					default: isMenu = false; break;
-					case KEY_EEXP: if (select > 0) select--; else select = menu.lastIdx; break;
-					case KEY_NEG:  if (select < menu.lastIdx) select++; else select = 0; break;
-					case KEY_FUNC: enterMenu(MENU_MATH_OPS); break;
-					case KEY_NUM7: enterMenu(MENU_TRIG_OPS); break;
-					case KEY_NUM8: enterMenu(MENU_PROG_OPS); break;
-					case KEY_DOT:  enterMenu(MENU_SETS_OPS); break;
-					case KEY_NUM1: case KEY_NUM2: case KEY_NUM3:
-						u08 index = select * MENU_OPS_PER_LINE + (key - KEY_NUM1);
-						ExecuteOperation(menu.opsBase + index);
-						break;
-					}
-				}
-				else
-				{
-					ExecuteOperation(isFunc ? FUNC_OPS + key : key);
-				}
-				PrintCalculator();
-			}
-		}
-		else
-		{
-			RTC_ReadDateAndTime();
-			PrintClock();
-		}
+		if (calcMode) updateCalcMode(); else updateRTCMode();
 		FrameSyncWait();
 	}
 	return 0;

@@ -30,7 +30,7 @@ b08 isDeg = true;
 enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS, MENU_SETS_OPS };
 
 void enterMenu(u08 type);
-void setupRTC();
+void setupAndSwitchToRTCMode();
 
 ////////////////////////////////////////////////////////////////////////////////
 // Operations Declarations
@@ -392,7 +392,7 @@ void FnTime()
 		&& dpop(rtc_seconds, 0, 59)
 		&& dpop(rtc_minutes, 0, 59)
 		&& dpop(rtc_hours, 0, 23))
-	setupRTC();
+	setupAndSwitchToRTCMode();
 }
 void FnDate()
 {
@@ -400,7 +400,7 @@ void FnDate()
 		&& dpop(rtc_year, 0, 99)
 		&& dpop(rtc_month, 1, 12)
 		&& dpop(rtc_date, 1, 31))
-	setupRTC();
+	setupAndSwitchToRTCMode();
 }
 
 void FnD2R()  { if ( isDeg) dpush(dpop() * PI / 180); }

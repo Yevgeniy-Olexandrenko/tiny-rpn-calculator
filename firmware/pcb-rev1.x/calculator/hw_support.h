@@ -734,6 +734,5 @@ void PWR_Idle()
 
 void PWR_Down()
 {
-	do { pwr_saving(SLEEP_MODE_PWR_DOWN); }
-	while (PWR_Voltage() < BAT_EMPTY);
+	pwr_saving(SLEEP_MODE_PWR_DOWN);
 }
