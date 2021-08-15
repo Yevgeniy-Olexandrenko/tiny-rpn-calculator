@@ -388,18 +388,18 @@ void FnThen() { cl--; }
 void FnSwDR() { isDeg ^= true; }
 void FnTime()
 {
-	if (RTC_ReadDateAndTime()
-		&& dpop(rtc_seconds, 0, 59)
-		&& dpop(rtc_minutes, 0, 59)
-		&& dpop(rtc_hours, 0, 23))
+	RTC_ReadDateAndTime();
+	if (dpop(rtc_seconds, 0, 59) &&
+		dpop(rtc_minutes, 0, 59) &&
+		dpop(rtc_hours,   0, 23))
 	setupAndSwitchToRTCMode();
 }
 void FnDate()
 {
-	if (RTC_ReadDateAndTime()
-		&& dpop(rtc_year, 0, 99)
-		&& dpop(rtc_month, 1, 12)
-		&& dpop(rtc_date, 1, 31))
+	RTC_ReadDateAndTime();
+	if (dpop(rtc_year,  0, 99) &&
+		dpop(rtc_month, 1, 12) &&
+		dpop(rtc_date,  1, 31))
 	setupAndSwitchToRTCMode();
 }
 

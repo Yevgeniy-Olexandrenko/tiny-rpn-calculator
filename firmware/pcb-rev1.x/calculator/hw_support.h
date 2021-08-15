@@ -551,9 +551,8 @@ uint8_t encode_bcd(uint8_t num)
   return (num / 10 * 16) + (num % 10);
 }
 
-bool RTC_ReadDateAndTime()
+void RTC_ReadDateAndTime()
 {
-#if RTC_SUPPORT
 	// Day of the week is not used!
 	// Century flag is not supported!
 	if (I2C_Start(RTC_ADDR, 0))
@@ -572,15 +571,11 @@ bool RTC_ReadDateAndTime()
 		rtc_month = decode_bcd(I2C_Read() & 0x1F);
 		rtc_year  = decode_bcd(I2C_Read() % 100);
 		I2C_Stop();
-		return true;
 	}
-#endif
-	return false;
 }
 
 void RTC_WriteDateAndTime()
 {
-#if RTC_SUPPORT
 	// Time always stored in 24-hour format!
 	// Day of the week is not used!
 	// Century flag is not supported!
@@ -596,12 +591,10 @@ void RTC_WriteDateAndTime()
 		I2C_Write(encode_bcd(rtc_year));
 		I2C_Stop();
 	}
-#endif
 }
 
 float RTC_ReadTemperature()
 {
-#if RTC_SUPPORT
 	if (I2C_Start(RTC_ADDR, 0))
 	{
 		I2C_Write(RTC_REG_TEMP_MSB);
@@ -611,7 +604,6 @@ float RTC_ReadTemperature()
 		I2C_Stop();
 		return int16_t(msb << 8 | lsb) / 256.f;
 	}
-#endif
 	return 0;
 }
 

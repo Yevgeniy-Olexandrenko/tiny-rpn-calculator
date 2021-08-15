@@ -248,15 +248,8 @@ void switchToCalcMode()
 
 void switchToRTCMode()
 {
-	if (RTC_ReadDateAndTime())
-	{
-		calcMode = false;
-		FrameSyncStart(FRAME_TIMEOUT_500MS);
-	}
-	else
-	{
-		switchToCalcMode();
-	}
+	calcMode = false;
+	FrameSyncStart(FRAME_TIMEOUT_1S);
 }
 
 void setupAndSwitchToRTCMode()
