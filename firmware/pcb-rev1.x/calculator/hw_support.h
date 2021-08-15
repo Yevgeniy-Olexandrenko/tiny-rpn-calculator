@@ -166,6 +166,44 @@ void i2c_stop()
 	I2C_SDA_H();
 }
 
+void I2C_Init()
+{
+	//
+}
+
+bool I2C_Start(uint8_t address, int readcount)
+{
+	if (readcount == 0)
+		return i2c_start_write(address);
+	else
+		return i2c_start_read(address);
+}
+
+bool I2C_Restart(uint8_t address, int readcount) 
+{
+	return I2C_Start(address, readcount);
+}
+
+uint8_t I2C_Read()
+{
+	return i2c_read_ack();
+}
+
+uint8_t I2C_ReadLast()
+{
+	return i2c_read_nack();
+}
+
+bool I2C_Write(uint8_t data)
+{
+	return i2c_write(data);
+}
+
+void I2C_Stop() 
+{
+	i2c_stop();
+}
+
 #else
 
 #define DDR_USI       DDRB
@@ -569,7 +607,7 @@ void RTC_ReadDateAndTime()
 		tmp = I2C_Read();
 		rtc_date  = rtc_bcd_decode(I2C_Read());
 		rtc_month = rtc_bcd_decode(I2C_Read() & 0x1F);
-		rtc_year  = rtc_bcd_decode(I2C_Read() % 100);
+		rtc_year  = rtc_bcd_decode(I2C_ReadLast() % 100);
 		I2C_Stop();
 	}
 }
@@ -601,7 +639,7 @@ float RTC_ReadTemperature()
 		I2C_Write(RTC_TEMP_MSB);
 		I2C_Restart(RTC_ADDR, 2);
 		uint8_t msb = I2C_Read();
-		uint8_t lsb = I2C_Read();
+		uint8_t lsb = I2C_ReadLast();
 		I2C_Stop();
 		return int16_t(msb << 8 | lsb) / 256.f;
 	}
