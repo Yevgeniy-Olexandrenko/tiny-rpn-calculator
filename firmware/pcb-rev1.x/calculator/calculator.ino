@@ -2,6 +2,7 @@
 #define F_CPU 16000000UL // 16 MHz
 
 // Firmware configuration
+#define DEBUG_ON_R1_0 1
 #define FONT_IN_EEMEM 0
 #define SOFTWARE_I2C  0
 

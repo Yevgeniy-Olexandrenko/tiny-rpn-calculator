@@ -26,7 +26,7 @@ void WDT_Init(uint8_t mode, uint8_t prescaler)
 	uint8_t wdtr = mode | ((prescaler > 7) ? 0x20 | (prescaler - 8) : prescaler);
 	uint8_t sreg = SREG;
 	cli();
-	WDTCR = ((1 << WDCE) | (1 << WDE));
+	WDTCR = _BV(WDCE) | _BV(WDE);
 	WDTCR = wdtr;
 	SREG  = sreg;
 }
@@ -71,13 +71,13 @@ uint16_t ADC_Read(uint8_t channel, uint8_t delay)
 #define I2C_SDA PB0
 #define I2C_SCL PB2
 
-#define I2C_SDA_H() (I2C_DDR &= ~(1 << I2C_SDA))
-#define I2C_SDA_L() (I2C_DDR |=  (1 << I2C_SDA))
-#define I2C_SDA_I() (I2C_PIN &   (1 << I2C_SDA))
+#define I2C_SDA_H() clr_bit(I2C_DDR, I2C_SDA)
+#define I2C_SDA_L() set_bit(I2C_DDR, I2C_SDA)
+#define I2C_SDA_I() isb_set(I2C_PIN, I2C_SDA)
 
-#define I2C_SCL_H() (I2C_DDR &= ~(1 << I2C_SCL))
-#define I2C_SCL_L() (I2C_DDR |=  (1 << I2C_SCL))
-#define I2C_SCL_I() (I2C_PIN &   (1 << I2C_SCL))
+#define I2C_SCL_H() clr_bit(I2C_DDR, I2C_SCL)
+#define I2C_SCL_L() set_bit(I2C_DDR, I2C_SCL)
+#define I2C_SCL_I() isb_set(I2C_PIN, I2C_SCL)
 
 #define I2C_DELAY() _delay_us(1)
 
@@ -85,26 +85,6 @@ void i2c_scl_h_wait()
 {
 	I2C_SCL_H();
 	while (!I2C_SCL_I());
-}
-
-void i2c_start()
-{
-	i2c_scl_h_wait();
-	I2C_SDA_L();
-	I2C_DELAY();
-	I2C_SCL_L();
-}
-
-uint8_t i2c_start_write(uint8_t addr)
-{
-	i2c_start();
-	return i2c_write(addr << 1);
-}
-
-uint8_t i2c_start_read(uint8_t addr)
-{
-	i2c_start();
-	return i2c_write(addr << 1 | 1);
 }
 
 uint8_t i2c_read_write(uint8_t data)
@@ -125,7 +105,7 @@ uint8_t i2c_read_write(uint8_t data)
 	return data;
 }
 
-uint8_t i2c_write(uint8_t data)
+bool i2c_write(uint8_t data)
 {
 	i2c_read_write(data);
 	i2c_scl_h_wait();
@@ -137,7 +117,7 @@ uint8_t i2c_write(uint8_t data)
 	return ack;
 }
 
-uint8_t i2c_read(uint8_t ack)
+uint8_t i2c_read(bool ack)
 {
 	uint8_t data = i2c_read_write(0xFF);
 	if (ack) I2C_SDA_L();
@@ -150,18 +130,38 @@ uint8_t i2c_read(uint8_t ack)
 
 uint8_t i2c_read_ack()
 { 
-	return i2c_read(1);
+	return i2c_read(true);
 }
 
 uint8_t i2c_read_nack()
 {
-	return i2c_read(0);
+	return i2c_read(false);
+}
+
+void i2c_start()
+{
+	i2c_scl_h_wait();
+	I2C_SDA_L();
+	I2C_DELAY();
+	I2C_SCL_L();
+}
+
+bool i2c_start_write(uint8_t addr)
+{
+	i2c_start();
+	return i2c_write(addr << 1);
+}
+
+bool i2c_start_read(uint8_t addr)
+{
+	i2c_start();
+	return i2c_write(addr << 1 | 1);
 }
 
 void i2c_stop()
 {
 	I2C_SDA_L();
-	I2C_SCL_H();
+	i2c_scl_h_wait();
 	I2C_DELAY();
 	I2C_SDA_H();
 }
@@ -338,8 +338,8 @@ void I2C_Stop()
 #define LCD_WIDTH 128 
 #define LCD_PAGES 4
 
-uint8_t renderRAM = 0xB4;
-uint8_t drawRAM = 0x40;
+uint8_t ssd1306_bbuf = 0xB4;
+uint8_t ssd1306_fbuf = 0x40;
 
 const uint8_t ssd1306_init_sequence[] PROGMEM =
 {
@@ -429,7 +429,7 @@ void LCD_Brightness(uint8_t brightness)
 void LCD_Position(uint8_t x, uint8_t y)
 { 
 	ssd1306_command_start();
-	ssd1306_send_byte(renderRAM | (y & 0x07));
+	ssd1306_send_byte(ssd1306_bbuf | (y & 0x07));
 	ssd1306_send_byte(0x10 | (x >> 4));
 	ssd1306_send_byte(x & 0x0f);
 	ssd1306_send_stop();
@@ -453,9 +453,9 @@ void LCD_Clear()
 
 void LCD_Flip()
 {
-	drawRAM ^= 0x20;
-	ssd1306_send_command(drawRAM);
-	renderRAM ^= 0x04;
+	ssd1306_fbuf ^= 0x20;
+	ssd1306_send_command(ssd1306_fbuf);
+	ssd1306_bbuf ^= 0x04;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -463,31 +463,31 @@ void LCD_Flip()
 ////////////////////////////////////////////////////////////////////////////////
 
 // Device address
-#define RTC_ADDR            0x68
+#define RTC_ADDR         0x68
 
 // Registers
-#define RTC_REG_SECONDS      0x00
-#define RTC_REG_MINUTES      0x01
-#define RTC_REG_HOURS        0x02
-#define RTC_REG_DAY          0x03
-#define RTC_REG_DATE         0x04
-#define RTC_REG_MONTH        0x05
-#define RTC_REG_YEAR         0x06
-#define RTC_REG_A1_SECONDS   0x07
-#define RTC_REG_A1_MINUTES   0x08
-#define RTC_REG_A1_HOUR      0x09
-#define RTC_REG_A1_DAY_DATE  0x0A
-#define RTC_REG_A2_MINUTES   0x0B
-#define RTC_REG_A2_HOUR      0x0C
-#define RTC_REG_A2_DAY_DATE  0x0D
-#define RTC_REG_CONTROL      0x0E
-#define RTC_REG_STATUS       0x0F
-#define RTC_REG_AGING_OFFSET 0x10
-#define RTC_REG_TEMP_MSB     0x11
-#define RTC_REG_TEMP_LSB     0x12
+#define RTC_SECONDS      0x00
+#define RTC_MINUTES      0x01
+#define RTC_HOURS        0x02
+#define RTC_DAY          0x03
+#define RTC_DATE         0x04
+#define RTC_MONTH        0x05
+#define RTC_YEAR         0x06
+#define RTC_A1_SECONDS   0x07
+#define RTC_A1_MINUTES   0x08
+#define RTC_A1_HOUR      0x09
+#define RTC_A1_DAY_DATE  0x0A
+#define RTC_A2_MINUTES   0x0B
+#define RTC_A2_HOUR      0x0C
+#define RTC_A2_DAY_DATE  0x0D
+#define RTC_CONTROL      0x0E
+#define RTC_STATUS       0x0F
+#define RTC_AGING_OFFSET 0x10
+#define RTC_TEMP_MSB     0x11
+#define RTC_TEMP_LSB     0x12
 
 // Flags
-#define RTC_HOUR_12         (0x01 << 6)
+#define RTC_HOUR_12      _BV(6)
 
 // Figure out build date and time (Example __DATE__ : "Jul 27 2012" and __TIME__ : "21:06:19")
 #define COMPUTE_BUILD_YEAR ((__DATE__[ 9] - '0') *   10 + (__DATE__[10] - '0'))
@@ -541,14 +541,14 @@ uint8_t rtc_date    = BUILD_DAY;   // 1 - 31
 uint8_t rtc_month   = BUILD_MONTH; // 1 - 12
 uint8_t rtc_year    = BUILD_YEAR;  // 0 - 99
 
-uint8_t decode_bcd(uint8_t num)
+uint8_t rtc_bcd_decode(uint8_t data)
 {
-  return (num / 16 * 10) + (num % 16);
+  return (data / 16 * 10) + (data % 16);
 }
 
-uint8_t encode_bcd(uint8_t num)
+uint8_t rtc_bcd_encode(uint8_t data)
 {
-  return (num / 10 * 16) + (num % 10);
+  return (data / 10 * 16) + (data % 10);
 }
 
 void RTC_ReadDateAndTime()
@@ -557,19 +557,19 @@ void RTC_ReadDateAndTime()
 	// Century flag is not supported!
 	if (I2C_Start(RTC_ADDR, 0))
 	{
-		I2C_Write(RTC_REG_SECONDS);
+		I2C_Write(RTC_SECONDS);
 		I2C_Restart(RTC_ADDR, 7);
-		rtc_seconds = decode_bcd(I2C_Read());
-		rtc_minutes = decode_bcd(I2C_Read());
+		rtc_seconds = rtc_bcd_decode(I2C_Read());
+		rtc_minutes = rtc_bcd_decode(I2C_Read());
 		uint8_t tmp = I2C_Read();
 		if (tmp & RTC_HOUR_12) 
 			rtc_hours = ((tmp >> 4) & 0x01) * 12 + ((tmp >> 5) & 0x01) * 12;
 		else 
-			rtc_hours = decode_bcd(tmp);
+			rtc_hours = rtc_bcd_decode(tmp);
 		tmp = I2C_Read();
-		rtc_date  = decode_bcd(I2C_Read());
-		rtc_month = decode_bcd(I2C_Read() & 0x1F);
-		rtc_year  = decode_bcd(I2C_Read() % 100);
+		rtc_date  = rtc_bcd_decode(I2C_Read());
+		rtc_month = rtc_bcd_decode(I2C_Read() & 0x1F);
+		rtc_year  = rtc_bcd_decode(I2C_Read() % 100);
 		I2C_Stop();
 	}
 }
@@ -581,29 +581,31 @@ void RTC_WriteDateAndTime()
 	// Century flag is not supported!
 	if(I2C_Start(RTC_ADDR, 0))
 	{
-		I2C_Write(RTC_REG_SECONDS);
-		I2C_Write(encode_bcd(rtc_seconds));
-		I2C_Write(encode_bcd(rtc_minutes));
-		I2C_Write(encode_bcd(rtc_hours));
+		I2C_Write(RTC_SECONDS);
+		I2C_Write(rtc_bcd_encode(rtc_seconds));
+		I2C_Write(rtc_bcd_encode(rtc_minutes));
+		I2C_Write(rtc_bcd_encode(rtc_hours));
 		I2C_Write(1);
-		I2C_Write(encode_bcd(rtc_date));
-		I2C_Write(encode_bcd(rtc_month));
-		I2C_Write(encode_bcd(rtc_year));
+		I2C_Write(rtc_bcd_encode(rtc_date));
+		I2C_Write(rtc_bcd_encode(rtc_month));
+		I2C_Write(rtc_bcd_encode(rtc_year));
 		I2C_Stop();
 	}
 }
 
 float RTC_ReadTemperature()
 {
+#if !DEBUG_ON_R1_0
 	if (I2C_Start(RTC_ADDR, 0))
 	{
-		I2C_Write(RTC_REG_TEMP_MSB);
+		I2C_Write(RTC_TEMP_MSB);
 		I2C_Restart(RTC_ADDR, 2);
 		uint8_t msb = I2C_Read();
 		uint8_t lsb = I2C_Read();
 		I2C_Stop();
 		return int16_t(msb << 8 | lsb) / 256.f;
 	}
+#endif
 	return 0;
 }
 
@@ -611,8 +613,13 @@ float RTC_ReadTemperature()
 // One Pin Analog 16-Key Keyboard
 //////////////////////////////////////////////////////////////////////////////// 
 
-#define KBD_PIN PORTB4
+#if DEBUG_ON_R1_0
+#define KBD_PIN PB3
+#define KBD_ADC ADC_3_PB3
+#else
+#define KBD_PIN PB4
 #define KBD_ADC ADC_2_PB4
+#endif
 
 // Keyboard layout on PCB:
 // A0 B0 C0 D0
@@ -620,34 +627,34 @@ float RTC_ReadTemperature()
 // A2 B2 C2 D2
 // A3 B3 C3 D3
 
-#define KEY_NO 0xFF
-#define KEY_A0 0x0F // F
-#define KEY_B0 0x07 // 7
-#define KEY_C0 0x08 // 8
-#define KEY_D0 0x09 // 9
-#define KEY_A1 0x0E // E
-#define KEY_B1 0x04 // 4
-#define KEY_C1 0x05 // 5
-#define KEY_D1 0x06 // 6
-#define KEY_A2 0x0D // S
-#define KEY_B2 0x01 // 1
-#define KEY_C2 0x02 // 2
-#define KEY_D2 0x03 // 3
-#define KEY_A3 0x0C // C
-#define KEY_B3 0x00 // 0
-#define KEY_C3 0x0A // D
-#define KEY_D3 0x0B // P
+#define KBD_NO 0xFF
+#define KBD_A0 0x0F // F
+#define KBD_B0 0x07 // 7
+#define KBD_C0 0x08 // 8
+#define KBD_D0 0x09 // 9
+#define KBD_A1 0x0E // E
+#define KBD_B1 0x04 // 4
+#define KBD_C1 0x05 // 5
+#define KBD_D1 0x06 // 6
+#define KBD_A2 0x0D // S
+#define KBD_B2 0x01 // 1
+#define KBD_C2 0x02 // 2
+#define KBD_D2 0x03 // 3
+#define KBD_A3 0x0C // C
+#define KBD_B3 0x00 // 0
+#define KBD_C3 0x0A // D
+#define KBD_D3 0x0B // P
 
-const uint16_t key_adc[] PROGMEM =
+const uint16_t kbd_adc[] PROGMEM =
 {
 	147, 182, 221, 269, 324, 383, 442, 505,
 	573, 635, 692, 762, 827, 863, 893, 913
 };
 
-const uint8_t key_code[] PROGMEM = 
+const uint8_t kbd_code[] PROGMEM = 
 {
-	KEY_A0, KEY_B0, KEY_C0, KEY_D0, KEY_A1, KEY_B1, KEY_C1, KEY_D1,
-	KEY_A2, KEY_B2, KEY_C2, KEY_D2, KEY_A3, KEY_B3, KEY_C3, KEY_D3
+	KBD_A0, KBD_B0, KBD_C0, KBD_D0, KBD_A1, KBD_B1, KBD_C1, KBD_D1,
+	KBD_A2, KBD_B2, KBD_C2, KBD_D2, KBD_A3, KBD_B3, KBD_C3, KBD_D3
 };
 
 void KBD_Init()
@@ -666,11 +673,11 @@ uint8_t KBD_Read()
 	{
 		for (uint8_t i = 0; i < 16; ++i)
 		{
-			uint16_t adcMax = pgm_read_word(&key_adc[i]);
-			if (adcVal < adcMax) return pgm_read_byte(&key_code[i]);
+			uint16_t adcMax = pgm_read_word(&kbd_adc[i]);
+			if (adcVal < adcMax) return pgm_read_byte(&kbd_code[i]);
 		}
 	}
-	return KEY_NO;
+	return KBD_NO;
 }
 
 ISR(PCINT0_vect)
@@ -711,7 +718,7 @@ float PWR_Voltage()
 	return (1125.3f / ADC_Read(ADC_VCC, 10));
 }
 
-uint8_t PWR_Level()
+float PWR_Level()
 {
 	float voltage = PWR_Voltage();
 	if (voltage > BAT_FULL ) return 1;
