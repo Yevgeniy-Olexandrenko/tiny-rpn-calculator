@@ -240,16 +240,17 @@ void enterMenu(u08 type)
 	select = 0;
 }
 
-void switchToCalcMode()
+void switchToCalcMode(bool yes = true)
 {
-	calcMode = true;
-	FrameSyncStart(FRAME_TIMEOUT_64MS);
+	calcMode = yes;
+	FrameSyncStart();
 }
 
 void switchToRTCMode()
 {
-	calcMode = false;
-	FrameSyncStart(FRAME_TIMEOUT_1S);
+	LCD_TurnOn();
+	oldkey = KBD_Read();
+	switchToCalcMode(false);
 }
 
 void setupAndSwitchToRTCMode()
@@ -315,38 +316,40 @@ void updateRTCMode()
 
 int main() 
 {
+	// init hardware and switch to rtc operation mode
 	ADC_Init();
 	I2C_Init();
 	LCD_Init();
 	KBD_Init();
 	sei();
-
-	LCD_TurnOn();
 	setupAndSwitchToRTCMode();
 
 	while (true)
 	{
+		// read key press and switch to calculator operation mode
 		key = KBD_Read();
 		if (key != oldkey) oldkey = key; else key = KEY_NONE;
 		if (key != KEY_NONE) switchToCalcMode();
 
+		// get time passed since last operation mode switch
 		uint16_t timePassedMs = FrameTimePassedMs();
 
+		// handle power down condition
 		if (timePassedMs >= POWEROFF_MILLIS)
 		{
+			// power down and go to sleeping
 			FrameSyncStop();
 			LCD_TurnOff();
 			PWR_Down();
 
-			/* SLEEPING */
-
-			oldkey = KBD_Read();
-			LCD_TurnOn();
+			// power up an switch to rtc operation mode
 			switchToRTCMode();
 		}
 
+		// handle display brightness change
 		LCD_Brightness(calcMode && timePassedMs < DIMOUT_MILLIS ? 0xFF : 0x00);
 
+		// update current operation mode and idle until next frame
 		if (calcMode) updateCalcMode(); else updateRTCMode();
 		FrameSyncWait();
 	}
