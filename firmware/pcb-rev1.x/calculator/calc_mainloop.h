@@ -180,6 +180,12 @@ void PrintClock()
 	PrintTwoDigitAt(20, 85, 1);
 	PrintTwoDigitAt(rtc_year, 107, 1);
 
+	uint8_t level = (uint8_t)(PWR_Level() * 4 + 0.5f);
+	while (level > 0)
+	{
+		PrintCharAt('-', 85 + (--level) * (FONT_WIDTH * CHAR_SIZE_M + 1), 2);
+	}
+	
 	LCD_Flip();
 }
 
