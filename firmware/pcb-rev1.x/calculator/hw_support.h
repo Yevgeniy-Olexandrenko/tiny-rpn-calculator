@@ -711,7 +711,7 @@ float PWR_Voltage()
 	return (1125.3f / ADC_Read(ADC_VCC, 10));
 }
 
-float PWR_BatteryLevel()
+uint8_t PWR_Level()
 {
 	float voltage = PWR_Voltage();
 	if (voltage > BAT_FULL ) return 1;
@@ -726,5 +726,6 @@ void PWR_Idle()
 
 void PWR_Down()
 {
-	pwr_saving(SLEEP_MODE_PWR_DOWN);
+	do pwr_saving(SLEEP_MODE_PWR_DOWN);
+	while (PWR_Voltage() <= BAT_EMPTY);
 }

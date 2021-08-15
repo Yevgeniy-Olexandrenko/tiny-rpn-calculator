@@ -332,7 +332,7 @@ int main()
 
 		uint16_t timePassedMs = FrameTimePassedMs();
 
-		if (timePassedMs >= POWEROFF_MILLIS || PWR_BatteryLevel() == 0)
+		if (timePassedMs >= POWEROFF_MILLIS)
 		{
 			FrameSyncStop();
 			LCD_TurnOff();
