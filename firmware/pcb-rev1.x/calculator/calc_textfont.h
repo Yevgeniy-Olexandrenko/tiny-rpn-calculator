@@ -2,7 +2,7 @@
 // Compact Font 5x8 with Special Characters
 ////////////////////////////////////////////////////////////////////////////////
 
-#define FONT_BEGIN 0x2B
+#define FONT_BEGIN 0x2A
 #define FONT_WIDTH 0x05
 
 #if FONT_IN_EEMEM

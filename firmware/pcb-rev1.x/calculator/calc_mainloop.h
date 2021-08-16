@@ -31,7 +31,7 @@ const char strMonth[] PROGMEM =
 
 const char strMainOps[] PROGMEM = 
 	"\03"
-	".  " "DUP" "C/D" "NEG" "EEX";
+	".  " "DUP" "DRP" "NEG" "EEX";
 
 const char strFuncOps[] PROGMEM = 
 	"\03"
@@ -56,14 +56,16 @@ const char strMenuTrig[] PROGMEM =
 
 const char strMenuProg[] PROGMEM = 
 	"\03"
-	"BEG" "UNT" "PRG"  // Begin, Until, Edit program
-	"EQ " "NE " "RUN"  // Equal, Not equal, Run program
-	"GT " "LT " "SOL"  // Greater than, Less than, Run solver
-	"IF " "ELS" "THN"; // If, Else, Than
+	"<1 " "<2 " "<3 "
+	"EQ " "NE " "BEG"
+	"GT " "LT " "UNT"
+	"IF " "ELS" "THN"
+	"@1 " "@2 " "@3 ";
 
 const char strMenuSets[] PROGMEM = 
 	"\03"
-	"D/R" "STM" "SDT";
+	"D/R" "STM" "SDT"
+	"END";
 
 struct Menu
 {
@@ -76,7 +78,7 @@ const Menu menus[] PROGMEM =
 {
 	{ strMenuMath, 2, MATH_OPS },
 	{ strMenuTrig, 3, TRIG_OPS },
-	{ strMenuProg, 3, PROG_OPS },
+	{ strMenuProg, 4, PROG_OPS },
 	{ strMenuSets, 0, SETS_OPS },
 };
 
@@ -142,7 +144,7 @@ void PrintStack(u08 i, u08 s, u08 y)
 			s08 fra_dig = DIGITS - lead_z - int_dig;
 
 			u08 x = M_DIGIT_LST, nonzero = false;
-			for (; fra_dig--; m /= 10, x -= DIGIT_WIDTH)
+			for (; fra_dig--; m /= 10, x -= dx)
 			{
 				u08 ones = _ones(m);
 				if (ones || nonzero)
@@ -154,12 +156,12 @@ void PrintStack(u08 i, u08 s, u08 y)
 
 			if (nonzero)
 			{
-				for (; --lead_z > 0; x -= DIGIT_WIDTH) PrintCharAt('0', x, y);
+				for (; --lead_z > 0; x -= dx) PrintCharAt('0', x, y);
 				PrintCharAt('.', x, y);
 			}
 			
 			PrintCharAt('0', x -= POINT_WIDTH, y);
-			for (; int_dig--; m /= 10, x -= DIGIT_WIDTH) PrintCharAt('0' + _ones(m), x, y);
+			for (; int_dig--; m /= 10, x -= dx) PrintCharAt('0' + _ones(m), x, y);
 
 			if (e)
 			{
@@ -191,13 +193,13 @@ void PrintClock()
 	PrintTwoDigitAt(rtc_year, 107, 1);
 
 	uint8_t level = (uint8_t)(PWR_Level() * 4 + 0.5f);
-	while (level > 0)
-	{
-		PrintCharAt('-', 85 + (--level) * (FONT_WIDTH * CHAR_SIZE_M + 1), 2);
-	}
+	while (level > 0) PrintCharAt('-', 85 + (--level) * dx, 2);
 	
 	LCD_Flip();
 }
+
+void getOperationStr(Operation op);
+char buf[4];
 
 void PrintCalculator()
 {
@@ -215,6 +217,7 @@ void PrintCalculator()
 	{
 		PrintCharSize(CHAR_SIZE_S, CHAR_SIZE_S);
 		PrintCharAt(isFunc ? CHAR_SHIFT : (isDeg ? 'D' : 'R'), MODE_CHAR, 0);
+
 		if (ap) PrintCharAt(CHAR_PLAY, MODE_CHAR, 1);
 
 		if (isMenu)
@@ -233,7 +236,15 @@ void PrintCalculator()
 		}
 		else
 		{
-			PrintStack(0, CHAR_SIZE_L, 0);
+			//PrintStack(0, CHAR_SIZE_L, 0);
+
+			getOperationStr(last_op);
+
+			PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_M);
+			PrintStringAt("P1", 0, 2);
+			PrintTwoDigitAt(0x00, 48, 2);
+			PrintStringAt(buf, 48+48, 2);
+			PrintStack(0, CHAR_SIZE_M, 0);
 		}
 	}
 
@@ -256,12 +267,12 @@ void enterMenu(u08 type)
 	select = 0;
 }
 
-void getOperationStr(Operation op, char out[4])
+void getOperationStr(Operation op)
 {
 	if (op < OpDot)
 	{
-		out[0] = '0' + op;
-		out[1] = 0;
+		buf[0] = '0' + op;
+		buf[1] = 0;
 	}
 	else
 	{
@@ -275,8 +286,8 @@ void getOperationStr(Operation op, char out[4])
 		else                    { ops = strMenuSets; op -= SETS_OPS; }
 
 		uint8_t sz = pgm_read_byte(ops++);
-		memcpy_P(&out[0], &ops[op * sz], sz);
-		out[sz] = 0;
+		memcpy_P(&buf[0], &ops[op * sz], sz);
+		buf[sz] = 0;
 	}
 }
 
@@ -293,7 +304,7 @@ void switchToRTCMode()
 	switchToCalcMode(false);
 }
 
-void setupAndSwitchToRTCMode()
+NOINLINE void setupAndSwitchToRTCMode()
 {
 	RTC_WriteDateAndTime();
 	switchToRTCMode();

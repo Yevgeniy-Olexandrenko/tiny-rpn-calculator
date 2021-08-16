@@ -12,6 +12,9 @@
 #include <util/delay.h>  // Needed for delays
 #include <math.h>        // Needed for some math
 
+#undef  NOINLINE
+#define NOINLINE __attribute__ ((noinline))
+
 #undef  FPSTR
 #undef  F
 class __FlashStringHelper;
@@ -25,6 +28,7 @@ class __FlashStringHelper;
 
 typedef bool     b08;
 typedef uint8_t  u08;
+typedef uint16_t u16;
 typedef uint32_t u32;
 typedef int8_t   s08;
 typedef int16_t  s16;

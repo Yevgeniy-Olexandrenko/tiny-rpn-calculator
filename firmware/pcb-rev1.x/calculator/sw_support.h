@@ -4,10 +4,10 @@
 
 template<typename T> static uint8_t _ones(const T & x) { return (uint8_t)(x % 10); }
 template<typename T> static uint8_t _tens(const T & x) { return (uint8_t)((x / 10) % 10); }
-template<typename T> static uint8_t _huns(const T & x) { return (uint8_t)((x / 100) % 10); }
+// template<typename T> static uint8_t _huns(const T & x) { return (uint8_t)((x / 100) % 10); }
 
-template<typename T> static T _min(const T & a, const T & b) { return a < b ? a : b; }
-template<typename T> static T _max(const T & a, const T & b) { return a > b ? a : b; }
+// template<typename T> static T _min(const T & a, const T & b) { return a < b ? a : b; }
+// template<typename T> static T _max(const T & a, const T & b) { return a > b ? a : b; }
 template<typename T> static T _abs(const T & x) { return x < 0 ? -x : x; }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -19,24 +19,24 @@ template<typename T> static T _abs(const T & x) { return x < 0 ? -x : x; }
 volatile bool frameWaiting;
 volatile uint16_t frameCounter;
 
-void FrameSyncStart()
+NOINLINE void FrameSyncStart()
 {
 	WDT_Init(WDT_MODE_INT, FRAME_TIMEOUT);
 	frameCounter = 0;
 }
 
-void FrameSyncStop()
+NOINLINE void FrameSyncStop()
 {
 	WDT_Init(WDT_MODE_DISABLED, 0);
 }
 
-void FrameSyncWait()
+NOINLINE void FrameSyncWait()
 {
 	frameWaiting = true;
 	while (frameWaiting) PWR_Idle();
 }
 
-uint16_t FrameTimePassedMs()
+NOINLINE uint16_t FrameTimePassedMs()
 {
 	return (frameCounter * (16 << FRAME_TIMEOUT));
 }
@@ -57,11 +57,13 @@ ISR(WDT_vect)
 
 uint8_t cw;
 uint8_t ch;
+uint8_t dx;
 
-void PrintCharSize(uint8_t width, uint8_t height)
+NOINLINE void PrintCharSize(uint8_t width, uint8_t height)
 {
 	cw = width;
 	ch = height;
+	dx = FONT_WIDTH * cw + 1;
 }
 
 uint8_t expand4bit(uint8_t b)
@@ -80,7 +82,7 @@ uint8_t expand2bit(uint8_t b)
 	return b;
 }
 
-void PrintCharAt(int8_t c, uint8_t x, uint8_t y)
+NOINLINE void PrintCharAt(int8_t c, uint8_t x, uint8_t y)
 {
 	c -= FONT_BEGIN;
 	for (uint8_t cy = 0; cy < ch; ++cy)
@@ -102,30 +104,28 @@ void PrintCharAt(int8_t c, uint8_t x, uint8_t y)
 	}
 }
 
-void PrintStringAt(const char* s, uint8_t x, uint8_t y)
+NOINLINE void PrintStringAt(const char* s, uint8_t x, uint8_t y)
 {
-	uint8_t ww = FONT_WIDTH * cw + 1;
 	while (char c = *s++)
 	{
 		PrintCharAt(c, x, y);
-		x += ww;
+		x += dx;
 	}
 }
 
-void PrintStringAt(const __FlashStringHelper* s, uint8_t i, uint8_t x, uint8_t y)
+NOINLINE void PrintStringAt(const __FlashStringHelper* s, uint8_t i, uint8_t x, uint8_t y)
 {
 	const char* ptr = (const char*)s;
 	uint8_t iw = pgm_read_byte(ptr++);
-	uint8_t ww = FONT_WIDTH * cw + 1;
 
-	for (ptr += (i * iw); iw > 0; --iw, ++ptr, x += ww)
+	for (ptr += (i * iw); iw > 0; --iw, ++ptr, x += dx)
 	{
 		PrintCharAt(pgm_read_byte(ptr), x, y);
 	}
 }
 
-void PrintTwoDigitAt(uint8_t number, uint8_t x, uint8_t y)
+NOINLINE void PrintTwoDigitAt(uint8_t number, uint8_t x, uint8_t y)
 {
 	PrintCharAt('0' + _tens(number), x, y);
-	PrintCharAt('0' + _ones(number), x + FONT_WIDTH * cw + 1, y);
+	PrintCharAt('0' + _ones(number), x + dx, y);
 }

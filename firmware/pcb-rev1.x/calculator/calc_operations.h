@@ -137,14 +137,14 @@ f32  dtop()       { return dget(0); }
 f32  dtopx()      { if (isLast) { lastx = dtop(); isLast = false; } return dtop(); }
 f32  dpopx()      { dtopx(); return dpop(); }
 
-b08 dpop(u08& dest, u08 min, u08 max)
+NOINLINE b08 dpop(u08& dest, u08 min, u08 max)
 {
 	u08 b = dpop();
 	if (b >= min && b <= max) { dest = b; return true; }
 	onError(); return false;
 }
 
-void rotateStack(b08 isUp)
+NOINLINE void rotateStack(b08 isUp)
 {
 	f32 x = dpop(), y = dpop(), z = dpop();
 	if (isUp)
@@ -170,7 +170,7 @@ void apop()  { if (ap) pp = as[--ap]; else onError(); }
 ////////////////////////////////////////////////////////////////////////////////
 
 enum { EXP, SIN, ASIN };
-f32 taylorExpSinASin(f32 f, u08 op)
+NOINLINE f32 taylorExpSinASin(f32 f, u08 op)
 {
 	f32 result, frac, ff = f * f;
 	result = frac = ((op == EXP) ? 1 : f);
@@ -198,7 +198,7 @@ f32 _log (f32 f) { return log(f); }
 f32 _exp (f32 f) { return taylorExpSinASin(f, EXP);  }
 f32 _sin (f32 f) { return taylorExpSinASin(f, SIN);  }
 f32 _asin(f32 f) { return taylorExpSinASin(f, ASIN); }
-f32 _p10 (s08 e) 
+NOINLINE f32 _p10 (s08 e) 
 { 
 	f32 f = 1.f;
 	if (e > 0) 
@@ -215,7 +215,7 @@ f32 _p10 (s08 e)
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
 
-void memoryAccess(b08 isWrite) 
+NOINLINE void memoryAccess(b08 isWrite) 
 {
 	u08 i;
 	if (dpop(i, 0, 9))
@@ -281,7 +281,7 @@ void onError() { ap = 0; dpush(NAN); }
 // Edit the number in X Register of Data Stack
 ////////////////////////////////////////////////////////////////////////////////
 
-void checkNewNum()
+NOINLINE void checkNewNum()
 {
 	if (isNewNum)
 	{
@@ -291,7 +291,7 @@ void checkNewNum()
 	}
 }
 
-void enterDigit(u08 digit)
+NOINLINE void enterDigit(u08 digit)
 {
 	checkNewNum();
 	dpush(dtop() < 0 ? -digit : digit);
@@ -303,7 +303,7 @@ void enterDigit(u08 digit)
 	isEdit = true;
 }
 
-void clearDigit() // TODO: check!
+NOINLINE void clearDigit() // TODO: check!
 {
 	if (decimals) 
 	{
@@ -336,7 +336,7 @@ void FnNum6() { enterDigit(6); }
 void FnNum7() { enterDigit(7); }
 void FnNum8() { enterDigit(8); }
 void FnNum9() { enterDigit(9); }
-void FnDot()  {	if (!decimals) { checkNewNum(); decimals = 1; }	isEdit = true; }
+void FnDot()  { if (!decimals) { checkNewNum(); decimals = 1; } isEdit = true; }
 void FnDup()  { dpush(dtop()); }
 void FnDrop() { if (isNewNum) dpopx(); else clearDigit(); }
 void FnNeg()  { dpush(-dpopx()); isEdit = !isNewNum; }
@@ -365,8 +365,8 @@ void FnSqrt() { dpush(2); FnNrt(); }
 void FnInv()  { dpush(1.f / dpopx()); }
 void FnPw10() { dpush(_p10(dpopx())); }
 void FnLg()   { FnLn(); dpush(M_LOG10E); FnMul(); }
-void FnPow()  {	callScript(SoPow); }
-void FnExp()  {	dpush(_exp(dpopx())); }
+void FnPow()  { callScript(SoPow); }
+void FnExp()  { dpush(_exp(dpopx())); }
 void FnLn()   { dpush(_log(dpopx())); }
 void FnNrt()  { FnInv(); FnPow(); }
 
@@ -492,17 +492,20 @@ const OpHandler opHandlers[] PROGMEM =
 	/* 10 */ &FnEnd,  // Last Operation
 };
 
-void ExecuteOperation(Operation op)
+Operation last_op = OpEnd;
+
+NOINLINE void ExecuteOperation(Operation op)
 {
 	isFunc = false;
 	isMenu = false;
 	isEdit = false;
 	isLast = isNewNum;
+
+	// TODO: save op to program
+	if (!ap) last_op = op;
 	
 	OpHandler opHandler = (OpHandler)pgm_read_word(&opHandlers[op]);
 	opHandler();
-
-	// TODO: save op to program
 
 	isPushed = (op == OpDup);
 	if (!isEdit)

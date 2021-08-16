@@ -1,6 +1,20 @@
 #pragma once
 
 ////////////////////////////////////////////////////////////////////////////////
+// Helping Functions
+////////////////////////////////////////////////////////////////////////////////
+
+NOINLINE uint8_t BCD_Decode(uint8_t data)
+{
+  return (data / 16 * 10) + (data % 16);
+}
+
+NOINLINE uint8_t BCD_Encode(uint8_t data)
+{
+  return (data / 10 * 16) + (data % 10);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Watch Dog Timer
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -47,7 +61,7 @@ void ADC_Init()
 	ADCSRA = _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
 }
 
-uint16_t ADC_Read(uint8_t channel, uint8_t delay)
+NOINLINE uint16_t ADC_Read(uint8_t channel, uint8_t delay)
 {
 	ADMUX = channel;
 	while (delay--) _delay_ms(1);
@@ -81,13 +95,13 @@ uint16_t ADC_Read(uint8_t channel, uint8_t delay)
 
 #define I2C_DELAY() _delay_us(1)
 
-void i2c_scl_h_wait()
+NOINLINE void i2c_scl_h_wait()
 {
 	I2C_SCL_H();
 	while (!I2C_SCL_I());
 }
 
-uint8_t i2c_read_write(uint8_t data)
+NOINLINE uint8_t i2c_read_write(uint8_t data)
 {
 	for (uint8_t sda_i, i = 8; i > 0; --i)
 	{
@@ -105,19 +119,19 @@ uint8_t i2c_read_write(uint8_t data)
 	return data;
 }
 
-bool i2c_write(uint8_t data)
+NOINLINE bool i2c_write(uint8_t data)
 {
 	i2c_read_write(data);
 	i2c_scl_h_wait();
 
-	uint8_t ack = 1;
-	if (I2C_SDA_I()) ack = 0;
+	bool ack = true;
+	if (I2C_SDA_I()) ack = false;
 
 	I2C_SCL_L();
 	return ack;
 }
 
-uint8_t i2c_read(bool ack)
+NOINLINE uint8_t i2c_read(bool ack)
 {
 	uint8_t data = i2c_read_write(0xFF);
 	if (ack) I2C_SDA_L();
@@ -138,7 +152,7 @@ uint8_t i2c_read_nack()
 	return i2c_read(false);
 }
 
-void i2c_start()
+NOINLINE void i2c_start()
 {
 	i2c_scl_h_wait();
 	I2C_SDA_L();
@@ -158,7 +172,7 @@ bool i2c_start_read(uint8_t addr)
 	return i2c_write(addr << 1 | 1);
 }
 
-void i2c_stop()
+NOINLINE void i2c_stop()
 {
 	I2C_SDA_L();
 	i2c_scl_h_wait();
@@ -168,7 +182,7 @@ void i2c_stop()
 
 void I2C_Init()
 {
-	//
+	// do nothing
 }
 
 bool I2C_Start(uint8_t address, int readcount)
@@ -575,19 +589,10 @@ void LCD_Flip()
 uint8_t rtc_seconds = BUILD_SEC;   // 0 - 59
 uint8_t rtc_minutes = BUILD_MIN;   // 0 - 59
 uint8_t rtc_hours   = BUILD_HOUR;  // 0 - 23
+
 uint8_t rtc_date    = BUILD_DAY;   // 1 - 31
 uint8_t rtc_month   = BUILD_MONTH; // 1 - 12
 uint8_t rtc_year    = BUILD_YEAR;  // 0 - 99
-
-uint8_t rtc_bcd_decode(uint8_t data)
-{
-  return (data / 16 * 10) + (data % 16);
-}
-
-uint8_t rtc_bcd_encode(uint8_t data)
-{
-  return (data / 10 * 16) + (data % 10);
-}
 
 void RTC_ReadDateAndTime()
 {
@@ -597,17 +602,17 @@ void RTC_ReadDateAndTime()
 	{
 		I2C_Write(RTC_SECONDS);
 		I2C_Restart(RTC_ADDR, 7);
-		rtc_seconds = rtc_bcd_decode(I2C_Read());
-		rtc_minutes = rtc_bcd_decode(I2C_Read());
+		rtc_seconds = BCD_Decode(I2C_Read());
+		rtc_minutes = BCD_Decode(I2C_Read());
 		uint8_t tmp = I2C_Read();
 		if (tmp & RTC_HOUR_12) 
 			rtc_hours = ((tmp >> 4) & 0x01) * 12 + ((tmp >> 5) & 0x01) * 12;
 		else 
-			rtc_hours = rtc_bcd_decode(tmp);
+			rtc_hours = BCD_Decode(tmp);
 		tmp = I2C_Read();
-		rtc_date  = rtc_bcd_decode(I2C_Read());
-		rtc_month = rtc_bcd_decode(I2C_Read() & 0x1F);
-		rtc_year  = rtc_bcd_decode(I2C_ReadLast() % 100);
+		rtc_date  = BCD_Decode(I2C_Read());
+		rtc_month = BCD_Decode(I2C_Read() & 0x1F);
+		rtc_year  = BCD_Decode(I2C_ReadLast() % 100);
 		I2C_Stop();
 	}
 }
@@ -620,13 +625,13 @@ void RTC_WriteDateAndTime()
 	if(I2C_Start(RTC_ADDR, 0))
 	{
 		I2C_Write(RTC_SECONDS);
-		I2C_Write(rtc_bcd_encode(rtc_seconds));
-		I2C_Write(rtc_bcd_encode(rtc_minutes));
-		I2C_Write(rtc_bcd_encode(rtc_hours));
+		I2C_Write(BCD_Encode(rtc_seconds));
+		I2C_Write(BCD_Encode(rtc_minutes));
+		I2C_Write(BCD_Encode(rtc_hours));
 		I2C_Write(1);
-		I2C_Write(rtc_bcd_encode(rtc_date));
-		I2C_Write(rtc_bcd_encode(rtc_month));
-		I2C_Write(rtc_bcd_encode(rtc_year));
+		I2C_Write(BCD_Encode(rtc_date));
+		I2C_Write(BCD_Encode(rtc_month));
+		I2C_Write(BCD_Encode(rtc_year));
 		I2C_Stop();
 	}
 }
@@ -704,7 +709,7 @@ void KBD_Init()
 	set_bit(GIMSK, PCIE);
 }
 
-uint8_t KBD_Read()
+NOINLINE uint8_t KBD_Read()
 {
 	uint16_t adcVal = ADC_Read(KBD_ADC, 1);
 	if (adcVal > 110)
@@ -751,7 +756,7 @@ void pwr_saving(uint8_t mode)
 	set_bit(ADCSRA, ADEN);
 }
 
-float PWR_Voltage()
+NOINLINE float PWR_Voltage()
 {
 	return (1125.3f / ADC_Read(ADC_VCC, 10));
 }
@@ -759,8 +764,8 @@ float PWR_Voltage()
 float PWR_Level()
 {
 	float voltage = PWR_Voltage();
-	if (voltage > BAT_FULL ) return 1;
-	if (voltage < BAT_EMPTY) return 0;
+	if (voltage >= BAT_FULL ) return 1;
+	if (voltage <= BAT_EMPTY) return 0;
 	return ((voltage - BAT_EMPTY) / (BAT_FULL - BAT_EMPTY));
 }
 
