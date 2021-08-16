@@ -29,13 +29,23 @@ const char strMonth[] PROGMEM =
 	"JAN" "FEB" "MAR" "APR" "MAY" "JUN"
 	"JUL" "AUG" "SEP" "OCT" "NOV" "DEC";
 
+const char strMainOps[] PROGMEM = 
+	"\03"
+	".  " "DUP" "C/D" "NEG" "EEX";
+
+const char strFuncOps[] PROGMEM = 
+	"\03"
+	"LST" "RCL" "STO" "-  " "CST"
+	"M+ " "*  " "---" "---" "/  "
+	"SWP" "+  " "AC " "RTD" "RTU";
+
 #define MENU_OPS_PER_LINE 3
 
 const char strMenuMath[] PROGMEM = 
 	"\03"
-	"X?+" "?,X" "1/X"
-	"10;" "LG+" "Y;+"
-	"E;+" "LN+" ";,Y";
+	"X? " "?,X" "1/X"
+	"10;" "LG " "Y; "
+	"E; " "LN " ";,Y";
 
 const char strMenuTrig[] PROGMEM = 
 	"\03"
@@ -46,14 +56,14 @@ const char strMenuTrig[] PROGMEM =
 
 const char strMenuProg[] PROGMEM = 
 	"\03"
-	"---" "---" "---"
-	"EQ+" "NE+" "---"
-	"GT+" "LT+" "---"
-	"IF+" "ELS" "THN";
+	"BEG" "UNT" "PRG"  // Begin, Until, Edit program
+	"EQ " "NE " "RUN"  // Equal, Not equal, Run program
+	"GT " "LT " "SOL"  // Greater than, Less than, Run solver
+	"IF " "ELS" "THN"; // If, Else, Than
 
 const char strMenuSets[] PROGMEM = 
 	"\03"
-	"D/R" "TIM" "DAT";
+	"D/R" "STM" "SDT";
 
 struct Menu
 {
@@ -244,6 +254,30 @@ void enterMenu(u08 type)
 	isMenu = true;
 	memcpy_P(&menu, &menus[type], sizeof(Menu));
 	select = 0;
+}
+
+void getOperationStr(Operation op, char out[4])
+{
+	if (op < OpDot)
+	{
+		out[0] = '0' + op;
+		out[1] = 0;
+	}
+	else
+	{
+		const char* ops;
+
+		if      (op < FUNC_OPS) { ops = strMainOps;  op -= OpDot;    }
+		else if (op < MATH_OPS) { ops = strFuncOps;  op -= FUNC_OPS; }
+		else if (op < TRIG_OPS) { ops = strMenuMath; op -= MATH_OPS; }
+		else if (op < PROG_OPS) { ops = strMenuTrig; op -= TRIG_OPS; }
+		else if (op < SETS_OPS) { ops = strMenuProg; op -= PROG_OPS; }
+		else                    { ops = strMenuSets; op -= SETS_OPS; }
+
+		uint8_t sz = pgm_read_byte(ops++);
+		memcpy_P(&out[0], &ops[op * sz], sz);
+		out[sz] = 0;
+	}
 }
 
 void switchToCalcMode(bool yes = true)

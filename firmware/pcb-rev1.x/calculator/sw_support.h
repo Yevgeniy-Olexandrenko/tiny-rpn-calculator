@@ -80,7 +80,7 @@ uint8_t expand2bit(uint8_t b)
 	return b;
 }
 
-void PrintCharAt(uint8_t c, uint8_t x, uint8_t y)
+void PrintCharAt(int8_t c, uint8_t x, uint8_t y)
 {
 	c -= FONT_BEGIN;
 	for (uint8_t cy = 0; cy < ch; ++cy)
@@ -88,13 +88,27 @@ void PrintCharAt(uint8_t c, uint8_t x, uint8_t y)
 		LCD_Position(x, y + cy);
 		for (uint8_t i = 0; i < FONT_WIDTH; ++i)
 		{
-			uint8_t bitmap = FONT_READ(&font[FONT_WIDTH * c + i]);
-			if (ch == CHAR_SIZE_M)
-				bitmap = expand4bit((bitmap >> (cy << 2)) & 0x0f); // Expand 0000abcd
-			else if (ch == CHAR_SIZE_L)
-				bitmap = expand2bit((bitmap >> (cy << 1)) & 0x03); // Expand 000000ab
+			uint8_t bitmap = 0x00;
+			if (c >= 0)
+			{
+				bitmap = FONT_READ(&font[FONT_WIDTH * c + i]);
+				if (ch == CHAR_SIZE_M)
+					bitmap = expand4bit((bitmap >> (cy << 2)) & 0x0f); // Expand 0000abcd
+				else if (ch == CHAR_SIZE_L)
+					bitmap = expand2bit((bitmap >> (cy << 1)) & 0x03); // Expand 000000ab
+			}
 			LCD_Write(bitmap, cw);
 		}
+	}
+}
+
+void PrintStringAt(const char* s, uint8_t x, uint8_t y)
+{
+	uint8_t ww = FONT_WIDTH * cw + 1;
+	while (char c = *s++)
+	{
+		PrintCharAt(c, x, y);
+		x += ww;
 	}
 }
 
@@ -104,7 +118,7 @@ void PrintStringAt(const __FlashStringHelper* s, uint8_t i, uint8_t x, uint8_t y
 	uint8_t iw = pgm_read_byte(ptr++);
 	uint8_t ww = FONT_WIDTH * cw + 1;
 
-	for(ptr += (i * iw); iw > 0; --iw, ++ptr, x += ww)
+	for (ptr += (i * iw); iw > 0; --iw, ++ptr, x += ww)
 	{
 		PrintCharAt(pgm_read_byte(ptr), x, y);
 	}
