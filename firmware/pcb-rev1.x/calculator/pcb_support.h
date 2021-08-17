@@ -1,8 +1,60 @@
 #pragma once
 
-////////////////////////////////////////////////////////////////////////////////
-// Helping Functions
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
+// PCB Rev 1.2
+// Supported hardware and software modules:
+// -----------------------------------------------------------------------------
+
+// BCD - Binary-Coded Decimals conversion
+// WDT - Watch Dog Timer configuration
+// ADC - Analog to Digital Converter reading
+// I2C - I2C Bus devices reading/writing
+// LCD - SSD1306 128x32 Display control
+// RTC - DS3231M Real Time Clock control
+// KBD - One Pin Analog 16-Key Keyboard reading
+// PWR - MPU Power management (Idle + Power down)
+// FPS - Frames per Second sync for main loop update
+
+// -----------------------------------------------------------------------------
+// Includes and Helping Defines
+// -----------------------------------------------------------------------------
+
+#undef  F_CPU
+#define F_CPU 16000000UL  // 16 MHz internal
+
+// includes
+#include <avr/pgmspace.h> // needed for reading data from PROGMEM
+#include <avr/eeprom.h>   // needed for saving data to EEPROM
+#include <avr/power.h>    // needed for power management
+#include <avr/sleep.h>    // needed for sleeping
+#include <util/delay.h>   // needed for delays
+
+// data types definition
+typedef bool     b08;
+typedef uint8_t  u08;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef int8_t   s08;
+typedef int16_t  s16;
+typedef int32_t  s32;
+typedef float    f32;
+
+// bits manipulations
+#define set_bit(sfr, bit) ((sfr) |= _BV(bit))
+#define clr_bit(sfr, bit) ((sfr) &= ~_BV(bit))
+#define isb_set(sfr, bit) ((sfr) & _BV(bit))
+#define isb_clr(sfr, bit) (!((sfr) & _BV(bit)))
+
+// support for strings in PROGMEM
+#undef  FPSTR
+#undef  F
+class __FlashStringHelper;
+#define FPSTR(pstr_pointer) (reinterpret_cast<const __FlashStringHelper *>(pstr_pointer))
+#define F(string_literal) (FPSTR(PSTR(string_literal)))
+
+// -----------------------------------------------------------------------------
+// Packed Binary-Coded Decimals
+// -----------------------------------------------------------------------------
 
 NOINLINE uint8_t BCD_Decode(uint8_t data)
 {
@@ -14,14 +66,14 @@ NOINLINE uint8_t BCD_Encode(uint8_t data)
   return (data / 10 * 16) + (data % 10);
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 // Watch Dog Timer
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 
-#define WDT_MODE_DISABLED  0x00
-#define WDT_MODE_RES       0x08 // To reset the CPU if there is a timeout
-#define WDT_MODE_INT       0x40 // Timeout will cause an interrupt
-#define WDT_MODE_INT_RES   0x48 // First time-out interrupt , the second time out - reset
+#define WDT_MODE_DISABLED  0x00 // disabled
+#define WDT_MODE_RES       0x08 // to reset the CPU if there is a timeout
+#define WDT_MODE_INT       0x40 // timeout will cause an interrupt
+#define WDT_MODE_INT_RES   0x48 // first time-out interrupt, the second time out - reset
 
 #define WDT_TIMEOUT_16MS   0x00 // (16 ± 1.6) ms
 #define WDT_TIMEOUT_32MS   0x01 // (32 ± 3.2) ms
@@ -34,20 +86,20 @@ NOINLINE uint8_t BCD_Encode(uint8_t data)
 #define WDT_TIMEOUT_4S     0x08 // (4096 ± 409.6) ms
 #define WDT_TIMEOUT_8S     0x09 // (8192 ± 819.2) ms
 
-void WDT_Init(uint8_t mode, uint8_t prescaler)
+void WDT_Init(u08 mode, u08 prescaler)
 {
 	// does not change global interrupts enable flag
-	uint8_t wdtr = mode | ((prescaler > 7) ? 0x20 | (prescaler - 8) : prescaler);
-	uint8_t sreg = SREG;
+	u08 wdtr = mode | ((prescaler > 7) ? 0x20 | (prescaler - 8) : prescaler);
+	u08 sreg = SREG;
 	cli();
 	WDTCR = _BV(WDCE) | _BV(WDE);
 	WDTCR = wdtr;
 	SREG  = sreg;
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 // Analog to Digital Converter
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 
 #define ADC_0_PB5 (0b0000)
 #define ADC_1_PB2 (0b0001)
@@ -61,7 +113,7 @@ void ADC_Init()
 	ADCSRA = _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
 }
 
-NOINLINE uint16_t ADC_Read(uint8_t channel, uint8_t delay)
+NOINLINE u16 ADC_Read(u08 channel, u08 delay)
 {
 	ADMUX = channel;
 	while (delay--) _delay_ms(1);
@@ -69,14 +121,14 @@ NOINLINE uint16_t ADC_Read(uint8_t channel, uint8_t delay)
 	set_bit(ADCSRA, ADSC);
 	while (isb_set(ADCSRA, ADSC));
 
-	uint8_t adcl = ADCL;
-	uint8_t adch = ADCH;
+	u08 adcl = ADCL;
+	u08 adch = ADCH;
 	return (adcl | adch << 8);
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 // I2C Bus
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 
 #if SOFTWARE_I2C
 
@@ -101,9 +153,9 @@ NOINLINE void i2c_scl_h_wait()
 	while (!I2C_SCL_I());
 }
 
-NOINLINE uint8_t i2c_read_write(uint8_t data)
+NOINLINE u08 i2c_read_write(u08 data)
 {
-	for (uint8_t sda_i, i = 8; i > 0; --i)
+	for (u08 sda_i, i = 8; i > 0; --i)
 	{
 		I2C_SDA_H();
 		if (!(data & 0x80)) I2C_SDA_L();
@@ -119,21 +171,21 @@ NOINLINE uint8_t i2c_read_write(uint8_t data)
 	return data;
 }
 
-NOINLINE bool i2c_write(uint8_t data)
+NOINLINE b08 i2c_write(u08 data)
 {
 	i2c_read_write(data);
 	i2c_scl_h_wait();
 
-	bool ack = true;
+	b08 ack = true;
 	if (I2C_SDA_I()) ack = false;
 
 	I2C_SCL_L();
 	return ack;
 }
 
-NOINLINE uint8_t i2c_read(bool ack)
+NOINLINE u08 i2c_read(b08 ack)
 {
-	uint8_t data = i2c_read_write(0xFF);
+	u08 data = i2c_read_write(0xFF);
 	if (ack) I2C_SDA_L();
 	i2c_scl_h_wait();
 	I2C_DELAY();
@@ -142,12 +194,12 @@ NOINLINE uint8_t i2c_read(bool ack)
 	return data;
 }
 
-uint8_t i2c_read_ack()
+u08 i2c_read_ack()
 { 
 	return i2c_read(true);
 }
 
-uint8_t i2c_read_nack()
+u08 i2c_read_nack()
 {
 	return i2c_read(false);
 }
@@ -160,13 +212,13 @@ NOINLINE void i2c_start()
 	I2C_SCL_L();
 }
 
-bool i2c_start_write(uint8_t addr)
+b08 i2c_start_write(u08 addr)
 {
 	i2c_start();
 	return i2c_write(addr << 1);
 }
 
-bool i2c_start_read(uint8_t addr)
+b08 i2c_start_read(u08 addr)
 {
 	i2c_start();
 	return i2c_write(addr << 1 | 1);
@@ -380,9 +432,9 @@ void I2C_Stop()
 
 #endif
 
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 // SSD1306 128x32 Display on I2C Bus
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 
 #define LCD_ADDR  0x3C
 #define LCD_COMM  0x00
@@ -395,15 +447,15 @@ uint8_t ssd1306_fbuf = 0x40;
 
 const uint8_t ssd1306_init_sequence[] PROGMEM =
 {
-	0xC8,       // Set scan direction (C0 scan from COM0 to COM[N-1] or C8 mirroring)
-	0xA1,       // Set segment remap (A0 regular or A1 flip)
-	0xA8, 0x1F, // Set mux ratio (N+1) where: 14<N<64 ... 3F or 1F
+	0xC8,       // set scan direction (C0 scan from COM0 to COM[N-1] or C8 mirroring)
+	0xA1,       // set segment remap (A0 regular or A1 flip)
+	0xA8, 0x1F, // set mux ratio (N+1) where: 14<N<64 ... 3F or 1F
 	0xDA, 0x02, // COM config pin mapping:
 	            //                  right/left left/right
 	            //      sequential      02        22
 	            //      alternate       12        32
-	0x20, 0x00, // Horizontal addressing mode (line feed after EOL)
-	0x8D, 0x14 // Charge pump (0x14 enable or 0x10 disable)
+	0x20, 0x00, // horizontal addressing mode (line feed after EOL)
+	0x8D, 0x14  // charge pump (0x14 enable or 0x10 disable)
 };
 
 void ssd1306_send_start()
@@ -510,14 +562,14 @@ void LCD_Flip()
 	ssd1306_bbuf ^= 0x04;
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 // DS3231M Real Time Clock on I2C Bus
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 
-// Device address
+// device address
 #define RTC_ADDR         0x68
 
-// Registers
+// registers
 #define RTC_SECONDS      0x00
 #define RTC_MINUTES      0x01
 #define RTC_HOURS        0x02
@@ -538,10 +590,10 @@ void LCD_Flip()
 #define RTC_TEMP_MSB     0x11
 #define RTC_TEMP_LSB     0x12
 
-// Flags
+// flags
 #define RTC_HOUR_12      _BV(6)
 
-// Figure out build date and time (Example __DATE__ : "Jul 27 2012" and __TIME__ : "21:06:19")
+// figure out build date and time (Example __DATE__ : "Jul 27 2012" and __TIME__ : "21:06:19")
 #define COMPUTE_BUILD_YEAR ((__DATE__[ 9] - '0') *   10 + (__DATE__[10] - '0'))
 #define COMPUTE_BUILD_DAY  (((__DATE__[4] >= '0') ? (__DATE__[4] - '0') * 10 : 0) + (__DATE__[5] - '0'))
 #define BUILD_MONTH_IS_JAN (__DATE__[0] == 'J' && __DATE__[1] == 'a' && __DATE__[2] == 'n')
@@ -652,9 +704,9 @@ float RTC_ReadTemperature()
 	return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 // One Pin Analog 16-Key Keyboard
-//////////////////////////////////////////////////////////////////////////////// 
+// -----------------------------------------------------------------------------
 
 #if DEBUG_ON_R1_0
 #define KBD_PIN PB3
@@ -688,13 +740,13 @@ float RTC_ReadTemperature()
 #define KBD_C3 0x0A // D
 #define KBD_D3 0x0B // P
 
-const uint16_t kbd_adc[] PROGMEM =
+const u16 kbd_adc[] PROGMEM =
 {
 	147, 182, 221, 269, 324, 383, 442, 505,
 	573, 635, 692, 762, 827, 863, 893, 913
 };
 
-const uint8_t kbd_code[] PROGMEM = 
+const u08 kbd_code[] PROGMEM = 
 {
 	KBD_A0, KBD_B0, KBD_C0, KBD_D0, KBD_A1, KBD_B1, KBD_C1, KBD_D1,
 	KBD_A2, KBD_B2, KBD_C2, KBD_D2, KBD_A3, KBD_B3, KBD_C3, KBD_D3
@@ -711,12 +763,12 @@ void KBD_Init()
 
 NOINLINE uint8_t KBD_Read()
 {
-	uint16_t adcVal = ADC_Read(KBD_ADC, 1);
+	u16 adcVal = ADC_Read(KBD_ADC, 1);
 	if (adcVal > 110)
 	{
-		for (uint8_t i = 0; i < 16; ++i)
+		for (u08 i = 0; i < 16; ++i)
 		{
-			uint16_t adcMax = pgm_read_word(&kbd_adc[i]);
+			u16 adcMax = pgm_read_word(&kbd_adc[i]);
 			if (adcVal < adcMax) return pgm_read_byte(&kbd_code[i]);
 		}
 	}
@@ -729,14 +781,14 @@ ISR(PCINT0_vect)
 	// just interrupt sleeping
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 // Power Management
-///////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 
 #define BAT_FULL  4.1f
 #define BAT_EMPTY 3.5f
 
-void pwr_sleeping(uint8_t mode)
+void pwr_sleeping(u08 mode)
 {
 	set_sleep_mode(mode);
 	sleep_enable();
@@ -744,7 +796,7 @@ void pwr_sleeping(uint8_t mode)
 	sleep_disable();
 }
 
-void pwr_saving(uint8_t mode)
+void pwr_saving(u08 mode)
 {
 	clr_bit(ADCSRA, ADEN);
 	power_all_disable();
@@ -756,14 +808,14 @@ void pwr_saving(uint8_t mode)
 	set_bit(ADCSRA, ADEN);
 }
 
-NOINLINE float PWR_Voltage()
+NOINLINE f32 PWR_Voltage()
 {
 	return (1125.3f / ADC_Read(ADC_VCC, 10));
 }
 
-float PWR_Level()
+f32 PWR_Level()
 {
-	float voltage = PWR_Voltage();
+	f32 voltage = PWR_Voltage();
 	if (voltage >= BAT_FULL ) return 1;
 	if (voltage <= BAT_EMPTY) return 0;
 	return ((voltage - BAT_EMPTY) / (BAT_FULL - BAT_EMPTY));
@@ -778,4 +830,41 @@ void PWR_Down()
 {
 	do pwr_saving(SLEEP_MODE_PWR_DOWN);
 	while (PWR_Voltage() <= BAT_EMPTY);
+}
+
+// -----------------------------------------------------------------------------
+// Frames per Second Synchronization
+// -----------------------------------------------------------------------------
+
+#define FRAME_TIMEOUT WDT_TIMEOUT_64MS  // 15 fps
+
+volatile b08 fps_waiting;
+volatile u16 fps_counter;
+
+NOINLINE void FPS_SyncStart()
+{
+	WDT_Init(WDT_MODE_INT, FRAME_TIMEOUT);
+	fps_counter = 0;
+}
+
+NOINLINE void FPS_SyncStop()
+{
+	WDT_Init(WDT_MODE_DISABLED, 0);
+}
+
+NOINLINE void FPS_SyncWait()
+{
+	fps_waiting = true;
+	while (fps_waiting) PWR_Idle();
+}
+
+NOINLINE u16 FPS_SyncMillis()
+{
+	return (fps_counter * (16 << FRAME_TIMEOUT));
+}
+
+ISR(WDT_vect)
+{
+	fps_waiting = false;
+	fps_counter++;
 }

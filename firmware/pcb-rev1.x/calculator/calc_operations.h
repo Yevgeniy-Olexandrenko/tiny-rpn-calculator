@@ -1,22 +1,23 @@
 #pragma once
 
+#define DS_CAPACITY 24
+#define AS_CAPACITY 24
+
 typedef uint8_t Operation;
 typedef uint8_t OpScript;
 
-#define DS_CAPACITY 24
 f32 ds[DS_CAPACITY];
 u08 dp = 0;
 
 f32 lastx = 0;
 f32 memory[10];
 
-#define AS_CAPACITY 24
 u16 as[AS_CAPACITY];
 u08 ap = 0;
 
 Operation programs[3][90] EEMEM;
 u16 pp = 0;
-u08 cl = 0;
+u08 cl = 0; // condition level
 
 b08 isNewNum = true; // True if stack has to be lifted before entering a new number
 u08 decimals = 0;    // Number of decimals entered (input after decimal dot)
@@ -166,52 +167,6 @@ NOINLINE void rotateStack(b08 isUp)
 /* Address Stack Operations */
 void apush() { if (ap < AS_CAPACITY) as[ap++] = pp; else onError(); }
 void apop()  { if (ap) pp = as[--ap]; else onError(); }
-
-////////////////////////////////////////////////////////////////////////////////
-// Basic Internal Math
-////////////////////////////////////////////////////////////////////////////////
-
-enum { EXP, SIN, ASIN };
-NOINLINE f32 taylorExpSinASin(f32 f, u08 op)
-{
-	f32 result, frac, ff = f * f;
-	result = frac = ((op == EXP) ? 1 : f);
-
-	for (u16 i = 1; i < 129; i++)
-	{
-		u16 i2 = 2 * i;
-		u16 i2p = i2 + 1;
-		u16 i2m = i2 - 1;
-		u16 i2m2 = i2m * i2m;
-		f32 ffi2i2p = ff / (i2 * i2p);
-
-		switch(op)
-		{
-			case EXP: frac *= f / i; break;
-			case SIN: frac *= -ffi2i2p; break;
-			default:  frac *= ffi2i2p * i2m2; break;
-		}
-		result += frac;
-	}
-	return result;
-}
-
-f32 _log (f32 f) { return log(f); }
-f32 _exp (f32 f) { return taylorExpSinASin(f, EXP);  }
-f32 _sin (f32 f) { return taylorExpSinASin(f, SIN);  }
-f32 _asin(f32 f) { return taylorExpSinASin(f, ASIN); }
-NOINLINE f32 _p10 (s08 e) 
-{ 
-	f32 f = 1.f;
-	if (e > 0) 
-		while (e--) f *= 10.f;
-	else 
-		while (e++) f /= 10.f;
-	return f;
-}
-
-#define _to_rad(x) ((x) * (M_PI / 180.f))
-#define _to_deg(x) ((x) * (180.f / M_PI))
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers

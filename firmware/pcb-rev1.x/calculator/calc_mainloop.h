@@ -295,7 +295,7 @@ void getOperationStr(Operation op)
 void switchToCalcMode(bool yes = true)
 {
 	calcMode = yes;
-	FrameSyncStart();
+	FPS_SyncStart();
 }
 
 void switchToRTCMode()
@@ -384,13 +384,13 @@ int main()
 		if (key != KEY_NONE) switchToCalcMode();
 
 		// get time passed since last operation mode switch
-		uint16_t timePassedMs = FrameTimePassedMs();
+		uint16_t timePassedMs = FPS_SyncMillis();
 
 		// handle power down condition
 		if (timePassedMs >= POWEROFF_MILLIS)
 		{
 			// power down and go to sleeping
-			FrameSyncStop();
+			FPS_SyncStop();
 			LCD_TurnOff();
 			PWR_Down();
 
@@ -403,7 +403,7 @@ int main()
 
 		// update current operation mode and idle until next frame
 		if (calcMode) updateCalcMode(); else updateRTCMode();
-		FrameSyncWait();
+		FPS_SyncWait();
 	}
 	return 0;
 }
