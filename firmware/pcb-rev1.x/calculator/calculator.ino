@@ -3,10 +3,11 @@
 #define FONT_IN_EEMEM  0
 #define ALLOW_NOINLINE 0
 
-#undef  NOINLINE
 #if ALLOW_NOINLINE
+#undef  NOINLINE
 #define NOINLINE __attribute__ ((noinline))
 #else
+#undef  NOINLINE
 #define NOINLINE
 #endif
 

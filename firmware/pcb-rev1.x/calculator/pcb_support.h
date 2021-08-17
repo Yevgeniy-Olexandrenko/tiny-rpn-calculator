@@ -240,10 +240,10 @@ NOINLINE void I2C_Stop()
 #define LCD_WIDTH 128 
 #define LCD_PAGES 4
 
-uint8_t ssd1306_bbuf = 0xB4;
-uint8_t ssd1306_fbuf = 0x40;
+u08 lcd_bbuf = 0xB4;
+u08 lcd_fbuf = 0x40;
 
-const uint8_t ssd1306_init_sequence[] PROGMEM =
+const u08 lcd_init_data[] PROGMEM =
 {
 	0xC8,       // set scan direction (C0 scan from COM0 to COM[N-1] or C8 mirroring)
 	0xA1,       // set segment remap (A0 regular or A1 flip)
@@ -256,98 +256,73 @@ const uint8_t ssd1306_init_sequence[] PROGMEM =
 	0x8D, 0x14  // charge pump (0x14 enable or 0x10 disable)
 };
 
-void ssd1306_send_start()
+void lcd_start_command()
 { 
 	I2C_StartWrite(LCD_ADDR);
+	I2C_Write(LCD_COMM);
 }
 
-uint8_t ssd1306_send_byte(uint8_t b)
+void lcd_start_data()
 { 
-	return I2C_Write(b);
+	I2C_StartWrite(LCD_ADDR);
+	I2C_Write(LCD_DATA);
 }
 
-void ssd1306_send_stop()
+void lcd_command(u08 cmd)
 { 
+	lcd_start_command();
+	I2C_Write(cmd);
 	I2C_Stop();
-}
-
-void ssd1306_command_start()
-{ 
-	ssd1306_send_start();
-	ssd1306_send_byte(LCD_COMM);
-}
-
-void ssd1306_data_start()
-{ 
-	ssd1306_send_start();
-	ssd1306_send_byte(LCD_DATA);
-}
-
-void ssd1306_send_command(uint8_t cmd)
-{ 
-	ssd1306_command_start();
-	ssd1306_send_byte(cmd);
-	ssd1306_send_stop();
-}
-
-void ssd1306_send_data(uint8_t b)
-{ 
-	if (!ssd1306_send_byte(b))
-	{
-		ssd1306_send_stop();
-		ssd1306_data_start();
-		ssd1306_send_byte(b);
-	}
 }
 
 void LCD_Init()
 {
-	ssd1306_command_start();
-	for (uint8_t i = 0; i < sizeof(ssd1306_init_sequence); i++)
+	lcd_start_command();
+	for (u08 i = 0; i < sizeof(lcd_init_data); i++)
 	{
-		ssd1306_send_byte(pgm_read_byte(&ssd1306_init_sequence[i]));
+		I2C_Write(pgm_read_byte(&lcd_init_data[i]));
 	}
-	ssd1306_send_stop();
+	I2C_Stop();
 }
 
 void LCD_TurnOn()
 {
-	ssd1306_send_command(0xAF);
+	lcd_command(0xAF);
 }
 
 void LCD_TurnOff()
 { 
-	ssd1306_send_command(0xAE);
+	lcd_command(0xAE);
 }
 
-void LCD_Brightness(uint8_t brightness)
+void LCD_Brightness(u08 brightness)
 { 
-	ssd1306_command_start();
-	ssd1306_send_byte(0x81);
-	ssd1306_send_byte(brightness);
-	ssd1306_send_stop();
+	lcd_start_command();
+	I2C_Write(0x81);
+	I2C_Write(brightness);
+	I2C_Stop();
 }
 
-void LCD_Position(uint8_t x, uint8_t y)
+void LCD_Position(u08 x, u08 y)
 { 
-	ssd1306_command_start();
-	ssd1306_send_byte(ssd1306_bbuf | (y & 0x07));
-	ssd1306_send_byte(0x10 | (x >> 4));
-	ssd1306_send_byte(x & 0x0f);
-	ssd1306_send_stop();
+	lcd_start_command();
+	I2C_Write(lcd_bbuf | (y & 0x07));
+	I2C_Write(0x10 | (x >> 4));
+	I2C_Write(x & 0x0F);
+	I2C_Stop();
 }
 
-void LCD_Write(uint8_t b, uint8_t s)
+void LCD_Write(u08 b, u08 s)
 {
-	ssd1306_data_start();
-	while (s--) ssd1306_send_data(b);
-	ssd1306_send_stop();
+	lcd_start_data();
+	while (s--) I2C_Write(b);
+	I2C_Stop();
 }
 
 void LCD_Clear()
 {
 	LCD_Position(0, 0);
-	for (uint8_t i = LCD_PAGES; i > 0; --i)
+	for (u08 i = LCD_PAGES; i > 0; --i)
 	{
 		LCD_Write(0x00, LCD_WIDTH);
 	}
@@ -355,9 +330,9 @@ void LCD_Clear()
 
 void LCD_Flip()
 {
-	ssd1306_fbuf ^= 0x20;
-	ssd1306_send_command(ssd1306_fbuf);
-	ssd1306_bbuf ^= 0x04;
+	lcd_fbuf ^= 0x20;
+	lcd_bbuf ^= 0x04;
+	lcd_command(lcd_fbuf);
 }
 
 // -----------------------------------------------------------------------------
