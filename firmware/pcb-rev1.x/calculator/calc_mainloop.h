@@ -174,6 +174,8 @@ void PrintStack(u08 i, u08 s, u08 y)
 	}
 }
 
+uint8_t battery;
+
 void PrintClock()
 {
 	LCD_Clear();
@@ -193,8 +195,8 @@ void PrintClock()
 	PrintTensOnesAt(20, 85, 1);
 	PrintTensOnesAt(rtc_year, 107, 1);
 
-	uint8_t level = (uint8_t)(PWR_Level() * 4 + 0.5f);
-	while (level > 0) PrintCharAt('-', 85 + (--level) * dx, 2);
+	uint8_t i = battery;
+	while (i) PrintCharAt('-', 85 + (--i) * dx, 2);
 	
 	LCD_Flip();
 }
@@ -302,6 +304,7 @@ void switchToRTCMode()
 {
 	LCD_TurnOn();
 	RTC_ReadTemperature();
+	battery = (uint8_t)(PWR_Level() * 4 + 0.5f);
 	switchToCalcMode(false);
 	oldkey = KBD_Read();
 }
