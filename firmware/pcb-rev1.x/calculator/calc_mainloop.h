@@ -369,11 +369,7 @@ void updateRTCMode()
 int main() 
 {
 	// init hardware and switch to rtc operation mode
-	ADC_Init();
-	I2C_Init();
-	LCD_Init();
-	KBD_Init();
-	sei();
+	PCB_Init();
 	setupAndSwitchToRTCMode();
 
 	while (true)

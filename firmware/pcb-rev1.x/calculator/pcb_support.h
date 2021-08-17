@@ -56,12 +56,12 @@ class __FlashStringHelper;
 // Packed Binary-Coded Decimals
 // -----------------------------------------------------------------------------
 
-NOINLINE uint8_t BCD_Decode(uint8_t data)
+NOINLINE u08 BCD_Decode(u08 data)
 {
   return (data / 16 * 10) + (data % 16);
 }
 
-NOINLINE uint8_t BCD_Encode(uint8_t data)
+NOINLINE u08 BCD_Encode(u08 data)
 {
   return (data / 10 * 16) + (data % 10);
 }
@@ -130,8 +130,6 @@ NOINLINE u16 ADC_Read(u08 channel, u08 delay)
 // I2C Bus
 // -----------------------------------------------------------------------------
 
-#if SOFTWARE_I2C
-
 #define I2C_DDR DDRB
 #define I2C_PIN PINB
 #define I2C_SDA PB0
@@ -171,7 +169,15 @@ NOINLINE u08 i2c_read_write(u08 data)
 	return data;
 }
 
-NOINLINE b08 i2c_write(u08 data)
+NOINLINE void i2c_start()
+{
+	i2c_scl_h_wait();
+	I2C_SDA_L();
+	I2C_DELAY();
+	I2C_SCL_L();
+}
+
+NOINLINE b08 I2C_Write(u08 data)
 {
 	i2c_read_write(data);
 	i2c_scl_h_wait();
@@ -183,7 +189,7 @@ NOINLINE b08 i2c_write(u08 data)
 	return ack;
 }
 
-NOINLINE u08 i2c_read(b08 ack)
+NOINLINE u08 I2C_Read(b08 ack)
 {
 	u08 data = i2c_read_write(0xFF);
 	if (ack) I2C_SDA_L();
@@ -194,243 +200,35 @@ NOINLINE u08 i2c_read(b08 ack)
 	return data;
 }
 
-u08 i2c_read_ack()
+u08 I2C_ReadAck()
 { 
-	return i2c_read(true);
+	return I2C_Read(true);
 }
 
-u08 i2c_read_nack()
+u08 I2C_ReadNack()
 {
-	return i2c_read(false);
+	return I2C_Read(false);
 }
 
-NOINLINE void i2c_start()
-{
-	i2c_scl_h_wait();
-	I2C_SDA_L();
-	I2C_DELAY();
-	I2C_SCL_L();
-}
-
-b08 i2c_start_write(u08 addr)
+b08 I2C_StartWrite(u08 addr)
 {
 	i2c_start();
-	return i2c_write(addr << 1);
+	return I2C_Write(addr << 1);
 }
 
-b08 i2c_start_read(u08 addr)
+b08 I2C_StartRead(u08 addr)
 {
 	i2c_start();
-	return i2c_write(addr << 1 | 1);
+	return I2C_Write(addr << 1 | 1);
 }
 
-NOINLINE void i2c_stop()
+NOINLINE void I2C_Stop()
 {
 	I2C_SDA_L();
 	i2c_scl_h_wait();
 	I2C_DELAY();
 	I2C_SDA_H();
 }
-
-void I2C_Init()
-{
-	// do nothing
-}
-
-bool I2C_Start(uint8_t address, int readcount)
-{
-	if (readcount == 0)
-		return i2c_start_write(address);
-	else
-		return i2c_start_read(address);
-}
-
-bool I2C_Restart(uint8_t address, int readcount) 
-{
-	return I2C_Start(address, readcount);
-}
-
-uint8_t I2C_Read()
-{
-	return i2c_read_ack();
-}
-
-uint8_t I2C_ReadLast()
-{
-	return i2c_read_nack();
-}
-
-bool I2C_Write(uint8_t data)
-{
-	return i2c_write(data);
-}
-
-void I2C_Stop() 
-{
-	i2c_stop();
-}
-
-#else
-
-#define DDR_USI       DDRB
-#define PORT_USI      PORTB
-#define PIN_USI       PINB
-
-#define PORT_USI_SDA  PORTB0
-#define PORT_USI_SCL  PORTB2
-#define PIN_USI_SDA   PINB0
-#define PIN_USI_SCL   PINB2
-
-#define DDR_USI_CL    DDR_USI
-#define PORT_USI_CL   PORT_USI
-#define PIN_USI_CL    PIN_USI
-
-#define TWI_FAST_MODE
-#ifdef  TWI_FAST_MODE                // TWI FAST mode timing limits. SCL = 100-400kHz
-#define DELAY_T2TWI (_delay_us(2))   // >1.3us
-#define DELAY_T4TWI (_delay_us(1))   // >0.6us
-#else                                // TWI STANDARD mode timing limits. SCL <= 100kHz
-#define DELAY_T2TWI (_delay_us(5))   // >4.7us
-#define DELAY_T4TWI (_delay_us(4))   // >4.0us
-#endif
-
-#define TWI_NACK_BIT 0               // Bit position for (N)ACK bit.
-
-// Prepare register value to: Clear flags, and set USI to shift 8 bits i.e. count 16 clock edges.
-const uint8_t USISR_8bit = 1<<USISIF | 1<<USIOIF | 1<<USIPF | 1<<USIDC | 0x0<<USICNT0;
-
-// Prepare register value to: Clear flags, and set USI to shift 1 bit i.e. count 2 clock edges.
-const uint8_t USISR_1bit = 1<<USISIF | 1<<USIOIF | 1<<USIPF | 1<<USIDC | 0xE<<USICNT0;
-
-int I2Ccount;
-
-uint8_t i2c_transfer(uint8_t data) 
-{
-	USISR = data;                                // Set USISR according to data.
-												 // Prepare clocking.
-	data  = 0<<USISIE | 0<<USIOIE |              // Interrupts disabled
-			1<<USIWM1 | 0<<USIWM0 |              // Set USI in Two-wire mode.
-			1<<USICS1 | 0<<USICS0 | 1<<USICLK |  // Software clock strobe as source.
-			1<<USITC;                            // Toggle Clock Port.
-	do {
-		DELAY_T2TWI;
-		USICR = data;                            // Generate positive SCL edge.
-		while (!(PIN_USI_CL & 1<<PIN_USI_SCL));  // Wait for SCL to go high.
-		DELAY_T4TWI;
-		USICR = data;                            // Generate negative SCL edge.
-	} while (!(USISR & 1<<USIOIF));              // Check for transfer complete.
-
-	DELAY_T2TWI;
-	data = USIDR;                                // Read out data.
-	USIDR = 0xFF;                                // Release SDA.
-	DDR_USI |= (1<<PIN_USI_SDA);                 // Enable SDA as output.
-
-	return data;                                 // Return the data from the USIDR
-}
-
-void I2C_Init()
-{
-	PORT_USI |= 1<<PIN_USI_SDA;                  // Enable pullup on SDA.
-	PORT_USI_CL |= 1<<PIN_USI_SCL;               // Enable pullup on SCL.
-
-	DDR_USI_CL |= 1<<PIN_USI_SCL;                // Enable SCL as output.
-	DDR_USI |= 1<<PIN_USI_SDA;                   // Enable SDA as output.
-
-	USIDR = 0xFF;                                // Preload data register with "released level" data.
-	USICR = 0<<USISIE | 0<<USIOIE |              // Disable Interrupts.
-			1<<USIWM1 | 0<<USIWM0 |              // Set USI in Two-wire mode.
-			1<<USICS1 | 0<<USICS0 | 1<<USICLK |  // Software stobe as counter clock source
-			0<<USITC;
-	USISR = 1<<USISIF | 1<<USIOIF | 1<<USIPF |   // Clear flags,
-			1<<USIDC  |	0<<USICNT0;              // and reset counter.
-}
-
-uint8_t I2C_Read()
-{
-	if ((I2Ccount != 0) && (I2Ccount != -1)) I2Ccount--;
-
-	/* Read a byte */
-	DDR_USI &= ~(1<<PIN_USI_SDA);                // Enable SDA as input.
-	uint8_t data = i2c_transfer(USISR_8bit);
-
-	/* Prepare to generate ACK (or NACK in case of End Of Transmission) */
-	if (I2Ccount == 0) USIDR = 0xFF; else USIDR = 0x00;
-	i2c_transfer(USISR_1bit);                    // Generate ACK/NACK.
-
-	return data;                                 // Read successfully completed
-}
-
-uint8_t I2C_ReadLast()
-{
-	I2Ccount = 0;
-	return I2C_Read();
-}
-
-bool I2C_Write(uint8_t data)
-{
-	/* Write a byte */
-	PORT_USI_CL &= ~(1<<PIN_USI_SCL);            // Pull SCL LOW.
-	USIDR = data;                                // Setup data.
-	i2c_transfer(USISR_8bit);                    // Send 8 bits on bus.
-
-	/* Clock and verify (N)ACK from slave */
-	DDR_USI &= ~(1<<PIN_USI_SDA);                // Enable SDA as input.
-	if (i2c_transfer(USISR_1bit) & 1<<TWI_NACK_BIT) return false;
-
-	return true;                                 // Write successfully completed
-}
-
-bool I2C_Start(uint8_t address, int readcount)
-{
-	/* Start transmission by sending address */
-	if (readcount != 0) { I2Ccount = readcount; readcount = 1; }
-	uint8_t addressRW = address<<1 | readcount;
-
-	/* Release SCL to ensure that (repeated) Start can be performed */
-	PORT_USI_CL |= 1<<PIN_USI_SCL;               // Release SCL.
-	while (!(PIN_USI_CL & 1<<PIN_USI_SCL));      // Verify that SCL becomes high.
-#ifdef TWI_FAST_MODE
-	DELAY_T4TWI;
-#else
-	DELAY_T2TWI;
-#endif
-
-	/* Generate Start Condition */
-	PORT_USI &= ~(1<<PIN_USI_SDA);               // Force SDA LOW.
-	DELAY_T4TWI;
-	PORT_USI_CL &= ~(1<<PIN_USI_SCL);            // Pull SCL LOW.
-	PORT_USI |= 1<<PIN_USI_SDA;                  // Release SDA.
-
-	if (!(USISR & 1<<USISIF)) return false;
-
-	/*Write address */
-	PORT_USI_CL &= ~(1<<PIN_USI_SCL);            // Pull SCL LOW.
-	USIDR = addressRW;                           // Setup data.
-	i2c_transfer(USISR_8bit);                    // Send 8 bits on bus.
-
-	/* Clock and verify (N)ACK from slave */
-	DDR_USI &= ~(1<<PIN_USI_SDA);                // Enable SDA as input.
-	if (i2c_transfer(USISR_1bit) & 1<<TWI_NACK_BIT) return false; // No ACK
-
-	return true;                                 // Start successfully completed
-}
-
-bool I2C_Restart(uint8_t address, int readcount) 
-{
-	return I2C_Start(address, readcount);
-}
-
-void I2C_Stop() 
-{
-	PORT_USI &= ~(1<<PIN_USI_SDA);               // Pull SDA low.
-	PORT_USI_CL |= 1<<PIN_USI_SCL;               // Release SCL.
-	while (!(PIN_USI_CL & 1<<PIN_USI_SCL));      // Wait for SCL to go high.
-	DELAY_T4TWI;
-	PORT_USI |= 1<<PIN_USI_SDA;                  // Release SDA.
-	DELAY_T2TWI;
-}
-
-#endif
 
 // -----------------------------------------------------------------------------
 // SSD1306 128x32 Display on I2C Bus
@@ -460,7 +258,7 @@ const uint8_t ssd1306_init_sequence[] PROGMEM =
 
 void ssd1306_send_start()
 { 
-	I2C_Start(LCD_ADDR, 0);
+	I2C_StartWrite(LCD_ADDR);
 }
 
 uint8_t ssd1306_send_byte(uint8_t b)
@@ -650,21 +448,21 @@ void RTC_ReadDateAndTime()
 {
 	// Day of the week is not used!
 	// Century flag is not supported!
-	if (I2C_Start(RTC_ADDR, 0))
+	if (I2C_StartWrite(RTC_ADDR))
 	{
 		I2C_Write(RTC_SECONDS);
-		I2C_Restart(RTC_ADDR, 7);
-		rtc_seconds = BCD_Decode(I2C_Read());
-		rtc_minutes = BCD_Decode(I2C_Read());
-		uint8_t tmp = I2C_Read();
+		I2C_StartRead(RTC_ADDR);
+		rtc_seconds = BCD_Decode(I2C_ReadAck());
+		rtc_minutes = BCD_Decode(I2C_ReadAck());
+		uint8_t tmp = I2C_ReadAck();
 		if (tmp & RTC_HOUR_12) 
 			rtc_hours = ((tmp >> 4) & 0x01) * 12 + ((tmp >> 5) & 0x01) * 12;
 		else 
 			rtc_hours = BCD_Decode(tmp);
-		tmp = I2C_Read();
-		rtc_date  = BCD_Decode(I2C_Read());
-		rtc_month = BCD_Decode(I2C_Read() & 0x1F);
-		rtc_year  = BCD_Decode(I2C_ReadLast() % 100);
+		tmp = I2C_ReadAck();
+		rtc_date  = BCD_Decode(I2C_ReadAck());
+		rtc_month = BCD_Decode(I2C_ReadAck() & 0x1F);
+		rtc_year  = BCD_Decode(I2C_ReadNack() % 100);
 		I2C_Stop();
 	}
 }
@@ -674,7 +472,7 @@ void RTC_WriteDateAndTime()
 	// Time always stored in 24-hour format!
 	// Day of the week is not used!
 	// Century flag is not supported!
-	if(I2C_Start(RTC_ADDR, 0))
+	if(I2C_StartWrite(RTC_ADDR))
 	{
 		I2C_Write(RTC_SECONDS);
 		I2C_Write(BCD_Encode(rtc_seconds));
@@ -691,12 +489,12 @@ void RTC_WriteDateAndTime()
 float RTC_ReadTemperature()
 {
 #if !DEBUG_ON_R1_0
-	if (I2C_Start(RTC_ADDR, 0))
+	if (I2C_StartWrite(RTC_ADDR))
 	{
 		I2C_Write(RTC_TEMP_MSB);
-		I2C_Restart(RTC_ADDR, 2);
-		uint8_t msb = I2C_Read();
-		uint8_t lsb = I2C_ReadLast();
+		I2C_StartRead(RTC_ADDR);
+		uint8_t msb = I2C_ReadAck();
+		uint8_t lsb = I2C_ReadNack();
 		I2C_Stop();
 		return int16_t(msb << 8 | lsb) / 256.f;
 	}
@@ -788,22 +586,14 @@ ISR(PCINT0_vect)
 #define BAT_FULL  4.1f
 #define BAT_EMPTY 3.5f
 
-void pwr_sleeping(u08 mode)
-{
-	set_sleep_mode(mode);
-	sleep_enable();
-	sleep_cpu();
-	sleep_disable();
-}
-
 void pwr_saving(u08 mode)
 {
 	clr_bit(ADCSRA, ADEN);
 	power_all_disable();
-	pwr_sleeping(mode);
-#if !SOFTWARE_I2C	
-	power_usi_enable();
-#endif	
+	set_sleep_mode(mode);
+	sleep_enable();
+	sleep_cpu();
+	sleep_disable();
 	power_adc_enable();
 	set_bit(ADCSRA, ADEN);
 }
@@ -867,4 +657,16 @@ ISR(WDT_vect)
 {
 	fps_waiting = false;
 	fps_counter++;
+}
+
+// -----------------------------------------------------------------------------
+// PCB Hardware Initialization
+// -----------------------------------------------------------------------------
+
+void PCB_Init()
+{
+	ADC_Init();
+	LCD_Init();
+	KBD_Init();
+	sei();
 }

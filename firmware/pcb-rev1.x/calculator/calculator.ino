@@ -1,12 +1,13 @@
 // Firmware configuration
 #define DEBUG_ON_R1_0  1
 #define FONT_IN_EEMEM  0
-#define SOFTWARE_I2C   0
 #define ALLOW_NOINLINE 0
 
-#if ALLOW_NOINLINE
 #undef  NOINLINE
+#if ALLOW_NOINLINE
 #define NOINLINE __attribute__ ((noinline))
+#else
+#define NOINLINE
 #endif
 
 #include "pcb_support.h"
