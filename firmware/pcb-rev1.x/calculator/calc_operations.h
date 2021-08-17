@@ -1,3 +1,5 @@
+#pragma once
+
 typedef uint8_t Operation;
 typedef uint8_t OpScript;
 
