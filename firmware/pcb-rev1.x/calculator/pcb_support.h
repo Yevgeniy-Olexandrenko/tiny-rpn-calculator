@@ -411,42 +411,41 @@ void LCD_Flip()
 #define BUILD_MIN         ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_MIN)
 #define BUILD_SEC         ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_SEC)
 
-uint8_t rtc_seconds = BUILD_SEC;   // 0 - 59
-uint8_t rtc_minutes = BUILD_MIN;   // 0 - 59
-uint8_t rtc_hours   = BUILD_HOUR;  // 0 - 23
+u08 rtc_seconds = BUILD_SEC;   // 0 - 59
+u08 rtc_minutes = BUILD_MIN;   // 0 - 59
+u08 rtc_hours   = BUILD_HOUR;  // 0 - 23
+u08 rtc_date    = BUILD_DAY;   // 1 - 31
+u08 rtc_month   = BUILD_MONTH; // 1 - 12
+u08 rtc_year    = BUILD_YEAR;  // 0 - 99
+f32 rtc_temp    = 22;
 
-uint8_t rtc_date    = BUILD_DAY;   // 1 - 31
-uint8_t rtc_month   = BUILD_MONTH; // 1 - 12
-uint8_t rtc_year    = BUILD_YEAR;  // 0 - 99
-
-void RTC_ReadDateAndTime()
+void RTC_ReadTimeDate()
 {
+	// Time always stored in 24-hour format!
 	// Day of the week is not used!
 	// Century flag is not supported!
+
 	if (I2C_StartWrite(RTC_ADDR))
 	{
 		I2C_Write(RTC_SECONDS);
 		I2C_StartRead(RTC_ADDR);
 		rtc_seconds = BCD_Decode(I2C_ReadAck());
 		rtc_minutes = BCD_Decode(I2C_ReadAck());
-		uint8_t tmp = I2C_ReadAck();
-		if (tmp & RTC_HOUR_12) 
-			rtc_hours = ((tmp >> 4) & 0x01) * 12 + ((tmp >> 5) & 0x01) * 12;
-		else 
-			rtc_hours = BCD_Decode(tmp);
-		tmp = I2C_ReadAck();
-		rtc_date  = BCD_Decode(I2C_ReadAck());
-		rtc_month = BCD_Decode(I2C_ReadAck() & 0x1F);
-		rtc_year  = BCD_Decode(I2C_ReadNack() % 100);
+		rtc_hours   = BCD_Decode(I2C_ReadAck());
+		I2C_ReadAck();
+		rtc_date    = BCD_Decode(I2C_ReadAck());
+		rtc_month   = BCD_Decode(I2C_ReadAck() & 0x1F);
+		rtc_year    = BCD_Decode(I2C_ReadNack() % 100);
 		I2C_Stop();
 	}
 }
 
-void RTC_WriteDateAndTime()
+void RTC_WriteTimeDate()
 {
 	// Time always stored in 24-hour format!
 	// Day of the week is not used!
 	// Century flag is not supported!
+
 	if(I2C_StartWrite(RTC_ADDR))
 	{
 		I2C_Write(RTC_SECONDS);
@@ -461,20 +460,19 @@ void RTC_WriteDateAndTime()
 	}
 }
 
-float RTC_ReadTemperature()
+void RTC_ReadTemperature()
 {
 #if !DEBUG_ON_R1_0
 	if (I2C_StartWrite(RTC_ADDR))
 	{
 		I2C_Write(RTC_TEMP_MSB);
 		I2C_StartRead(RTC_ADDR);
-		uint8_t msb = I2C_ReadAck();
-		uint8_t lsb = I2C_ReadNack();
+		u08 msb = I2C_ReadAck();
+		u08 lsb = I2C_ReadNack();
+		rtc_temp = s16(msb << 8 | lsb) / 256.f;
 		I2C_Stop();
-		return int16_t(msb << 8 | lsb) / 256.f;
 	}
 #endif
-	return 0;
 }
 
 // -----------------------------------------------------------------------------

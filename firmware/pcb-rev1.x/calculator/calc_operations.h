@@ -192,7 +192,7 @@ void enterConstant()
 		switch(i)
 		{
 			case 0: dpush(PWR_Voltage() ); return;
-			case 1: dpush(RTC_ReadTemperature()); return;
+			case 1: dpush(rtc_temp); return;
 			case 2: dpush(M_E ); return;
 			case 3: dpush(M_PI); return;
 		}
@@ -345,7 +345,7 @@ void FnThen() { cl--; }
 void FnSwDR() { isDeg ^= true; }
 void FnTime()
 {
-	RTC_ReadDateAndTime();
+	RTC_ReadTimeDate();
 	if (dpop(rtc_seconds, 0, 59) &&
 		dpop(rtc_minutes, 0, 59) &&
 		dpop(rtc_hours,   0, 23))
@@ -353,7 +353,7 @@ void FnTime()
 }
 void FnDate()
 {
-	RTC_ReadDateAndTime();
+	RTC_ReadTimeDate();
 	if (dpop(rtc_year,  0, 99) &&
 		dpop(rtc_month, 1, 12) &&
 		dpop(rtc_date,  1, 31))

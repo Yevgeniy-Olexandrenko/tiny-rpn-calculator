@@ -168,7 +168,7 @@ void PrintStack(u08 i, u08 s, u08 y)
 			{
 				PrintCharSize(CHAR_SIZE_M, s >> 1);
 				if (e < 0) { e = -e; PrintCharAt('-', E_SIGN, y); }
-				PrintTwoDigitAt(e, E_DIGIT1, y);
+				PrintTensOnesAt(e, E_DIGIT1, y);
 			}
 		}
 	}
@@ -181,17 +181,17 @@ void PrintClock()
 	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_L);
 	PrintCharAt(':', 20, 0);
 	PrintCharAt(':', 47, 0);
-	PrintTwoDigitAt(rtc_hours, 0, 0);
-	PrintTwoDigitAt(rtc_minutes, 27, 0);
-	PrintTwoDigitAt(rtc_seconds, 54, 0);
+	PrintTensOnesAt(rtc_hours, 0, 0);
+	PrintTensOnesAt(rtc_minutes, 27, 0);
+	PrintTensOnesAt(rtc_seconds, 54, 0);
 
 	PrintCharSize(CHAR_SIZE_S, CHAR_SIZE_S);
 	PrintStringAt(FPSTR(strMonth), rtc_month - 1, 85, 0);
 
 	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_S);
-	PrintTwoDigitAt(rtc_date, 107, 0);
-	PrintTwoDigitAt(20, 85, 1);
-	PrintTwoDigitAt(rtc_year, 107, 1);
+	PrintTensOnesAt(rtc_date, 107, 0);
+	PrintTensOnesAt(20, 85, 1);
+	PrintTensOnesAt(rtc_year, 107, 1);
 
 	uint8_t level = (uint8_t)(PWR_Level() * 4 + 0.5f);
 	while (level > 0) PrintCharAt('-', 85 + (--level) * dx, 2);
@@ -243,7 +243,7 @@ void PrintCalculator()
 
 			PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_M);
 			PrintStringAt("P1", 0, 2);
-			PrintTwoDigitAt(0x00, 48, 2);
+			PrintTensOnesAt(0x00, 48, 2);
 			PrintStringAt(buf, 48+48, 2);
 			PrintStack(0, CHAR_SIZE_M, 0);
 		}
@@ -301,13 +301,14 @@ void switchToCalcMode(bool yes = true)
 void switchToRTCMode()
 {
 	LCD_TurnOn();
-	oldkey = KBD_Read();
+	RTC_ReadTemperature();
 	switchToCalcMode(false);
+	oldkey = KBD_Read();
 }
 
 NOINLINE void setupAndSwitchToRTCMode()
 {
-	RTC_WriteDateAndTime();
+	RTC_WriteTimeDate();
 	switchToRTCMode();
 }
 
@@ -362,7 +363,7 @@ void updateCalcMode()
 
 void updateRTCMode()
 {
-	RTC_ReadDateAndTime();
+	RTC_ReadTimeDate();
 	PrintClock();
 }
 
@@ -374,13 +375,11 @@ int main()
 
 	while (true)
 	{
-		// read key press and switch to calculator operation mode
-		key = KBD_Read();
-		if (key != oldkey) oldkey = key; else key = KEY_NONE;
-		if (key != KEY_NONE) switchToCalcMode();
-
 		// get time passed since last operation mode switch
 		uint16_t timePassedMs = FPS_SyncMillis();
+
+		// handle display brightness change
+		LCD_Brightness(calcMode && timePassedMs < DIMOUT_MILLIS ? 0xFF : 0x00);
 
 		// handle power down condition
 		if (timePassedMs >= POWEROFF_MILLIS)
@@ -394,8 +393,10 @@ int main()
 			switchToRTCMode();
 		}
 
-		// handle display brightness change
-		LCD_Brightness(calcMode && timePassedMs < DIMOUT_MILLIS ? 0xFF : 0x00);
+		// read key press and switch to calculator operation mode
+		key = KBD_Read();
+		if (key != oldkey) oldkey = key; else key = KEY_NONE;
+		if (key != KEY_NONE) switchToCalcMode();
 
 		// update current operation mode and idle until next frame
 		if (calcMode) updateCalcMode(); else updateRTCMode();

@@ -392,7 +392,7 @@ NOINLINE void PrintStringAt(const __FlashStringHelper* s, uint8_t i, uint8_t x, 
 	}
 }
 
-NOINLINE void PrintTwoDigitAt(uint8_t number, uint8_t x, uint8_t y)
+NOINLINE void PrintTensOnesAt(uint8_t number, uint8_t x, uint8_t y)
 {
 	PrintCharAt('0' + _tens(number), x, y);
 	PrintCharAt('0' + _ones(number), x + dx, y);
