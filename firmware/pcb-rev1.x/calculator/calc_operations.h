@@ -43,7 +43,7 @@ enum /* Operation codes */
 {
 	// basic operations
 	OpNum0, OpNum1, OpNum2, OpNum3, OpNum4, OpNum5, OpNum6, OpNum7,
-	OpNum8, OpNum9, OpDot,  OpDup,  OpDrop, OpNeg,  OpEExp, AcFunc,
+	OpNum8, OpNum9, OpDot,  OpDup,  OpClr, OpNeg,  OpEExp, AcFunc,
 
 	// shifted operations
 	OpLast, OpRcl, OpSto,  OpSub, OpCst,  OpMAdd, OpMul,  AcTrig,
@@ -109,7 +109,7 @@ const Operation scripts[] PROGMEM =
 void FnNop();
 
 void FnNum0(); void FnNum1(); void FnNum2(); void FnNum3(); void FnNum4(); void FnNum5(); void FnNum6(); void FnNum7();
-void FnNum8(); void FnNum9(); void FnDot();  void FnDup();  void FnDrop(); void FnNeg();  void FnEExp(); void FnFunc();
+void FnNum8(); void FnNum9(); void FnDot();  void FnDup();  void FnClr(); void FnNeg();  void FnEExp(); void FnFunc();
 
 void FnLast(); void FnRcl();  void FnSto();  void FnSub();  void FnCst();  void FnMAdd(); void FnMul();  void FnTrig();
 void FnProg(); void FnDiv();  void FnSwap(); void FnAdd();  void FnAClr(); void FnRotD(); void FnRotU(); void FnMath();
@@ -248,32 +248,15 @@ NOINLINE void checkNewNum()
 	}
 }
 
-NOINLINE void enterDigit(u08 digit)
+NOINLINE void enterDigit(s08 d)
 {
 	checkNewNum();
-	dpush(dtop() < 0 ? -digit : digit);
+	if (dtop() < 0) d = -d; dpush(d);
 	if (decimals)
 		{ dpush(_p10(decimals++)); FnDiv(); }
 	else
 		{ FnSwap(); dpush(10); FnMul(); }
 	FnAdd();
-	isEdit = true;
-}
-
-NOINLINE void clearDigit() // TODO: check!
-{
-	if (decimals) 
-	{
-		f32 a = _p10(--decimals);
-		f32 b = s32(dpop() * a) / a;
-		dpush(b);
-	}
-	else 
-	{
-		s32 a = dpop() / 10.f;
-		if (a) dpush(a); 
-		else isNewNum = true;
-	}
 	isEdit = true;
 }
 
@@ -295,7 +278,7 @@ void FnNum8() { enterDigit(8); }
 void FnNum9() { enterDigit(9); }
 void FnDot()  { if (!decimals) { checkNewNum(); decimals = 1; } isEdit = true; }
 void FnDup()  { dpush(dtop()); }
-void FnDrop() { if (isNewNum) dpopx(); else clearDigit(); }
+void FnClr()  { if (dtop() && !isNewNum) { dpop(); dpush(decimals = 0); isEdit = true; } else dpopx(); }
 void FnNeg()  { dpush(-dpopx()); isEdit = !isNewNum; }
 void FnEExp() { isLast = false; FnPw10(); FnMul(); }
 void FnFunc() { isFunc = true; }
@@ -382,9 +365,9 @@ const OpHandler opHandlers[] PROGMEM =
 	/* 07 */ &FnNum7, // Edit
 	/* 08 */ &FnNum8, // Edit
 	/* 09 */ &FnNum9, // Edit
-	/* 0A */ &FnDot,
+	/* 0A */ &FnDot,  // Edit
 	/* 0B */ &FnDup,
-	/* 0C */ &FnDrop, // Edit
+	/* 0C */ &FnClr,  // Edit
 	/* 0D */ &FnNeg,
 	/* 0E */ &FnEExp,
 	/* 0F */ &FnFunc, // Shift

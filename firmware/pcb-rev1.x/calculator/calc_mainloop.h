@@ -32,7 +32,7 @@ const char strMonth[] PROGMEM =
 
 const char strMainOps[] PROGMEM = 
 	"\03"
-	".  " "DUP" "DRP" "NEG" "EEX";
+	".  " "DUP" "CLR" "NEG" "EEX";
 
 const char strFuncOps[] PROGMEM = 
 	"\03"
