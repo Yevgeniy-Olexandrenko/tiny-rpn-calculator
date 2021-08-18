@@ -1,10 +1,11 @@
 #pragma once
 
 // -----------------------------------------------------------------------------
-// PCB Rev 1.2
-// Supported hardware and software modules:
+// PCB Rev 1.1 and newer
+// Fuses: High - 0xD7, Low - 0xF1, Ext - 0xFF 
 // -----------------------------------------------------------------------------
 
+// Supported hardware and software modules:
 // BCD - Binary-Coded Decimals conversion
 // WDT - Watch Dog Timer configuration
 // ADC - Analog to Digital Converter reading
@@ -143,7 +144,7 @@ void WDT_Init(u08 mode, u08 prescaler)
 }
 
 // -----------------------------------------------------------------------------
-// Analog to Digital Converter
+// Analog to Digital Converter (10 bit)
 // -----------------------------------------------------------------------------
 
 #define ADC_0_PB5 (0b0000)
@@ -285,8 +286,8 @@ NOINLINE void I2C_Stop()
 #define LCD_WIDTH 128 
 #define LCD_PAGES 4
 
-u08 lcd_bbuf = 0xB4;
-u08 lcd_fbuf = 0x40;
+u08 lcd_draw_buf = 0xB4;
+u08 lcd_rend_buf = 0x40;
 
 const u08 lcd_init_data[] PROGMEM =
 {
@@ -351,7 +352,7 @@ void LCD_Brightness(u08 brightness)
 void LCD_Position(u08 x, u08 y)
 { 
 	lcd_start_command();
-	I2C_Write(lcd_bbuf | (y & 0x07));
+	I2C_Write(lcd_draw_buf | (y & 0x07));
 	I2C_Write(0x10 | (x >> 4));
 	I2C_Write(x & 0x0F);
 	I2C_Stop();
@@ -375,9 +376,9 @@ void LCD_Clear()
 
 void LCD_Flip()
 {
-	lcd_fbuf ^= 0x20;
-	lcd_bbuf ^= 0x04;
-	lcd_command(lcd_fbuf);
+	lcd_rend_buf ^= 0x20;
+	lcd_draw_buf ^= 0x04;
+	lcd_command(lcd_rend_buf);
 }
 
 // -----------------------------------------------------------------------------
@@ -416,7 +417,7 @@ u08 rtc_hours   = BUILD_HOUR;  // 0 - 23
 u08 rtc_date    = BUILD_DAY;   // 1 - 31
 u08 rtc_month   = BUILD_MONTH; // 1 - 12
 u08 rtc_year    = BUILD_YEAR;  // 0 - 99
-f32 rtc_temp    = 22;
+f32 rtc_temp;
 
 void RTC_ReadTimeDate()
 {
