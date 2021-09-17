@@ -239,15 +239,15 @@ void PrintCalculator()
 		}
 		else
 		{
-			//PrintStack(0, CHAR_SIZE_L, 0);
+			PrintStack(0, CHAR_SIZE_L, 0);
 
-			getOperationStr(last_op);
+			//getOperationStr(last_op);
 
-			PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_M);
-			PrintStringAt("P1", 0, 2);
-			PrintTensOnesAt(0x00, 48, 2);
-			PrintStringAt(buf, 48+48, 2);
-			PrintStack(0, CHAR_SIZE_M, 0);
+			//PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_M);
+			//PrintStringAt("P1", 0, 2);
+			//PrintTensOnesAt(0x00, 48, 2);
+			//PrintStringAt(buf, 48+48, 2);
+			//PrintStack(0, CHAR_SIZE_M, 0);
 		}
 	}
 

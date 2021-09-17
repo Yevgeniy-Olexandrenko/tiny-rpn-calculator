@@ -1,5 +1,5 @@
 // Firmware configuration
-#define DEBUG_ON_R1_0  1
+#define DEBUG_ON_R1_0  0
 #define FONT_IN_EEMEM  0
 #define ALLOW_NOINLINE 0
 
