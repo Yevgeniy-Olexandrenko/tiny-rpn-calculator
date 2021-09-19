@@ -329,8 +329,10 @@ void updateCalcMode()
 
 void updateRTCMode()
 {
-	RTC_ReadTimeDate();
-	PrintClock();
+	if (RTC_ReadTimeDate())
+	{
+		PrintClock();
+	}
 }
 
 int main() 

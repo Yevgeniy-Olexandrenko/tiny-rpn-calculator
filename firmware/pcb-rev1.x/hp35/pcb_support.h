@@ -410,6 +410,7 @@ void LCD_Flip()
 #define RTC_TEMP_MSB     0x11
 #define RTC_TEMP_LSB     0x12
 
+u08 rtc_old_sec = 0xFF;
 u08 rtc_seconds = BUILD_SEC;   // 0 - 59
 u08 rtc_minutes = BUILD_MIN;   // 0 - 59
 u08 rtc_hours   = BUILD_HOUR;  // 0 - 23
@@ -418,7 +419,7 @@ u08 rtc_month   = BUILD_MONTH; // 1 - 12
 u08 rtc_year    = BUILD_YEAR;  // 0 - 99
 s16 rtc_temp;                  // MSB degrees, LSB fractional
 
-void RTC_ReadTimeDate()
+bool RTC_ReadTimeDate()
 {
 	if (I2C_StartWrite(RTC_ADDR))
 	{
@@ -433,12 +434,19 @@ void RTC_ReadTimeDate()
 		rtc_year    = BCD_Decode(I2C_ReadNack() % 100);
 		I2C_Stop();
 	}
+	if (rtc_seconds != rtc_old_sec)
+	{
+		rtc_old_sec = rtc_seconds;
+		return true;
+	}
+	return false;
 }
 
 void RTC_WriteTimeDate()
 {
 	if(I2C_StartWrite(RTC_ADDR))
 	{
+		rtc_old_sec = 0xFF;
 		I2C_Write(RTC_SECONDS);
 		I2C_Write(BCD_Encode(rtc_seconds));
 		I2C_Write(BCD_Encode(rtc_minutes));
