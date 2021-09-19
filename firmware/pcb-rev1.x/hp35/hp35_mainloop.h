@@ -339,7 +339,6 @@ int main()
 {
 	// init hardware and switch to rtc operation mode
 	PCB_Init();
-	HP35_Init();
 	setupAndSwitchToRTCMode();
 
 	while (true)

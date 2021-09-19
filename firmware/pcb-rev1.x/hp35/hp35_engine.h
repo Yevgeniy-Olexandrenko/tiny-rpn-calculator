@@ -44,9 +44,8 @@
 uint8_t HP35_Display[15]; // output
 uint8_t HP35_Error;       // output
 
-void HP35_Init();
-bool HP35_Update(uint16_t cycles);
 void HP35_Execute(uint8_t key);
+bool HP35_Update(uint16_t cycles);
 
 // -----------------------------------------------------------------------------
 // HP35 Calculator Engine Implementation
@@ -112,29 +111,29 @@ const uint8_t hp35_rom[] PROGMEM =
 };
 
 // Registers
-nibble_t a[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // A register
-nibble_t b[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // B register
-nibble_t c[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // C register (X)
-nibble_t d[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // D register (Y)
-nibble_t e[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // E register (Z)
-nibble_t f[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // F register (T)
-nibble_t m[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // M Scratchpad
-nibble_t t[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Temporary
+nibble_t a[16]; // A register
+nibble_t b[16]; // B register
+nibble_t c[16]; // C register (X)
+nibble_t d[16]; // D register (Y)
+nibble_t e[16]; // E register (Z)
+nibble_t f[16]; // F register (T)
+nibble_t m[16]; // M Scratchpad
+nibble_t t[16]; // Temporary
 
 // Flags
-uint8_t s[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Status
-uint8_t p = 0, pc = 0, ret = 0;						 // Pointer
-uint8_t offset = 0;									 // ROM offset
+uint8_t s[12]; // Status
+uint8_t p, pc, ret;						 // Pointer
+uint8_t offset;									 // ROM offset
 uint8_t first, last;									 // Register loop boundaries
-uint8_t hp35_carry = 0, hp35_carry_alu = 0;					 // Carry bits
-uint8_t fetch_h, fetch_l, op_code = 0;				 // ROM fetch and operation code
-uint8_t hp35_key_in, hp35_key_pc = 0;					 // Key variables
-uint8_t h35_display_enable = false, h35_display_update = true;	 // Display control
+uint8_t hp35_carry, hp35_carry_alu;					 // Carry bits
+uint8_t fetch_h, fetch_l, op_code;				 // ROM fetch and operation code
+uint8_t hp35_key_in, hp35_key_pc;					 // Key variables
+uint8_t h35_display_enable, h35_display_update;	 // Display control
 
 // Add 2 nibbles
 nibble_t hp35_add(nibble_t x, nibble_t y)
 {
-	int res = x + y + hp35_carry; // ???
+	int8_t res = x + y + hp35_carry;
 	if (res > 9)
 	{
 		res -= 10;
@@ -148,7 +147,7 @@ nibble_t hp35_add(nibble_t x, nibble_t y)
 // Substract 2 nibbles
 nibble_t hp35_sub(nibble_t x, nibble_t y)
 {
-	int res = x - y - hp35_carry; // ???
+	int8_t res = x - y - hp35_carry;
 	if (res < 0)
 	{
 		res += 10;
@@ -210,7 +209,6 @@ bool hp35_execute()
 	fetch_h = pgm_read_byte_near(hp35_rom + (offset * 256 * 2) + (pc * 2));
 	fetch_l = pgm_read_byte_near(hp35_rom + (offset * 256 * 2) + (pc * 2) + 1);
 	pc++;
-	pc %= 256; // ???
 
 	// Process received key
 	if (hp35_key_in != HP35_NONE)
@@ -261,23 +259,22 @@ bool hp35_execute()
 		hp35_carry = s[hp35_fetch_index()];
 	}
 
-	// Set s
+	// Set s bit
 	if ((fetch_l & 0x3f) == 0x04)
 	{
 		s[hp35_fetch_index()] = 1;
 	}
 
-	// Clear s
+	// Clear s bit
 	if ((fetch_l & 0x3f) == 0x24)
 	{
 		s[hp35_fetch_index()] = 0;
 	}
 
-	// Clear stati
+	// Clear s reg
 	if ((fetch_l & 0x3f) == 0x34)
 	{
-		for (uint8_t i = 0; i <= 12; i++)
-			s[i] = 0; // ???
+		for (uint8_t i = 0; i < SSIZE; i++) s[i] = 0;
 	}
 
 	// Set carry
@@ -640,13 +637,9 @@ bool hp35_execute()
 	return false;
 }
 
-void HP35_Init()
+void HP35_Execute(uint8_t key)
 {
-	for (int8_t i = 15; i >= 0; --i) HP35_Display[i] = ' ';
-	HP35_Error = false;
-
-	hp35_key_in = HP35_NONE;
-	hp35_key_pc = HP35_NONE;
+	hp35_key_in = key;
 }
 
 bool HP35_Update(uint16_t cycles)
@@ -654,9 +647,4 @@ bool HP35_Update(uint16_t cycles)
 	bool display_updated = false;
 	while (cycles--) display_updated |= hp35_execute();
 	return display_updated;
-}
-
-void HP35_Execute(uint8_t key)
-{
-	hp35_key_in = key;
 }
