@@ -319,6 +319,9 @@ const uint8_t font[] FONT_STORAGE =
 // Print Data On Display
 ////////////////////////////////////////////////////////////////////////////////
 
+template<typename T> static uint8_t _ones(const T & x) { return (uint8_t)(x % 10); }
+template<typename T> static uint8_t _tens(const T & x) { return (uint8_t)((x / 10) % 10); }
+
 #define	CHAR_SIZE_S 1
 #define	CHAR_SIZE_M 2
 #define	CHAR_SIZE_L 4

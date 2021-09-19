@@ -1,7 +1,5 @@
 #pragma once
 
-//#define debug
-
 ////////////////////////////////////////////////////////////////////////////////
 // Key Codes (0x00-0x09 numbers, 0x0A-0x0F special keys)
 ////////////////////////////////////////////////////////////////////////////////
@@ -13,6 +11,38 @@ enum
 	KEY_NEG  = KBD_A2, KEY_NUM1 = KBD_B2, KEY_NUM2 = KBD_C2, KEY_NUM3 = KBD_D2,
 	KEY_DROP = KBD_A3, KEY_NUM0 = KBD_B3, KEY_DOT  = KBD_C3, KEY_DUP  = KBD_D3,
 	KEY_NONE = KBD_NO
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// HP35 Operation (basic + extended)
+////////////////////////////////////////////////////////////////////////////////
+
+#define FUNC_KEYS (HP35_NONE - 1)
+#define MENU_MATH (HP35_NONE - 2)
+#define MENU_TRIG (HP35_NONE - 3)
+#define TRIG_ASIN (HP35_NONE - 4)
+#define TRIG_ACOS (HP35_NONE - 5)
+#define TRIG_ATAN (HP35_NONE - 6)
+
+const uint8_t main_operations[16 + 16] PROGMEM =
+{
+	HP35_NUM0, HP35_NUM1, HP35_NUM2, HP35_NUM3, HP35_NUM4, HP35_NUM5, HP35_NUM6, HP35_NUM7,
+	HP35_NUM8, HP35_NUM9, HP35_DOT,  HP35_PUSH, HP35_CLX,  HP35_CHS,  HP35_EEX,  FUNC_KEYS,
+
+	HP35_NONE, HP35_RCL,  HP35_STO,  HP35_SUB,  HP35_PI, HP35_ARC, HP35_MUL,  MENU_TRIG,
+	HP35_NONE, HP35_DIV,  HP35_SWAP, HP35_ADD,  HP35_CLR,  HP35_ROT,  HP35_NONE, MENU_MATH
+};
+
+const uint8_t math_operations[6] PROGMEM =
+{
+	HP35_POW, HP35_SQRT, HP35_INV,
+	HP35_LOG, HP35_LN,   HP35_EXP
+};
+
+const uint8_t trig_operations[6] PROGMEM =
+{
+	HP35_SIN,  HP35_COS,  HP35_TAN,
+	TRIG_ASIN, TRIG_ACOS, TRIG_ATAN
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -44,55 +74,40 @@ const char strFuncOps[] PROGMEM =
 
 const char strMenuMath[] PROGMEM = 
 	"\03"
-	"X? " "?,X" "1/X"
-	"10;" "LG " "Y; "
-	"E; " "LN " ";,Y";
+	"Y; " "?,X" "1/X"  // X^Y, SQRT(X), 1/X
+	"LOG" "LN " "E; "; // LOG(X), LN(X), e^X
 
 const char strMenuTrig[] PROGMEM = 
 	"\03"
 	"SIN" "COS" "TAN"  // Sine, Cosine, Tangent
-	"ASN" "ACS" "ATN"  // Inverse sine, Inverse cosine, Inverse tangent
-	"SNH" "CSH" "TNH"  // Hyperbolic sine, Hyperbolic cosine,  Hyperbolic tangent
-	"ASH" "ACH" "ATH"; // Inverse hyperbolic sine, Inverse hyperbolic cosine, Inverse hyperbolic tangent
-
-const char strMenuProg[] PROGMEM = 
-	"\03"
-	"<1 " "<2 " "<3 "
-	"EQ " "NE " "BEG"
-	"GT " "LT " "UNT"
-	"IF " "ELS" "THN"
-	"@1 " "@2 " "@3 ";
-
-const char strMenuSets[] PROGMEM = 
-	"\03"
-	"D/R" "STM" "SDT"
-	"END";
+	"ASN" "ACS" "ATN"; // Inverse sine, Inverse cosine, Inverse tangent
 
 struct Menu
 {
-	const char* string;
 	u08 lastIdx;
-	u08 opsBase;
+	const char * string;
+	const uint8_t * opsBase;
 };
 
 const Menu menus[] PROGMEM =
 {
-	{ strMenuMath, 2, MATH_OPS },
-	{ strMenuTrig, 3, TRIG_OPS },
-	{ strMenuProg, 4, PROG_OPS },
-	{ strMenuSets, 0, SETS_OPS },
+	{ sizeof(math_operations) / MENU_OPS_PER_LINE - 1, strMenuMath, math_operations },
+	{ sizeof(trig_operations) / MENU_OPS_PER_LINE - 1, strMenuTrig, trig_operations },
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
+b08 isFunc;
+b08 isMenu;
+
 Menu menu;
 u08  select;
+
+enum { MENU_MATH_OPS, MENU_TRIG_OPS };
 
 ////////////////////////////////////////////////////////////////////////////////
 
 #define CHAR_SHIFT  '='
-#define CHAR_RECORD '@'
-#define CHAR_PLAY   '<'
 
 #define DIGITS      (6)
 #define DIGIT_WIDTH ((FONT_WIDTH * CHAR_SIZE_M) + 1)
@@ -107,69 +122,26 @@ u08  select;
 #define E_DIGIT1    (E_DIGIT2 - DIGIT_WIDTH)
 #define E_SIGN      (E_DIGIT1 - DIGIT_WIDTH)
 
-void PrintStack(u08 i, u08 s, u08 y)
+void PrintStack()
 {
-	f32 f = dget(i);
-	PrintCharSize(CHAR_SIZE_M, s);
+	PrintCharSize(CHAR_SIZE_S, ch);
 
-	if (isnan(f)) { PrintStringAt(FPSTR(strMessage), MSG_ERR, M_DIGIT_FST, y);	}
+	if (HP35_Error)
+	{
+		PrintStringAt(FPSTR(strMessage), MSG_ERR, M_DIGIT_FST, 0);
+	}
 	else
 	{
-		if (f < 0) { f = -f; PrintCharAt('-', M_SIGN, y); }
-		if (isinf(f)) {	PrintStringAt(FPSTR(strMessage), MSG_INF, M_DIGIT_FST, y); }
-		else
+		u08 pos = 0;
+		for (u08 i = 0; i < 15; i++)
 		{
-			s08 e = (s08)(log(f) / log(10.f));
-			u32 m = (u32)(f / _p10(e - (DIGITS - 1)) + 0.5f);
-
-			if (m > 0 && m < _p10(DIGITS - 1))
+			if (i == 12)
 			{
-				m = (u32)(f / _p10(--e - (DIGITS - 1)) + 0.5f);
+				PrintCharSize(CHAR_SIZE_S, ch >> 1);
 			}
 
-			s08 int_dig = 1, lead_z = 0;
-			if (_abs(e) < DIGITS)
-			{
-				if (e >= 0)
-				{
-					int_dig += e;
-				}
-				else
-				{
-					int_dig = 0;
-					lead_z -= e;
-					for (u08 n = lead_z; n--; m /= 10);
-				}
-				e = 0;
-			}
-			s08 fra_dig = DIGITS - lead_z - int_dig;
-
-			u08 x = M_DIGIT_LST, nonzero = false;
-			for (; fra_dig--; m /= 10, x -= dx)
-			{
-				u08 ones = _ones(m);
-				if (ones || nonzero)
-				{
-					PrintCharAt('0' + ones, x, y);
-					nonzero = true;
-				}
-			}
-
-			if (nonzero)
-			{
-				for (; --lead_z > 0; x -= dx) PrintCharAt('0', x, y);
-				PrintCharAt('.', x, y);
-			}
-			
-			PrintCharAt('0', x -= POINT_WIDTH, y);
-			for (; int_dig--; m /= 10, x -= dx) PrintCharAt('0' + _ones(m), x, y);
-
-			if (e)
-			{
-				PrintCharSize(CHAR_SIZE_M, s >> 1);
-				if (e < 0) { e = -e; PrintCharAt('-', E_SIGN, y); }
-				PrintTensOnesAt(e, E_DIGIT1, y);
-			}
+			PrintCharAt(HP35_Display[i], pos, 0);
+			pos += ((FONT_WIDTH * CHAR_SIZE_S) + 1);
 		}
 	}
 }
@@ -201,55 +173,30 @@ void PrintClock()
 	LCD_Flip();
 }
 
-void getOperationStr(Operation op);
-char buf[4];
-
 void PrintCalculator()
 {
 	LCD_Clear();
-#ifdef debug
-	if (ap)
-	{
-		PrintStack(3, CHAR_SIZE_S, 0);
-		PrintStack(2, CHAR_SIZE_S, 1);
-		PrintStack(1, CHAR_SIZE_S, 2);
-		PrintStack(0, CHAR_SIZE_S, 3);
-	}
-	else
-#endif
+
+	if (isFunc)
 	{
 		PrintCharSize(CHAR_SIZE_S, CHAR_SIZE_S);
-		PrintCharAt(isFunc ? CHAR_SHIFT : (isDeg ? 'D' : 'R'), MODE_CHAR, 0);
+		PrintCharAt(CHAR_SHIFT, MODE_CHAR, 0);
+	}
 
-		if (ap) PrintCharAt(CHAR_PLAY, MODE_CHAR, 1);
-
-		if (isMenu)
+	if (isMenu)
+	{
+		PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_M);
+		for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
 		{
-			PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_M);
-			for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
-			{
-				PrintStringAt(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 48 * i, 2);
-			}
-			PrintStack(0, CHAR_SIZE_M, 0);
-		}
-		else if (isFunc)
-		{
-			PrintStack(1, CHAR_SIZE_M, 0);
-			PrintStack(0, CHAR_SIZE_M, 2);
-		}
-		else
-		{
-			//PrintStack(0, CHAR_SIZE_L, 0);
-
-			getOperationStr(last_op);
-
-			PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_M);
-			PrintStringAt("P1", 0, 2);
-			PrintTensOnesAt(0x00, 48, 2);
-			PrintStringAt(buf, 48+48, 2);
-			PrintStack(0, CHAR_SIZE_M, 0);
+			PrintStringAt(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 48 * i, 2);
 		}
 	}
+	else
+	{
+		PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_L);
+	}
+
+	PrintStack();
 
 	LCD_Flip();
 }
@@ -270,30 +217,6 @@ void enterMenu(u08 type)
 	select = 0;
 }
 
-void getOperationStr(Operation op)
-{
-	if (op < OpDot)
-	{
-		buf[0] = '0' + op;
-		buf[1] = 0;
-	}
-	else
-	{
-		const char* ops;
-
-		if      (op < FUNC_OPS) { ops = strMainOps;  op -= OpDot;    }
-		else if (op < MATH_OPS) { ops = strFuncOps;  op -= FUNC_OPS; }
-		else if (op < TRIG_OPS) { ops = strMenuMath; op -= MATH_OPS; }
-		else if (op < PROG_OPS) { ops = strMenuTrig; op -= TRIG_OPS; }
-		else if (op < SETS_OPS) { ops = strMenuProg; op -= PROG_OPS; }
-		else                    { ops = strMenuSets; op -= SETS_OPS; }
-
-		uint8_t sz = pgm_read_byte(ops++);
-		memcpy_P(&buf[0], &ops[op * sz], sz);
-		buf[sz] = 0;
-	}
-}
-
 void switchToCalcMode(bool yes = true)
 {
 	calcMode = yes;
@@ -304,7 +227,7 @@ void switchToRTCMode()
 {
 	LCD_TurnOn();
 	RTC_ReadTemperature();
-	battery = (uint8_t)(PWR_Level() * 4 + 0.5f);
+	battery = (uint8_t)((PWR_Level() * 4 + 50) / 100);
 	switchToCalcMode(false);
 	oldkey = KBD_Read();
 }
@@ -315,51 +238,105 @@ NOINLINE void setupAndSwitchToRTCMode()
 	switchToRTCMode();
 }
 
+bool executeHP35()
+{
+	for (u16 i = 1000; i > 0; --i)
+	{
+		if (HP35_Update()) return true;
+	}
+	return false;
+}
+
+void executeOperation(u08 operation)
+{
+	// reset input modifiers
+	isFunc = false;
+	isMenu = false;
+
+	// wait for engine
+	while (!HP35_IsReady()) HP35_Update();
+
+	// execute basic and extended operations
+	switch (operation)
+	{
+		default:
+			HP35_Key = operation;
+			break;
+
+		case FUNC_KEYS:
+			isFunc = true;
+			break;
+
+		case MENU_MATH:
+			enterMenu(MENU_MATH_OPS);
+			break;
+
+		case MENU_TRIG:
+			enterMenu(MENU_TRIG_OPS);
+			break;
+		
+		case TRIG_ASIN:
+			executeOperation(HP35_ARC);
+			executeOperation(HP35_SIN);
+			break;
+
+		case TRIG_ACOS:
+			executeOperation(HP35_ARC);
+			executeOperation(HP35_COS);
+			break;
+		
+		case TRIG_ATAN:
+			executeOperation(HP35_ARC);
+			executeOperation(HP35_TAN);
+			break;
+	}
+}
+
 void updateCalcMode()
 {
-	if (ap)
-	{
-#ifdef debug
-		if (ap && isScript() && key != KEY_NONE)
-			ExecuteOperation(pgm_read_byte(&scripts[pp++]));
-#else
-		while (ap && isScript())
-		{
-			// execute scripted operations
-			ExecuteOperation(pgm_read_byte(&scripts[pp++]));
-		}
-#endif
-		if (ap)
-		{
-			// execute user program
-			// TODO
-		}
-		PrintCalculator();
-	}
+	b08 isDisplayUpdated = false;
 
-	else if (key != KEY_NONE)
+	if (isMenu)
 	{
-		if (isMenu)
+		if (key != KEY_NONE)
 		{
 			switch(key)
 			{
-			default: isMenu = false; break;
-			case KEY_EEXP: if (select > 0) select--; else select = menu.lastIdx; break;
-			case KEY_NEG:  if (select < menu.lastIdx) select++; else select = 0; break;
-			case KEY_FUNC: enterMenu(MENU_MATH_OPS); break;
-			case KEY_NUM7: enterMenu(MENU_TRIG_OPS); break;
-			case KEY_NUM8: enterMenu(MENU_PROG_OPS); break;
-			case KEY_DOT:  enterMenu(MENU_SETS_OPS); break;
-			case KEY_NUM1: case KEY_NUM2: case KEY_NUM3:
-				u08 index = select * MENU_OPS_PER_LINE + (key - KEY_NUM1);
-				ExecuteOperation(menu.opsBase + index);
+				case KEY_EEXP: if (select > 0) select--; else select = menu.lastIdx; break;
+				case KEY_NEG:  if (select < menu.lastIdx) select++; else select = 0; break;
+				case KEY_FUNC: enterMenu(MENU_MATH_OPS); break;
+				case KEY_NUM7: enterMenu(MENU_TRIG_OPS); break;
+				case KEY_NUM1: case KEY_NUM2: case KEY_NUM3:
+					u08 index = select * MENU_OPS_PER_LINE + (key - KEY_NUM1);
+					u08 operation = pgm_read_byte(menu.opsBase + index);
+					executeOperation(operation);
+					break;
+				default: isMenu = false; break;
+			}
+			isDisplayUpdated = true;
+		}
+	}
+	else
+	{
+		if (key != KEY_NONE && HP35_IsReady())
+		{
+			u08 operation = pgm_read_byte(main_operations + (isFunc ? 16 : 0) + key);
+			executeOperation(operation);
+			isDisplayUpdated = true;
+		}
+
+		for (u16 i = 1000; i > 0; --i)
+		{
+			if (HP35_Update())
+			{
+				isDisplayUpdated = true;
 				break;
 			}
 		}
-		else
-		{
-			ExecuteOperation(isFunc ? FUNC_OPS + key : key);
-		}
+	}
+
+	if (isDisplayUpdated)
+	{
 		PrintCalculator();
 	}
 }
@@ -374,6 +351,7 @@ int main()
 {
 	// init hardware and switch to rtc operation mode
 	PCB_Init();
+	HP35_Init();
 	setupAndSwitchToRTCMode();
 
 	while (true)

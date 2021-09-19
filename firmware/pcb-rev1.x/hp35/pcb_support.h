@@ -38,7 +38,6 @@ typedef uint32_t u32;
 typedef int8_t   s08;
 typedef int16_t  s16;
 typedef int32_t  s32;
-typedef float    f32;
 
 // bits manipulations
 #define set_bit(sfr, bit) ((sfr) |= _BV(bit))
@@ -417,7 +416,7 @@ u08 rtc_hours   = BUILD_HOUR;  // 0 - 23
 u08 rtc_date    = BUILD_DAY;   // 1 - 31
 u08 rtc_month   = BUILD_MONTH; // 1 - 12
 u08 rtc_year    = BUILD_YEAR;  // 0 - 99
-f32 rtc_temp;
+s16 rtc_temp;                  // MSB degrees, LSB fractional
 
 void RTC_ReadTimeDate()
 {
@@ -461,7 +460,7 @@ void RTC_ReadTemperature()
 		I2C_StartRead(RTC_ADDR);
 		u08 msb = I2C_ReadAck();
 		u08 lsb = I2C_ReadNack();
-		rtc_temp = s16(msb << 8 | lsb) / 256.f;
+		rtc_temp = msb << 8 | lsb;
 		I2C_Stop();
 	}
 #endif
@@ -548,8 +547,8 @@ ISR(PCINT0_vect)
 // Power Management
 // -----------------------------------------------------------------------------
 
-#define BAT_FULL  4.1f
-#define BAT_EMPTY 3.5f
+#define BAT_FULL  4100 // mV
+#define BAT_EMPTY 3500 // mV
 
 void pwr_saving(u08 mode)
 {
@@ -563,15 +562,15 @@ void pwr_saving(u08 mode)
 	set_bit(ADCSRA, ADEN);
 }
 
-NOINLINE f32 PWR_Voltage()
+NOINLINE u16 PWR_Voltage()
 {
-	return (1125.3f / ADC_Read(ADC_VCC, 10));
+	return (1125300L / ADC_Read(ADC_VCC, 10));
 }
 
-f32 PWR_Level()
+u08 PWR_Level()
 {
-	f32 voltage = PWR_Voltage();
-	if (voltage >= BAT_FULL ) return 1;
+	u16 voltage = PWR_Voltage();
+	if (voltage >= BAT_FULL ) return 100;
 	if (voltage <= BAT_EMPTY) return 0;
 	return ((voltage - BAT_EMPTY) / (BAT_FULL - BAT_EMPTY));
 }
