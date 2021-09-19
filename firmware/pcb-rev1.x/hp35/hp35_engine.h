@@ -41,13 +41,12 @@
 #define HP35_CLR  0x00 // [+]
 #define HP35_CLX  0x38 // [+]
 
-uint8_t HP35_Key;         // input
 uint8_t HP35_Display[15]; // output
-bool    HP35_Error;       // output
+uint8_t HP35_Error;       // output
 
 void HP35_Init();
-bool HP35_IsReady();
-bool HP35_Update();
+bool HP35_Update(uint16_t cycles);
+void HP35_Execute(uint8_t key);
 
 // -----------------------------------------------------------------------------
 // HP35 Calculator Engine Implementation
@@ -129,8 +128,8 @@ uint8_t offset = 0;									 // ROM offset
 uint8_t first, last;									 // Register loop boundaries
 uint8_t hp35_carry = 0, hp35_carry_alu = 0;					 // Carry bits
 uint8_t fetch_h, fetch_l, op_code = 0;				 // ROM fetch and operation code
-uint8_t hp35_key_pc = 0;					 // Key variables
-bool display_enable = true, update_display = true;	 // Display control
+uint8_t hp35_key_in, hp35_key_pc = 0;					 // Key variables
+uint8_t h35_display_enable = false, h35_display_update = true;	 // Display control
 
 // Add 2 nibbles
 nibble_t hp35_add(nibble_t x, nibble_t y)
@@ -172,43 +171,37 @@ void hp35_update_display()
 	// Create X with register a and b
 	for (int8_t i = WSIZE - 1; i >= 0; i--)
 	{
-		if (b[i] >= 8)
-			HP35_Display[pos++] = ' ';
-		else if (i == 2)
+		if (h35_display_enable)
 		{
-			if (a[i] >= 8)
-				HP35_Display[pos++] = '-';
-			else
+			if (b[i] >= 8)
 				HP35_Display[pos++] = ' ';
-		}
-		else if (i == 13)
-		{
-			if (a[i] >= 8)
-				HP35_Display[pos++] = '-';
+			else if (i == 2)
+			{
+				if (a[i] >= 8)
+					HP35_Display[pos++] = '-';
+				else
+					HP35_Display[pos++] = ' ';
+			}
+			else if (i == 13)
+			{
+				if (a[i] >= 8)
+					HP35_Display[pos++] = '-';
+				else
+					HP35_Display[pos++] = ' ';
+			}
 			else
-				HP35_Display[pos++] = ' ';
+				HP35_Display[pos++] = ('0' + a[i]);
+			if (b[i] == 2)
+				HP35_Display[pos++] = '.';
 		}
 		else
-			HP35_Display[pos++] = ('0' + a[i]);
-		if (b[i] == 2)
-			HP35_Display[pos++] = '.';
+		{
+			HP35_Display[pos++] = ' ';
+		}
 	}
 }
 
-void HP35_Init()
-{
-	HP35_Key = HP35_NONE;
-	for (int8_t i = 15; i >= 0; --i) HP35_Display[i] = ' ';
-	HP35_Error = false;
-}
-
-bool HP35_IsReady()
-{
-	return (HP35_Key == HP35_NONE && s[0] == 0);
-}
-
-// Process input key and update output display
-bool HP35_Update()
+bool hp35_execute()
 {
 	// Error handling
 	if ((pc == 0xBF) & (offset == 0))
@@ -225,11 +218,11 @@ bool HP35_Update()
 	pc %= 256; // ???
 
 	// Process received key
-	if (HP35_Key != HP35_NONE)
+	if (hp35_key_in != HP35_NONE)
 	{
-		HP35_Error = false;
-		hp35_key_pc = HP35_Key;
-		HP35_Key = HP35_NONE;
+		HP35_Error  = false;
+		hp35_key_pc = hp35_key_in;
+		hp35_key_in = HP35_NONE;
 		s[0] = 1;
 	}
 
@@ -388,16 +381,15 @@ bool HP35_Update()
 	// No display
 	if (((fetch_h & 0x03) == 0x00) && ((fetch_l & 0xef) == 0x28))
 	{
-		display_enable = false;
-		update_display = false;
+		h35_display_enable = true;
+		h35_display_update = true;
 	}
 
 	// Toggle display
 	if (((fetch_h & 0x03) == 0x02) && ((fetch_l & 0xef) == 0x28))
 	{
-		display_enable = !display_enable;
-		if (display_enable)
-			update_display = true;
+		h35_display_enable = !h35_display_enable;
+		h35_display_update = true;
 	}
 
 	// Conditional branch
@@ -644,15 +636,32 @@ bool HP35_Update()
 	}
 
 	// Display
-	if (display_enable)
-	{
-		update_display = true;
-	}
-	else if (update_display)
+	if (h35_display_update)
 	{
 		hp35_update_display();
-		update_display = false;
+		h35_display_update = false;
 		return true;
 	}
 	return false;
+}
+
+void HP35_Init()
+{
+	for (int8_t i = 15; i >= 0; --i) HP35_Display[i] = ' ';
+	HP35_Error = false;
+
+	hp35_key_in = HP35_NONE;
+	hp35_key_pc = HP35_NONE;
+}
+
+bool HP35_Update(uint16_t cycles)
+{
+	bool display_updated = false;
+	while (cycles--) display_updated |= hp35_execute();
+	return display_updated;
+}
+
+void HP35_Execute(uint8_t key)
+{
+	hp35_key_in = key;
 }

@@ -17,7 +17,7 @@ enum
 // HP35 Operation (basic + extended)
 ////////////////////////////////////////////////////////////////////////////////
 
-#define FUNC_KEYS (HP35_NONE - 1)
+#define FUNC_KEY  (HP35_NONE - 1)
 #define MENU_MATH (HP35_NONE - 2)
 #define MENU_TRIG (HP35_NONE - 3)
 #define TRIG_ASIN (HP35_NONE - 4)
@@ -27,9 +27,9 @@ enum
 const uint8_t main_operations[16 + 16] PROGMEM =
 {
 	HP35_NUM0, HP35_NUM1, HP35_NUM2, HP35_NUM3, HP35_NUM4, HP35_NUM5, HP35_NUM6, HP35_NUM7,
-	HP35_NUM8, HP35_NUM9, HP35_DOT,  HP35_PUSH, HP35_CLX,  HP35_CHS,  HP35_EEX,  FUNC_KEYS,
+	HP35_NUM8, HP35_NUM9, HP35_DOT,  HP35_PUSH, HP35_CLX,  HP35_CHS,  HP35_EEX,  FUNC_KEY,
 
-	HP35_NONE, HP35_RCL,  HP35_STO,  HP35_SUB,  HP35_PI, HP35_ARC, HP35_MUL,  MENU_TRIG,
+	HP35_NONE, HP35_RCL,  HP35_STO,  HP35_SUB,  HP35_PI,   HP35_NONE, HP35_MUL,  MENU_TRIG,
 	HP35_NONE, HP35_DIV,  HP35_SWAP, HP35_ADD,  HP35_CLR,  HP35_ROT,  HP35_NONE, MENU_MATH
 };
 
@@ -238,32 +238,30 @@ NOINLINE void setupAndSwitchToRTCMode()
 	switchToRTCMode();
 }
 
-bool executeHP35()
+#define CALC_FRAMES_PER_SEC      (15)
+#define HP35_CYCLE_TIME_US       (286)
+#define HP35_CYCLES_PER_FRAME    (1000000 / HP35_CYCLE_TIME_US / CALC_FRAMES_PER_SEC)
+#define OPERATION_UPDATE_CYCLES  (HP35_CYCLES_PER_FRAME * 3)
+#define OPERATION_EXECUTE_CYCLES (HP35_CYCLES_PER_FRAME * 5)
+
+void executeOperationAndWait(u08 operation)
 {
-	for (u16 i = 1000; i > 0; --i)
-	{
-		if (HP35_Update()) return true;
-	}
-	return false;
+	HP35_Execute(operation);
+	HP35_Update(OPERATION_EXECUTE_CYCLES);
 }
 
 void executeOperation(u08 operation)
 {
-	// reset input modifiers
 	isFunc = false;
 	isMenu = false;
 
-	// wait for engine
-	while (!HP35_IsReady()) HP35_Update();
-
-	// execute basic and extended operations
 	switch (operation)
 	{
 		default:
-			HP35_Key = operation;
+			HP35_Execute(operation);
 			break;
 
-		case FUNC_KEYS:
+		case FUNC_KEY:
 			isFunc = true;
 			break;
 
@@ -276,32 +274,31 @@ void executeOperation(u08 operation)
 			break;
 		
 		case TRIG_ASIN:
-			executeOperation(HP35_ARC);
-			executeOperation(HP35_SIN);
+			executeOperationAndWait(HP35_ARC);
+			executeOperationAndWait(HP35_SIN);
 			break;
 
 		case TRIG_ACOS:
-			executeOperation(HP35_ARC);
-			executeOperation(HP35_COS);
+			executeOperationAndWait(HP35_ARC);
+			executeOperationAndWait(HP35_COS);
 			break;
 		
 		case TRIG_ATAN:
-			executeOperation(HP35_ARC);
-			executeOperation(HP35_TAN);
+			executeOperationAndWait(HP35_ARC);
+			executeOperationAndWait(HP35_TAN);
 			break;
 	}
 }
 
 void updateCalcMode()
 {
-	b08 isDisplayUpdated = false;
-
 	if (isMenu)
 	{
 		if (key != KEY_NONE)
 		{
 			switch(key)
 			{
+				default: isMenu = false; break;
 				case KEY_EEXP: if (select > 0) select--; else select = menu.lastIdx; break;
 				case KEY_NEG:  if (select < menu.lastIdx) select++; else select = 0; break;
 				case KEY_FUNC: enterMenu(MENU_MATH_OPS); break;
@@ -311,33 +308,22 @@ void updateCalcMode()
 					u08 operation = pgm_read_byte(menu.opsBase + index);
 					executeOperation(operation);
 					break;
-				default: isMenu = false; break;
 			}
-			isDisplayUpdated = true;
+			PrintCalculator();
 		}
 	}
 	else
 	{
-		if (key != KEY_NONE && HP35_IsReady())
+		if (key != KEY_NONE)
 		{
 			u08 operation = pgm_read_byte(main_operations + (isFunc ? 16 : 0) + key);
 			executeOperation(operation);
-			isDisplayUpdated = true;
+			PrintCalculator();
 		}
-
-		for (u16 i = 1000; i > 0; --i)
+		else if (HP35_Update(OPERATION_UPDATE_CYCLES))
 		{
-			if (HP35_Update())
-			{
-				isDisplayUpdated = true;
-				break;
-			}
+			PrintCalculator();
 		}
-	}
-
-	if (isDisplayUpdated)
-	{
-		PrintCalculator();
 	}
 }
 
