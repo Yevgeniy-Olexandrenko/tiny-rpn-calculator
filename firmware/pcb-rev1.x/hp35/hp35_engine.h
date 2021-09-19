@@ -166,37 +166,32 @@ uint8_t hp35_fetch_index()
 
 void hp35_update_display()
 {
-	uint8_t pos = 0;
-
 	// Create X with register a and b
-	for (int8_t i = WSIZE - 1; i >= 0; i--)
+	for (int8_t i = WSIZE - 1, d = 0; i >= 0; --i)
 	{
 		if (h35_display_enable)
 		{
 			if (b[i] >= 8)
-				HP35_Display[pos++] = ' ';
-			else if (i == 2)
 			{
-				if (a[i] >= 8)
-					HP35_Display[pos++] = '-';
-				else
-					HP35_Display[pos++] = ' ';
+				HP35_Display[d++] = ' ';
 			}
-			else if (i == 13)
+			else if (i == 2 || i == 13)
 			{
-				if (a[i] >= 8)
-					HP35_Display[pos++] = '-';
-				else
-					HP35_Display[pos++] = ' ';
+				HP35_Display[d++] = (a[i] >= 8 ? '-' : ' ');
 			}
 			else
-				HP35_Display[pos++] = ('0' + a[i]);
+			{
+				HP35_Display[d++] = ('0' + a[i]);
+			}
+
 			if (b[i] == 2)
-				HP35_Display[pos++] = '.';
+			{
+				HP35_Display[d++] = '.';
+			}
 		}
 		else
 		{
-			HP35_Display[pos++] = ' ';
+			HP35_Display[d++] = ' ';
 		}
 	}
 }
