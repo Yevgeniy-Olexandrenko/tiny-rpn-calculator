@@ -146,33 +146,6 @@ void PrintStack()
 	}
 }
 
-uint8_t battery;
-
-void PrintClock()
-{
-	LCD_Clear();
-
-	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_L);
-	PrintCharAt(':', 20, 0);
-	PrintCharAt(':', 47, 0);
-	PrintTensOnesAt(rtc_hours, 0, 0);
-	PrintTensOnesAt(rtc_minutes, 27, 0);
-	PrintTensOnesAt(rtc_seconds, 54, 0);
-
-	PrintCharSize(CHAR_SIZE_S, CHAR_SIZE_S);
-	PrintStringAt(FPSTR(strMonth), rtc_month - 1, 85, 0);
-
-	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_S);
-	PrintTensOnesAt(rtc_date, 107, 0);
-	PrintTensOnesAt(20, 85, 1);
-	PrintTensOnesAt(rtc_year, 107, 1);
-
-	uint8_t i = battery;
-	while (i) PrintCharAt('-', 85 + (--i) * dx, 2);
-	
-	LCD_Flip();
-}
-
 void PrintCalculator()
 {
 	LCD_Clear();
@@ -208,34 +181,12 @@ void PrintCalculator()
 
 u08 key;
 u08 oldkey;
-b08 calcMode;
 
 void enterMenu(u08 type)
 {
 	isMenu = true;
 	memcpy_P(&menu, &menus[type], sizeof(Menu));
 	select = 0;
-}
-
-void switchToCalcMode(bool yes = true)
-{
-	calcMode = yes;
-	FPS_SyncStart();
-}
-
-void switchToRTCMode()
-{
-	LCD_TurnOn();
-	RTC_ReadTemperature();
-	battery = (uint8_t)((PWR_Level() * 4 + 50) / 100);
-	switchToCalcMode(false);
-	oldkey = KBD_Read();
-}
-
-NOINLINE void setupAndSwitchToRTCMode()
-{
-	RTC_WriteTimeDate();
-	switchToRTCMode();
 }
 
 #define CALC_FRAMES_PER_SEC      (15)
@@ -326,6 +277,55 @@ void updateCalcMode()
 	}
 }
 
+#if SUPPORT_RTC
+b08 calcMode;
+u08 battery;
+
+void switchToCalcMode(bool yes = true)
+{
+	calcMode = yes;
+	FPS_SyncStart();
+}
+
+void switchToRTCMode()
+{
+	LCD_TurnOn();
+	battery = (uint8_t)((PWR_Level() * 4 + 50) / 100);
+	switchToCalcMode(false);
+	oldkey = KBD_Read();
+}
+
+NOINLINE void setupAndSwitchToRTCMode()
+{
+	RTC_WriteTimeDate();
+	switchToRTCMode();
+}
+
+void PrintClock()
+{
+	LCD_Clear();
+
+	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_L);
+	PrintCharAt(':', 20, 0);
+	PrintCharAt(':', 47, 0);
+	PrintTensOnesAt(rtc_hours, 0, 0);
+	PrintTensOnesAt(rtc_minutes, 27, 0);
+	PrintTensOnesAt(rtc_seconds, 54, 0);
+
+	PrintCharSize(CHAR_SIZE_S, CHAR_SIZE_S);
+	PrintStringAt(FPSTR(strMonth), rtc_month - 1, 85, 0);
+
+	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_S);
+	PrintTensOnesAt(rtc_date, 107, 0);
+	PrintTensOnesAt(20, 85, 1);
+	PrintTensOnesAt(rtc_year, 107, 1);
+
+	u08 i = battery;
+	while (i) PrintCharAt('-', 85 + (--i) * dx, 2);
+	
+	LCD_Flip();
+}
+
 void updateRTCMode()
 {
 	if (RTC_ReadTimeDate())
@@ -371,3 +371,49 @@ int main()
 	}
 	return 0;
 }
+#else
+void switchToCalcMode()
+{
+	LCD_TurnOn();
+	FPS_SyncStart();
+	oldkey = KBD_Read();
+}
+
+int main() 
+{
+	// init hardware and switch to calculator operation mode
+	PCB_Init();
+	switchToCalcMode();
+
+	while (true)
+	{
+		// get time passed since last operation mode switch
+		uint16_t timePassedMs = FPS_SyncMillis();
+
+		// handle display brightness change
+		LCD_Brightness(timePassedMs < DIMOUT_MILLIS ? 0xFF : 0x00);
+
+		// handle power down condition
+		if (timePassedMs >= POWEROFF_MILLIS)
+		{
+			// power down and go to sleeping
+			FPS_SyncStop();
+			LCD_TurnOff();
+			PWR_Down();
+
+			// power up an switch to calculator operation mode
+			switchToCalcMode();
+		}
+
+		// read key press and switch to calculator operation mode
+		key = KBD_Read();
+		if (key != oldkey) oldkey = key; else key = KEY_NONE;
+		if (key != KEY_NONE) FPS_SyncStart();
+
+		// update current operation mode and idle until next frame
+		updateCalcMode();
+		FPS_SyncWait();
+	}
+	return 0;
+}
+#endif

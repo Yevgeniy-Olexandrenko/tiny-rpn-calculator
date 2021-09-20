@@ -1,5 +1,8 @@
 #pragma once
 
+// Firmware parts
+#define SUPPORT_RTC 0
+
 // Firmware configuration
 #define DEBUG_ON_R1_0  1
 #define FONT_IN_EEMEM  0
