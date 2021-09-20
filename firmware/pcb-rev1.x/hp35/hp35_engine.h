@@ -1,5 +1,11 @@
 #pragma once
 
+#define HP35_CLOCK_RATE       (800000 / 4) // Hz
+#define HP35_BIT_TIME_WIDTH   (1000000 / HP35_CLOCK_RATE) // uS
+#define HP35_BITS_PER_CYCLE   (14 * 4)
+#define HP35_CYCLE_TIME_WIDTH (HP35_BITS_PER_CYCLE * HP35_BIT_TIME_WIDTH) // uS
+#define HP35_CYCLES_PER_SEC   (1000000 / HP35_CYCLE_TIME_WIDTH)
+
 // -----------------------------------------------------------------------------
 // HP35 Calculator Engine Interface
 // -----------------------------------------------------------------------------
