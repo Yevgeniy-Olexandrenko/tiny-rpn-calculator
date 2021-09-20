@@ -309,170 +309,163 @@ bool hp35_execute()
 		s[0] = 0;
 	}
 
-	// Jump subroutine
-	if ((fetch_l & 0x03) == 0x01)
+	uint8_t fetch_l_03 = (fetch_l & 0x03);
+	if (fetch_l_03 == 0x00)
 	{
+		// Return from subroutine
+		if ((fetch_l & 0x7F) == 0x30)
+		{
+			pc = ret;
+		}
+
+		// ROM select
+		if ((fetch_l & 0x7F) == 0x10)
+		{
+			offset  = (fetch_h << 1) & 06;
+			offset |= (fetch_l >> 7) & 01;
+		}
+
+		switch(fetch_l & 0x3f)
+		{
+			case 0x14: // Set carry due to status
+				hp35_carry = s[hp35_fetch_index()];
+				break;
+
+			case 0x04: // Set s bit
+				s[hp35_fetch_index()] = 1;
+				break;
+
+			case 0x24: // Clear s bit
+				s[hp35_fetch_index()] = 0;
+				break;
+
+			case 0x34: // [!] Clear s reg
+				for (uint8_t i = 0; i < SSIZE; i++) s[i] = 0;
+				break;
+
+			case 0x2C: // [!] Set carry
+				hp35_carry = (p == hp35_fetch_index());
+				break;
+
+			// Set p
+			case 0x0C:
+				p = hp35_fetch_index();
+				break;
+			
+			case 0x3C:
+				p += 0x01;
+				p &= 0x0F;
+				break;
+			
+			case 0x1C:
+				p -= 0x01;
+				p &= 0x0F;
+				break;
+
+			case 0x18: // Load constant
+				c[p]  = (fetch_l >> 6);
+				c[p] |= (fetch_h << 2);
+				p -= 0x01;
+				p &= 0x0F;
+				break;
+		}
+
+		uint8_t fetch_h_03 = (fetch_h & 0x03);
+		uint8_t fetch_l_EF = (fetch_l & 0xEF);
+
+		if (fetch_h_03 == 0x00)
+		{
+			// No display
+			if (fetch_l_EF == 0x28)
+			{
+				h35_display_enable = true;
+				h35_display_update = true;
+			}
+
+			// c<->m
+			if (fetch_l_EF == 0xA8)
+			{
+				for (uint8_t i = 0; i < WSIZE; i++)
+				{
+					int tmp = c[i];
+					c[i] = m[i];
+					m[i] = tmp;
+				}
+			}
+		}
+		else if (fetch_h_03 == 0x01)
+		{
+			// c to stack
+			if (fetch_l_EF == 0x28)
+			{
+				for (uint8_t i = 0; i < WSIZE; i++)
+				{
+					f[i] = e[i];
+					e[i] = d[i];
+					d[i] = c[i];
+				}
+			}
+
+			// stack to a
+			if (fetch_l_EF == 0xA8)
+			{
+				for (uint8_t i = 0; i < WSIZE; i++)
+				{
+					a[i] = d[i];
+					d[i] = e[i];
+					e[i] = f[i];
+				}
+			}
+		}
+		else if (fetch_h_03 == 0x02)
+		{
+			// Toggle display
+			if (fetch_l_EF == 0x28)
+			{
+				h35_display_enable = !h35_display_enable;
+				h35_display_update = true;
+			}
+
+			// m to c
+			if (fetch_l_EF == 0xA8)
+			{
+				for (uint8_t i = 0; i < WSIZE; i++)
+					c[i] = m[i];
+			}
+		}
+		else // fetch_h_03 == 0x03
+		{
+			// Rotate down
+			if (fetch_l_EF == 0x28)
+			{
+				for (uint8_t i = 0; i < WSIZE; i++)
+				{
+					int tmp = c[i];
+					c[i] = d[i];
+					d[i] = e[i];
+					e[i] = f[i];
+					f[i] = tmp;
+				}
+			}
+
+			// Clear all register
+			if (fetch_l_EF == 0xA8)
+			{
+				for (uint8_t i = 0; i < WSIZE; i++)
+					a[i] = b[i] = c[i] = d[i] = e[i] = f[i] = m[i] = 0;
+			}
+		}
+	}
+	else if (fetch_l_03 == 0x01)
+	{
+		// Jump subroutine
 		ret = pc;
 		pc  = (fetch_l >> 2) & 0x3f;
 		pc |= (fetch_h << 6) & 0xc0;
 	}
-
-	// Return from subroutine
-	if ((fetch_l & 0x7F) == 0x30)
+	else if (fetch_l_03 == 0x02)
 	{
-		pc = ret;
-	}
-
-	// ROM select
-	if ((fetch_l & 0x7F) == 0x10)
-	{
-		offset = (fetch_h << 1) & 06;
-		offset |= (fetch_l >> 7) & 01;
-	}
-
-	// Set carry due to status
-	if ((fetch_l & 0x3f) == 0x14)
-	{
-		hp35_carry = s[hp35_fetch_index()];
-	}
-
-	// Set s bit
-	if ((fetch_l & 0x3f) == 0x04)
-	{
-		s[hp35_fetch_index()] = 1;
-	}
-
-	// Clear s bit
-	if ((fetch_l & 0x3f) == 0x24)
-	{
-		s[hp35_fetch_index()] = 0;
-	}
-
-	// [!] Clear s reg
-	if ((fetch_l & 0x3f) == 0x34)
-	{
-		for (uint8_t i = 0; i < SSIZE; i++) s[i] = 0;
-	}
-
-	// Set carry
-	if ((fetch_l & 0x3f) == 0x2C)
-	{
-		hp35_carry = 0;
-		if (p == hp35_fetch_index()) hp35_carry = 1;
-	}
-
-	// Set p
-	if ((fetch_l & 0x3f) == 0x0C)
-	{
-		p = hp35_fetch_index();
-	}
-	if ((fetch_l & 0x3f) == 0x3C)
-	{
-		p += 0x01;
-		p &= 0x0F;
-	}
-	if ((fetch_l & 0x3f) == 0x1C)
-	{
-		p -= 0x01;
-		p &= 0x0F;
-	}
-
-	// Load constant
-	if ((fetch_l & 0x3F) == 0x18)
-	{
-		c[p]  = (fetch_l >> 6);
-		c[p] |= (fetch_h << 2);
-		p -= 0x01;
-		p &= 0x0F;
-	}
-
-	// c<->m
-	if (((fetch_h & 0x03) == 0x00) && ((fetch_l & 0xef) == 0xA8))
-	{
-		for (uint8_t i = 0; i < WSIZE; i++)
-		{
-			int tmp = c[i];
-			c[i] = m[i];
-			m[i] = tmp;
-		}
-	}
-
-	// c to stack
-	if (((fetch_h & 0x03) == 0x01) && ((fetch_l & 0xef) == 0x28))
-	{
-		for (uint8_t i = 0; i < WSIZE; i++)
-		{
-			f[i] = e[i];
-			e[i] = d[i];
-			d[i] = c[i];
-		}
-	}
-
-	// stack to a
-	if (((fetch_h & 0x03) == 0x01) && ((fetch_l & 0xef) == 0xA8))
-	{
-		for (uint8_t i = 0; i < WSIZE; i++)
-		{
-			a[i] = d[i];
-			d[i] = e[i];
-			e[i] = f[i];
-		}
-	}
-
-	// m to c
-	if (((fetch_h & 0x03) == 0x02) && ((fetch_l & 0xef) == 0xA8))
-	{
-		for (uint8_t i = 0; i < WSIZE; i++)
-			c[i] = m[i];
-	}
-
-	// Rotate down
-	if (((fetch_h & 0x03) == 0x03) && ((fetch_l & 0xef) == 0x28))
-	{
-		for (uint8_t i = 0; i < WSIZE; i++)
-		{
-			int tmp = c[i];
-			c[i] = d[i];
-			d[i] = e[i];
-			e[i] = f[i];
-			f[i] = tmp;
-		}
-	}
-
-	// Clear all register
-	if (((fetch_h & 0x03) == 0x03) && ((fetch_l & 0xef) == 0xA8))
-	{
-		for (uint8_t i = 0; i < WSIZE; i++)
-			a[i] = b[i] = c[i] = d[i] = e[i] = f[i] = m[i] = 0;
-	}
-
-	// No display
-	if (((fetch_h & 0x03) == 0x00) && ((fetch_l & 0xef) == 0x28))
-	{
-		h35_display_enable = true;
-		h35_display_update = true;
-	}
-
-	// Toggle display
-	if (((fetch_h & 0x03) == 0x02) && ((fetch_l & 0xef) == 0x28))
-	{
-		h35_display_enable = !h35_display_enable;
-		h35_display_update = true;
-	}
-
-	// Conditional branch
-	if ((fetch_l & 0x03) == 0x03)
-	{
-		if (hp35_carry_alu != 1)
-		{
-			pc = (fetch_l & 0xfc) >> 2;
-			pc |= (fetch_h & 0x03) << 6;
-		}
-	}
-
-	// A&R calculations due to opcode
-	if ((fetch_l & 0x03) == 0x02)
-	{
+		// A&R calculations due to opcode
 		uint8_t op_code;
 		op_code  = ((fetch_l >> 5) & 0x07);
 		op_code |= ((fetch_h << 3) & 0x18);
@@ -632,6 +625,15 @@ bool hp35_execute()
 			hp35_carry = 1;
 			hp35_add_regs(a, a, ZERO);
 			break;
+		}
+	}
+	else // fetch_l_03 == 0x03
+	{
+		// Conditional branch
+		if (hp35_carry_alu != 1)
+		{
+			pc  = (fetch_l & 0xfc) >> 2;
+			pc |= (fetch_h & 0x03) << 6;
 		}
 	}
 
