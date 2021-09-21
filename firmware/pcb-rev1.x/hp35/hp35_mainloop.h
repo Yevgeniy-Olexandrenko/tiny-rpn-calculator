@@ -126,19 +126,19 @@ void PrintStack()
 {
 	PrintCharSize(CHAR_SIZE_S, ch);
 
-	if (HP35_Error)
-	{
-		PrintStringAt(FPSTR(strMessage), MSG_ERR, M_DIGIT_FST, 0);
-	}
-	else
+	// if (HP35_Error)
+	// {
+	// 	PrintStringAt(FPSTR(strMessage), MSG_ERR, M_DIGIT_FST, 0);
+	// }
+	// else
 	{
 		u08 pos = 0;
 		for (u08 i = 0; i < 15; i++)
 		{
-			if (i == 12)
-			{
-				PrintCharSize(CHAR_SIZE_S, ch >> 1);
-			}
+			// if (i == 12)
+			// {
+			// 	PrintCharSize(CHAR_SIZE_S, ch >> 1);
+			// }
 
 			PrintCharAt(HP35_Display[i], pos, 0);
 			pos += ((FONT_WIDTH * CHAR_SIZE_S) + 1);
@@ -194,10 +194,18 @@ void enterMenu(u08 type)
 #define OPERATION_UPDATE_CYCLES  (HP35_CYCLES_PER_FRAME * 3)
 #define OPERATION_EXECUTE_CYCLES (HP35_CYCLES_PER_FRAME * 5)
 
+void updateHP35ForCycles(uint16_t cycles)
+{
+	while (cycles--)
+	{
+		if (HP35_Cycle()) PrintCalculator();
+	}
+}
+
 void executeOperationAndWait(u08 operation)
 {
-	HP35_Execute(operation);
-	HP35_Update(OPERATION_EXECUTE_CYCLES);
+	HP35_Operation(operation);
+	updateHP35ForCycles(OPERATION_EXECUTE_CYCLES);
 }
 
 void executeOperation(u08 operation)
@@ -208,7 +216,7 @@ void executeOperation(u08 operation)
 	switch (operation)
 	{
 		default:
-			HP35_Execute(operation);
+			HP35_Operation(operation);
 			break;
 
 		case FUNC_KEY:
@@ -270,9 +278,9 @@ void updateCalcMode()
 			executeOperation(operation);
 			PrintCalculator();
 		}
-		else if (HP35_Update(OPERATION_UPDATE_CYCLES))
+		else
 		{
-			PrintCalculator();
+			updateHP35ForCycles(OPERATION_UPDATE_CYCLES);
 		}
 	}
 }

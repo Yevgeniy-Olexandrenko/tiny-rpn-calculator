@@ -50,7 +50,7 @@
 uint8_t HP35_Display[15]; // output
 uint8_t HP35_Error;       // output
 
-void HP35_Execute(uint8_t key);
+void HP35_Operation(uint8_t key);
 bool HP35_Update(uint16_t cycles);
 
 // -----------------------------------------------------------------------------
@@ -243,6 +243,10 @@ void hp35_update_display()
 	{
 		if (h35_display_enable)
 		{
+			HP35_Display[d++] = ' ';
+		}
+		else
+		{
 			if (b[i] >= 8)
 			{
 				HP35_Display[d++] = ' ';
@@ -261,14 +265,33 @@ void hp35_update_display()
 				HP35_Display[d++] = '.';
 			}
 		}
-		else
-		{
-			HP35_Display[d++] = ' ';
-		}
 	}
 }
 
-bool hp35_execute()
+void HP35_Operation(uint8_t key)
+{
+	hp35_key_in = key;
+}
+
+bool HP35_Cycle2()
+{
+	// Fetch ROM
+	uint16_t addr_l = (offset << 8 | pc);
+	uint8_t  addr_h = (addr_l >> 2);
+	uint8_t  shift  = (addr_l & 0x03) << 1;
+	fetch_l = pgm_read_byte(hp35_rom_l + addr_l);
+	fetch_h = pgm_read_byte(hp35_rom_h + addr_h) >> shift & 0x03;
+
+	hp35_carry_alu = hp35_carry;
+	hp35_carry = 0;
+	pc++;
+
+	// Operation decode
+	uint8_t op_type = (fetch_l & 0x03);
+	uint8_t op_code = (fetch_l >> 2 | fetch_h << 6);
+}
+
+bool HP35_Cycle()
 {
 	// Error handling
 	if ((pc == 0xBF) & (offset == 0))
@@ -378,8 +401,11 @@ bool hp35_execute()
 			// No display
 			if (fetch_l_EF == 0x28)
 			{
-				h35_display_enable = true;
-				h35_display_update = true;
+				if (h35_display_enable)
+				{
+					h35_display_enable = false;
+					h35_display_update = true;
+				}
 			}
 
 			// c<->m
@@ -645,16 +671,4 @@ bool hp35_execute()
 		return true;
 	}
 	return false;
-}
-
-void HP35_Execute(uint8_t key)
-{
-	hp35_key_in = key;
-}
-
-bool HP35_Update(uint16_t cycles)
-{
-	bool display_updated = false;
-	while (cycles--) display_updated |= hp35_execute();
-	return display_updated;
 }
