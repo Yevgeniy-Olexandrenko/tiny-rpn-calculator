@@ -1,15 +1,17 @@
 #pragma once
 
-#define HP35_CLOCK_RATE       (800000 / 4) // Hz
-#define HP35_BIT_TIME_WIDTH   (1000000 / HP35_CLOCK_RATE) // uS
+// -----------------------------------------------------------------------------
+// HP35 Calculator Virtual Machine
+// -----------------------------------------------------------------------------
+
+// clock parameters
+#define HP35_CLOCK_RATE       (800 / 4) // kHz
+#define HP35_BIT_TIME_WIDTH   (1000 / HP35_CLOCK_RATE) // uS
 #define HP35_BITS_PER_CYCLE   (14 * 4)
 #define HP35_CYCLE_TIME_WIDTH (HP35_BITS_PER_CYCLE * HP35_BIT_TIME_WIDTH) // uS
 #define HP35_CYCLES_PER_SEC   (1000000 / HP35_CYCLE_TIME_WIDTH)
 
-// -----------------------------------------------------------------------------
-// HP35 Calculator Engine Interface
-// -----------------------------------------------------------------------------
-
+// public interface
 #define HP35_NONE 0xFF // no key
 #define HP35_NUM0 0x24 // 
 #define HP35_NUM1 0x1C // 
@@ -53,10 +55,7 @@ uint8_t HP35_Error;       // output
 void HP35_Operation(uint8_t key);
 bool HP35_Update(uint16_t cycles);
 
-// -----------------------------------------------------------------------------
-// HP35 Calculator Firmware ROM
-// -----------------------------------------------------------------------------
-
+// firmware ROM (768 words)
 const uint8_t hp35_rom_l[] PROGMEM =
 {
 	0xDD, 0xFF, 0x24, 0x17, 0x44, 0x44, 0x84, 0x10, 0xD1, 0xFB, 0x5F, 0xC3, 0xA8, 0x67, 0xEE, 0xE2,
@@ -125,27 +124,23 @@ const uint8_t hp35_rom_h[] PROGMEM =
 	0x7C, 0xB7, 0x7C, 0x8E, 0x97, 0xD3, 0x7E, 0x9C, 0x00, 0x29, 0xC5, 0x97, 0x65, 0xC7, 0x00, 0x59
 };
 
-// -----------------------------------------------------------------------------
-// HP35 Calculator Defines and Variables
-// -----------------------------------------------------------------------------
-
-// Defines
+// defines
 typedef uint8_t hp35_nibble;
 typedef hp35_nibble * hp35_register;
 #define hp35_iterate_word(a) for (uint8_t i = 0; i < 14; ++i) { a; }
 #define hp35_iterate_field(a) for (uint8_t i = hp35_ff; i <= hp35_fl; ++i) { a; }
 
-// Registers (TODO)
-hp35_nibble a[16]; // A register
-hp35_nibble b[16]; // B register
-hp35_nibble c[16]; // C register (X)
-hp35_nibble d[16]; // D register (Y)
-hp35_nibble e[16]; // E register (Z)
-hp35_nibble f[16]; // F register (T)
-hp35_nibble m[16]; // M Scratchpad
+// registers
+hp35_nibble hp35_A[16]; // A register
+hp35_nibble hp35_B[16]; // B register
+hp35_nibble hp35_C[16]; // C register (X)
+hp35_nibble hp35_D[16]; // D register (Y)
+hp35_nibble hp35_E[16]; // E register (Z)
+hp35_nibble hp35_F[16]; // F register (T)
+hp35_nibble hp35_M[16]; // M Scratchpad
 
-// Flags
-uint8_t s[12];                              // Status (TODO)
+// flags
+uint8_t hp35_s[12];                         // Status
 uint8_t hp35_p, hp35_pc, hp35_ret;          // Pointer
 uint8_t hp35_rom_offset;                    // ROM offset
 uint8_t hp35_ff, hp35_fl;                   // Register loop boundaries
@@ -153,10 +148,7 @@ uint8_t hp35_carry, hp35_carry_alu;         // Carry bits
 uint8_t hp35_key_in, hp35_key_pc;           // Key variables
 uint8_t hp35_disp_enable, hp35_disp_update; // Display control
 
-// -----------------------------------------------------------------------------
-// HP35 Calculator Math
-// -----------------------------------------------------------------------------
-
+// basic math
 hp35_nibble hp35_nib_add(hp35_nibble x, hp35_nibble y)
 {
 	int8_t res = x + y + hp35_carry;
@@ -229,14 +221,11 @@ void hp35_reg_copy(hp35_register x, hp35_register y)
 
 void hp35_reg_swap(hp35_register x, hp35_register y)
 {
-	hp35_nibble temp;
-	hp35_iterate_field(temp = x[i]; x[i] = y[i]; y[i] = temp);
+	hp35_nibble t;
+	hp35_iterate_field(t = x[i]; x[i] = y[i]; y[i] = t);
 }
 
-// -----------------------------------------------------------------------------
-// HP35 Calculator Interface Implementation
-// -----------------------------------------------------------------------------
-
+// implementation
 void HP35_Operation(uint8_t key)
 {
 	hp35_key_in = key;
@@ -244,22 +233,22 @@ void HP35_Operation(uint8_t key)
 
 bool HP35_Cycle()
 {
-	// Error handling
+	// error handling
 	if ((hp35_pc == 0xBF) & (hp35_rom_offset == 0x00))
 	{
 		HP35_Error = true;
 	}
 
-	// Process received key
+	// process received key
 	if (hp35_key_in != HP35_NONE)
 	{
 		HP35_Error  = false;
 		hp35_key_pc = hp35_key_in;
 		hp35_key_in = HP35_NONE;
-		s[0] = 1;
+		hp35_s[0] = 1;
 	}
 
-	// Fetch ROM
+	// fetch ROM
 	uint16_t addr_l  = (hp35_rom_offset << 8 | hp35_pc);
 	uint8_t  addr_h  = (addr_l >> 2);
 	uint8_t  shift   = (addr_l & 0x03) << 1;
@@ -270,7 +259,7 @@ bool HP35_Cycle()
 	hp35_carry = 0;
 	hp35_pc++;
 
-	// Operation decode
+	// operation decode
 	uint8_t op_type = (fetch_l & 0x03);
 	uint8_t op_code = (fetch_l >> 2 | fetch_h << 6);
 
@@ -282,68 +271,96 @@ bool HP35_Cycle()
 			case 0b00000000: // NO OPERATION
 				break;
 			case 0b00110100: // KEY -> ROM ADDRESS
-				hp35_pc = hp35_key_pc; s[0] = 0;
+				hp35_pc = hp35_key_pc; hp35_s[0] = 0;
 				break;
 			case 0b00000111: // P – 1 -> P
 				hp35_p -= 0x01; hp35_p &= 0x0F;
 				break;
 			case 0b00001010: // DISPLAY TOGGLE
-				hp35_disp_enable = !hp35_disp_enable; hp35_disp_update = true;
+				hp35_disp_enable = !hp35_disp_enable;
+				hp35_disp_update = 1;
 				break;
 			case 0b00101010: // C EXCHANGE M
-				hp35_iterate_word(hp35_nibble temp = c[i]; c[i] = m[i]; m[i] = temp);
+				hp35_iterate_word(
+					hp35_nibble t = hp35_C[i];
+					hp35_C[i] = hp35_M[i];
+					hp35_M[i] = t);
 				break;
 			case 0b01001010: // C -> STACK
-				hp35_iterate_word(f[i] = e[i]; e[i] = d[i]; d[i] = c[i]);
+				hp35_iterate_word(
+					hp35_F[i] = hp35_E[i];
+					hp35_E[i] = hp35_D[i];
+					hp35_D[i] = hp35_C[i]);
 				break;
 			case 0b01101010: // STACK -> A
-				hp35_iterate_word(a[i] = d[i]; d[i] = e[i]; e[i] = f[i]);
+				hp35_iterate_word(
+					hp35_A[i] = hp35_D[i];
+					hp35_D[i] = hp35_E[i];
+					hp35_E[i] = hp35_F[i]);
 				break;
 			case 0b10001010: // DISPLAY OFF
-				if (hp35_disp_enable) { hp35_disp_enable = false; hp35_disp_update = true; }
+				if (hp35_disp_enable) 
+				{
+					hp35_disp_enable = 0;
+					hp35_disp_update = 1; 
+				}
 				break;
 			case 0b10101010: // M -> C
-				hp35_iterate_word(c[i] = m[i]);
+				hp35_iterate_word(hp35_C[i] = hp35_M[i]);
 				break;
 			case 0b11001010: // DOWN ROTATE
-				hp35_iterate_word(hp35_nibble temp = c[i]; c[i] = d[i]; d[i] = e[i]; e[i] = f[i]; f[i] = temp);
+				hp35_iterate_word(
+					hp35_nibble t = hp35_C[i];
+					hp35_C[i] = hp35_D[i];
+					hp35_D[i] = hp35_E[i];
+					hp35_E[i] = hp35_F[i];
+					hp35_F[i] = t);
 				break;
 			case 0b11101010: // CLEAR REGISTERS
-				hp35_iterate_word(a[i] = b[i] = c[i] = d[i] = e[i] = f[i] = m[i] = 0);
+				hp35_iterate_word(
+					hp35_A[i] =
+					hp35_B[i] =
+					hp35_C[i] =
+					hp35_D[i] =
+					hp35_E[i] =
+					hp35_F[i] =
+					hp35_M[i] = 0);
 				break;
 			case 0b00001100: // RETURN
 				hp35_pc = hp35_ret;
 				break;
 			case 0b00001101: // CLEAR STATUS
-				for (uint8_t i = 0; i < 12; i++) s[i] = 0;
+				for (uint8_t i = 0; i < 12; i++) hp35_s[i] = 0;
 				break;
 			case 0b00001111: // P + 1 -> P
 				hp35_p += 0x01; hp35_p &= 0x0F;
 				break;
 			default:
-				uint8_t index = op_code >> 4;
+				uint8_t nnnn = op_code >> 4;
 				switch(op_code & 0x0F)
 				{
 					case 0b0001: // 1 -> Sn
-						s[index] = 1;
+						hp35_s[nnnn] = 1;
 						break;
 					case 0b0011: // n -> P
-						hp35_p = index;
+						hp35_p = nnnn;
 						break;
 					case 0b0100: // ROM SELECT n
-						hp35_rom_offset = (index >> 1);
+						hp35_rom_offset = (nnnn >> 1);
 						break;
 					case 0b0101: // IF Sn = 0
-						hp35_carry = s[index];
+						hp35_carry = hp35_s[nnnn];
 						break;
 					case 0b0110: // n -> C
-						c[hp35_p] = index; hp35_p -= 0x01; hp35_p &= 0x0F;
+						hp35_C[hp35_p] = nnnn;
+						hp35_p -= 0x01;
+						hp35_p &= 0x0F;
 						break;
 					case 0b1001: // 0 -> Sn
-						s[index] = 0;
+						hp35_s[nnnn] = 0;
 						break;
 					case 0b1011: // IF p # n
-						hp35_carry = (hp35_p == index);
+						hp35_carry = (hp35_p == nnnn);
 						break;
 				}
 		}
@@ -378,100 +395,100 @@ bool HP35_Cycle()
 		switch(op_code >> 3)
 		{
 			case 0b00000: // IF B[f] = 0
-				hp35_iterate_field(hp35_carry |= (b[i] != 0));
+				hp35_iterate_field(hp35_carry |= (hp35_B[i] != 0));
 				break;
 			case 0b00001: // 0 -> B[f]
-				hp35_reg_clr(b);
+				hp35_reg_clr(hp35_B);
 				break;
 			case 0b00010: // IF A >= C[f]
-				hp35_iterate_field(hp35_nib_sub(a[i], c[i]));
+				hp35_iterate_field(hp35_nib_sub(hp35_A[i], hp35_C[i]));
 				break;
 			case 0b00011: // IF C[f] >= 1
-				hp35_carry = 1; hp35_iterate_field(hp35_carry &= (c[i] == 0));
+				hp35_carry = 1; hp35_iterate_field(hp35_carry &= (hp35_C[i] == 0));
 				break;
 			case 0b00100: // B -> C[f]
-				hp35_reg_copy(c, b);
+				hp35_reg_copy(hp35_C, hp35_B);
 				break;
 			case 0b00101: // 0 – C -> C[f]
-				hp35_iterate_field(c[i] = hp35_nib_sub(0, c[i]));
+				hp35_iterate_field(hp35_C[i] = hp35_nib_sub(0, hp35_C[i]));
 				break;
 			case 0b00110: // 0 -> C[f]
-				hp35_reg_clr(c);
+				hp35_reg_clr(hp35_C);
 				break;
 			case 0b00111: // 0 – C – 1 -> C[f]
-				hp35_carry = 1; hp35_iterate_field(c[i] = hp35_nib_sub(0, c[i]));
+				hp35_carry = 1; hp35_iterate_field(hp35_C[i] = hp35_nib_sub(0, hp35_C[i]));
 				break;
 			case 0b01000: // SHIFT LEFT A[f]
-				hp35_reg_shl(a);
+				hp35_reg_shl(hp35_A);
 				break;
 			case 0b01001: // A -> B[f]
-				hp35_reg_copy(b, a);
+				hp35_reg_copy(hp35_B, hp35_A);
 				break;
 			case 0b01010: // A – C -> C[f]
-				hp35_reg_sub(c, a, c);
+				hp35_reg_sub(hp35_C, hp35_A, hp35_C);
 				break;
 			case 0b01011: // C – 1 -> C[f]
-				hp35_reg_dec(c);
+				hp35_reg_dec(hp35_C);
 				break;
 			case 0b01100: // C -> A[f]
-				hp35_reg_copy(a, c);
+				hp35_reg_copy(hp35_A, hp35_C);
 				break;
 			case 0b01101: // IF C[f] = 0
-				hp35_iterate_field(hp35_carry |= (c[i] != 0));
+				hp35_iterate_field(hp35_carry |= (hp35_C[i] != 0));
 				break;
 			case 0b01110: // A + C -> C[f]
-				hp35_reg_add(c, a, c);
+				hp35_reg_add(hp35_C, hp35_A, hp35_C);
 				break;
 			case 0b01111: // C + 1 -> C[f]
-				hp35_reg_inc(c);
+				hp35_reg_inc(hp35_C);
 				break;
 			case 0b10000: // IF A >= B[f]
-				hp35_iterate_field(hp35_nib_sub(a[i], b[i]));
+				hp35_iterate_field(hp35_nib_sub(hp35_A[i], hp35_B[i]));
 				break;
 			case 0b10001: // B EXCHANGE C[f]
-				hp35_reg_swap(b, c);
+				hp35_reg_swap(hp35_B, hp35_C);
 				break;
 			case 0b10010: // SHIFT RIGHT C[f]
-				hp35_reg_shr(c);
+				hp35_reg_shr(hp35_C);
 				break;
 			case 0b10011: // IF A[f] >= 1
-				hp35_carry = 1; hp35_iterate_field(hp35_carry &= (a[i] == 0));
+				hp35_carry = 1; hp35_iterate_field(hp35_carry &= (hp35_A[i] == 0));
 				break;
 			case 0b10100: // SHIFT RIGHT B[f]
-				hp35_reg_shr(b);
+				hp35_reg_shr(hp35_B);
 				break;
 			case 0b10101: // C + C -> C[f]
-				hp35_reg_add(c, c, c);
+				hp35_reg_add(hp35_C, hp35_C, hp35_C);
 				break;
 			case 0b10110: // SHIFT RIGHT A[f]
-				hp35_reg_shr(a);
+				hp35_reg_shr(hp35_A);
 				break;
 			case 0b10111: // 0 -> A[f]
-				hp35_reg_clr(a);
+				hp35_reg_clr(hp35_A);
 				break;
 			case 0b11000: // A – B -> A[f]
-				hp35_reg_sub(a, a, b);
+				hp35_reg_sub(hp35_A, hp35_A, hp35_B);
 				break;
 			case 0b11001: // A EXCHANGE B[f]
-				hp35_reg_swap(a, b);
+				hp35_reg_swap(hp35_A, hp35_B);
 				break;
 			case 0b11010: // A – C -> A[f]
-				hp35_reg_sub(a, a, c);
+				hp35_reg_sub(hp35_A, hp35_A, hp35_C);
 				break;
 			case 0b11011: // A – 1 -> A[f]
-				hp35_reg_dec(a);
+				hp35_reg_dec(hp35_A);
 				break;
 			case 0b11100: // A + B -> A[f]
-				hp35_reg_add(a, a, b);
+				hp35_reg_add(hp35_A, hp35_A, hp35_B);
 				break;
 			case 0b11101: // A EXCHANGE C[f]
-				hp35_reg_swap(a, c);
+				hp35_reg_swap(hp35_A, hp35_C);
 				break;
 			case 0b11110: // A + C -> A[f]
-				hp35_reg_add(a, a, c);
+				hp35_reg_add(hp35_A, hp35_A, hp35_C);
 				break;
 			case 0b11111: // A + 1 -> A[f]
-				hp35_reg_inc(a);
+				hp35_reg_inc(hp35_A);
 				break;
 		}
 	}
@@ -486,7 +503,7 @@ bool HP35_Cycle()
 		}
 	}
 
-	// Display update
+	// display update
 	if (hp35_disp_update)
 	{
 		hp35_disp_update = false;
@@ -494,13 +511,13 @@ bool HP35_Cycle()
 		{
 			if (hp35_disp_enable)
 			{
-				if (b[i] == 9)
+				if (hp35_B[i] == 9)
 					HP35_Display[d++] = ' ';
 				else if (i == 2 || i == 13)
-					HP35_Display[d++] = (a[i] == 9 ? '-' : ' ');
+					HP35_Display[d++] = (hp35_A[i] == 9 ? '-' : ' ');
 				else
-					HP35_Display[d++] = ('0' + a[i]);
-				if (b[i] == 2)
+					HP35_Display[d++] = ('0' + hp35_A[i]);
+				if (hp35_B[i] == 2)
 					HP35_Display[d++] = '.';
 			}
 			else

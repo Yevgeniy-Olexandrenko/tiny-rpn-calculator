@@ -141,7 +141,8 @@ void PrintStack()
 			// }
 
 			PrintCharAt(HP35_Display[i], pos, 0);
-			pos += ((FONT_WIDTH * CHAR_SIZE_S) + 1);
+			//pos += ((FONT_WIDTH * CHAR_SIZE_S) + 1);
+			pos += 8;
 		}
 	}
 }
