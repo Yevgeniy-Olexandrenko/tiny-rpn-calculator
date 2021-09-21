@@ -10,42 +10,42 @@
 // HP35 Calculator Engine Interface
 // -----------------------------------------------------------------------------
 
-#define HP35_NONE 0xFF // [+] no key
-#define HP35_NUM0 0x24 // [+]
-#define HP35_NUM1 0x1C // [+]
-#define HP35_NUM2 0x1B // [+]
-#define HP35_NUM3 0x1A // [+]
-#define HP35_NUM4 0x14 // [+]
-#define HP35_NUM5 0x13 // [+]
-#define HP35_NUM6 0x12 // [+]
-#define HP35_NUM7 0x34 // [+]
-#define HP35_NUM8 0x33 // [+]
-#define HP35_NUM9 0x32 // [+]
-#define HP35_PUSH 0x3E // [+] ENTER
-#define HP35_INV  0x0E // [+] 1/x
-#define HP35_SIN  0x2B // [+]
-#define HP35_COS  0x2A // [+]
-#define HP35_TAN  0x28 // [+]
-#define HP35_PI   0x22 // [+]
-#define HP35_CHS  0x3B // [+]
-#define HP35_EEX  0x3A // [+]
-#define HP35_SWAP 0x0C // [+] X<->Y
-#define HP35_ROT  0x0B // [+] Rv
-#define HP35_STO  0x0A // [+]
-#define HP35_RCL  0x08 // [+]
-#define HP35_POW  0x06 // [+] X^Y
-#define HP35_LOG  0x04 // [+] LOG
-#define HP35_LN   0x03 // [+] LN
-#define HP35_EXP  0x02 // [+] e^x
-#define HP35_SQRT 0x2E // [+] SQRT
-#define HP35_ARC  0x2C // [+]
-#define HP35_ADD  0x16 // [+] +
-#define HP35_SUB  0x36 // [+] -
-#define HP35_DIV  0x26 // [+] /
-#define HP35_MUL  0x1E // [+] *
-#define HP35_DOT  0x23 // [+] .
-#define HP35_CLR  0x00 // [+]
-#define HP35_CLX  0x38 // [+]
+#define HP35_NONE 0xFF // no key
+#define HP35_NUM0 0x24 // 
+#define HP35_NUM1 0x1C // 
+#define HP35_NUM2 0x1B // 
+#define HP35_NUM3 0x1A // 
+#define HP35_NUM4 0x14 // 
+#define HP35_NUM5 0x13 // 
+#define HP35_NUM6 0x12 // 
+#define HP35_NUM7 0x34 // 
+#define HP35_NUM8 0x33 // 
+#define HP35_NUM9 0x32 // 
+#define HP35_PUSH 0x3E // ENTER
+#define HP35_INV  0x0E // 1/x
+#define HP35_SIN  0x2B // 
+#define HP35_COS  0x2A // 
+#define HP35_TAN  0x28 // 
+#define HP35_PI   0x22 // 
+#define HP35_CHS  0x3B // 
+#define HP35_EEX  0x3A // 
+#define HP35_SWAP 0x0C // X<->Y
+#define HP35_ROT  0x0B // Rv
+#define HP35_STO  0x0A // 
+#define HP35_RCL  0x08 // 
+#define HP35_POW  0x06 // X^Y
+#define HP35_LOG  0x04 // LOG
+#define HP35_LN   0x03 // LN
+#define HP35_EXP  0x02 // e^x
+#define HP35_SQRT 0x2E // SQRT
+#define HP35_ARC  0x2C // 
+#define HP35_ADD  0x16 // +
+#define HP35_SUB  0x36 // -
+#define HP35_DIV  0x26 // /
+#define HP35_MUL  0x1E // *
+#define HP35_DOT  0x23 // .
+#define HP35_CLR  0x00 // 
+#define HP35_CLX  0x38 // 
 
 uint8_t HP35_Display[15]; // output
 uint8_t HP35_Error;       // output
@@ -234,78 +234,6 @@ void hp35_reg_swap(hp35_register x, hp35_register y)
 }
 
 // -----------------------------------------------------------------------------
-
-void hp35_math_00000() { hp35_iterate_field(hp35_carry |= (b[i] != 0)); }
-void hp35_math_00001() { hp35_reg_clr(b); }
-void hp35_math_00010() { hp35_iterate_field(hp35_nib_sub(a[i], c[i])); }
-void hp35_math_00011() { hp35_carry = 1; hp35_iterate_field(hp35_carry &= (c[i] == 0)); }
-void hp35_math_00100() { hp35_reg_copy(c, b); }
-void hp35_math_00101() { hp35_iterate_field(c[i] = hp35_nib_sub(0, c[i])); }
-void hp35_math_00110() { hp35_reg_clr(c); }
-void hp35_math_00111() { hp35_carry = 1; hp35_iterate_field(c[i] = hp35_nib_sub(0, c[i])); }
-void hp35_math_01000() { hp35_reg_shl(a); }
-void hp35_math_01001() { hp35_reg_copy(b, a); }
-void hp35_math_01010() { hp35_reg_sub(c, a, c); }
-void hp35_math_01011() { hp35_reg_dec(c); }
-void hp35_math_01100() { hp35_reg_copy(a, c); }
-void hp35_math_01101() { hp35_iterate_field(hp35_carry |= (c[i] != 0)); }
-void hp35_math_01110() { hp35_reg_add(c, a, c); }
-void hp35_math_01111() { hp35_reg_inc(c); }
-void hp35_math_10000() { hp35_iterate_field(hp35_nib_sub(a[i], b[i])); }
-void hp35_math_10001() { hp35_reg_swap(b, c); }
-void hp35_math_10010() { hp35_reg_shr(c); }
-void hp35_math_10011() { hp35_carry = 1; hp35_iterate_field(hp35_carry &= (a[i] == 0)); }
-void hp35_math_10100() { hp35_reg_shr(b); }
-void hp35_math_10101() { hp35_reg_add(c, c, c); }
-void hp35_math_10110() { hp35_reg_shr(a); }
-void hp35_math_10111() { hp35_reg_clr(a); }
-void hp35_math_11000() { hp35_reg_sub(a, a, b); }
-void hp35_math_11001() { hp35_reg_swap(a, b); }
-void hp35_math_11010() { hp35_reg_sub(a, a, c); }
-void hp35_math_11011() { hp35_reg_dec(a); }
-void hp35_math_11100() { hp35_reg_add(a, a, b); }
-void hp35_math_11101() { hp35_reg_swap(a, c); }
-void hp35_math_11110() { hp35_reg_add(a, a, c); }
-void hp35_math_11111() { hp35_reg_inc(a); }
-
-typedef void (*hp35_math_fn)();
-const hp35_math_fn hp35_math_handlers[] PROGMEM = 
-{
-	&hp35_math_00000, // IF B[f] = 0
-	&hp35_math_00001, // 0 -> B[f]
-	&hp35_math_00010, // IF A >= C[f]
-	&hp35_math_00011, // IF C[f] >= 1
-	&hp35_math_00100, // B -> C[f]
-	&hp35_math_00101, // 0 – C -> C[f]
-	&hp35_math_00110, // 0 -> C[f]
-	&hp35_math_00111, // 0 – C – 1 -> C[f]
-	&hp35_math_01000, // SHIFT LEFT A[f]
-	&hp35_math_01001, // A -> B[f]
-	&hp35_math_01010, // A – C -> C[f]
-	&hp35_math_01011, // C – 1 -> C[f]
-	&hp35_math_01100, // C -> A[f]
-	&hp35_math_01101, // IF C[f] = 0
-	&hp35_math_01110, // A + C -> C[f]
-	&hp35_math_01111, // C + 1 -> C[f]
-	&hp35_math_10000, // IF A >= B[f]
-	&hp35_math_10001, // B EXCHANGE C[f]
-	&hp35_math_10010, // SHIFT RIGHT C[f]
-	&hp35_math_10011, // IF A[f] >= 1
-	&hp35_math_10100, // SHIFT RIGHT B[f]
-	&hp35_math_10101, // C + C -> C[f]
-	&hp35_math_10110, // SHIFT RIGHT A[f]
-	&hp35_math_10111, // 0 -> A[f]
-	&hp35_math_11000, // A – B -> A[f]
-	&hp35_math_11001, // A EXCHANGE B[f]
-	&hp35_math_11010, // A – C -> A[f]
-	&hp35_math_11011, // A – 1 -> A[f]
-	&hp35_math_11100, // A + B -> A[f]
-	&hp35_math_11101, // A EXCHANGE C[f]
-	&hp35_math_11110, // A + C -> A[f]
-	&hp35_math_11111, // A + 1 -> A[f]
-};
-
-// -----------------------------------------------------------------------------
 // HP35 Calculator Interface Implementation
 // -----------------------------------------------------------------------------
 
@@ -425,7 +353,6 @@ bool HP35_Cycle()
 	else if (op_type == 0x01)
 	{
 		// JSB addr
-		// Jump to address, store return address
 		hp35_ret = hp35_pc;
 		hp35_pc  = op_code;
 	}
@@ -448,16 +375,112 @@ bool HP35_Cycle()
 
 		// Process opcode
 		hp35_carry = 0;
-		hp35_math_fn math_handler = (hp35_math_fn)pgm_read_word(&hp35_math_handlers[op_code >> 3]);
-		math_handler();
+		switch(op_code >> 3)
+		{
+			case 0b00000: // IF B[f] = 0
+				hp35_iterate_field(hp35_carry |= (b[i] != 0));
+				break;
+			case 0b00001: // 0 -> B[f]
+				hp35_reg_clr(b);
+				break;
+			case 0b00010: // IF A >= C[f]
+				hp35_iterate_field(hp35_nib_sub(a[i], c[i]));
+				break;
+			case 0b00011: // IF C[f] >= 1
+				hp35_carry = 1; hp35_iterate_field(hp35_carry &= (c[i] == 0));
+				break;
+			case 0b00100: // B -> C[f]
+				hp35_reg_copy(c, b);
+				break;
+			case 0b00101: // 0 – C -> C[f]
+				hp35_iterate_field(c[i] = hp35_nib_sub(0, c[i]));
+				break;
+			case 0b00110: // 0 -> C[f]
+				hp35_reg_clr(c);
+				break;
+			case 0b00111: // 0 – C – 1 -> C[f]
+				hp35_carry = 1; hp35_iterate_field(c[i] = hp35_nib_sub(0, c[i]));
+				break;
+			case 0b01000: // SHIFT LEFT A[f]
+				hp35_reg_shl(a);
+				break;
+			case 0b01001: // A -> B[f]
+				hp35_reg_copy(b, a);
+				break;
+			case 0b01010: // A – C -> C[f]
+				hp35_reg_sub(c, a, c);
+				break;
+			case 0b01011: // C – 1 -> C[f]
+				hp35_reg_dec(c);
+				break;
+			case 0b01100: // C -> A[f]
+				hp35_reg_copy(a, c);
+				break;
+			case 0b01101: // IF C[f] = 0
+				hp35_iterate_field(hp35_carry |= (c[i] != 0));
+				break;
+			case 0b01110: // A + C -> C[f]
+				hp35_reg_add(c, a, c);
+				break;
+			case 0b01111: // C + 1 -> C[f]
+				hp35_reg_inc(c);
+				break;
+			case 0b10000: // IF A >= B[f]
+				hp35_iterate_field(hp35_nib_sub(a[i], b[i]));
+				break;
+			case 0b10001: // B EXCHANGE C[f]
+				hp35_reg_swap(b, c);
+				break;
+			case 0b10010: // SHIFT RIGHT C[f]
+				hp35_reg_shr(c);
+				break;
+			case 0b10011: // IF A[f] >= 1
+				hp35_carry = 1; hp35_iterate_field(hp35_carry &= (a[i] == 0));
+				break;
+			case 0b10100: // SHIFT RIGHT B[f]
+				hp35_reg_shr(b);
+				break;
+			case 0b10101: // C + C -> C[f]
+				hp35_reg_add(c, c, c);
+				break;
+			case 0b10110: // SHIFT RIGHT A[f]
+				hp35_reg_shr(a);
+				break;
+			case 0b10111: // 0 -> A[f]
+				hp35_reg_clr(a);
+				break;
+			case 0b11000: // A – B -> A[f]
+				hp35_reg_sub(a, a, b);
+				break;
+			case 0b11001: // A EXCHANGE B[f]
+				hp35_reg_swap(a, b);
+				break;
+			case 0b11010: // A – C -> A[f]
+				hp35_reg_sub(a, a, c);
+				break;
+			case 0b11011: // A – 1 -> A[f]
+				hp35_reg_dec(a);
+				break;
+			case 0b11100: // A + B -> A[f]
+				hp35_reg_add(a, a, b);
+				break;
+			case 0b11101: // A EXCHANGE C[f]
+				hp35_reg_swap(a, c);
+				break;
+			case 0b11110: // A + C -> A[f]
+				hp35_reg_add(a, a, c);
+				break;
+			case 0b11111: // A + 1 -> A[f]
+				hp35_reg_inc(a);
+				break;
+		}
 	}
 
 	// Type 11: Branching Instructions
 	else // op_type == 0x03
 	{
 		// (THEN) GO TO addr
-		// If no Carry, jump to address
-		if (hp35_carry_alu != 1)
+		if (!hp35_carry_alu)
 		{
 			hp35_pc = op_code;
 		}
