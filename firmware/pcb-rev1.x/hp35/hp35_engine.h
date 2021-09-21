@@ -60,7 +60,6 @@ bool HP35_Update(uint16_t cycles);
 // HP32 Engine Defines
 #define SSIZE 12
 #define WSIZE 14
-#define ZERO  0
 
 typedef uint8_t hp35_nibble;
 typedef hp35_nibble * hp35_register;
@@ -142,7 +141,6 @@ hp35_nibble d[16]; // D register (Y)
 hp35_nibble e[16]; // E register (Z)
 hp35_nibble f[16]; // F register (T)
 hp35_nibble m[16]; // M Scratchpad
-hp35_nibble t[16]; // Temporary
 
 // Flags
 uint8_t s[12]; // Status
@@ -153,6 +151,32 @@ uint8_t hp35_carry, hp35_carry_alu;					 // Carry bits
 uint8_t fetch_h, fetch_l;				 // ROM fetch and operation code
 uint8_t hp35_key_in, hp35_key_pc;					 // Key variables
 uint8_t h35_display_enable, h35_display_update;	 // Display control
+
+void hp35_update_display()
+{
+	// Create X with register a and b
+	for (int8_t i = WSIZE - 1, d = 0; i >= 0; --i)
+	{
+		if (h35_display_enable)
+		{
+			if (b[i] >= 8)
+				HP35_Display[d++] = ' ';
+			else if (i == 2 || i == 13)
+				HP35_Display[d++] = (a[i] >= 8 ? '-' : ' ');
+			else
+				HP35_Display[d++] = ('0' + a[i]);
+			if (b[i] == 2)
+				HP35_Display[d++] = '.';
+		}
+		else
+			HP35_Display[d++] = ' ';
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+#define hp35_iterate_word(a) for (uint8_t i = 0; i < 14; ++i) { a; }
+#define hp35_iterate_field(a) for (uint8_t i = hp35_fn; i <= hp35_ln; ++i) { a; }
 
 // Add 2 nibbles
 hp35_nibble hp35_add(hp35_nibble x, hp35_nibble y)
@@ -182,99 +206,150 @@ hp35_nibble hp35_sub(hp35_nibble x, hp35_nibble y)
 	return hp35_nibble(res);
 }
 
-void hp35_sub_regs(hp35_register r, hp35_register x, hp35_register y)
+void hp35_reg_clr(hp35_register r)
 {
-	for (uint8_t i = hp35_fn; i <= hp35_ln; ++i)
-	{
-		r[i] = hp35_sub((x ? x[i] : 0), (y ? y[i] : 0));
-	}
+	hp35_iterate_field(r[i] = 0);
 }
 
-void hp35_add_regs(hp35_register r, hp35_register x, hp35_register y)
+void hp35_reg_add(hp35_register r, hp35_register x, hp35_register y)
 {
-	for (uint8_t i = hp35_fn; i <= hp35_ln; ++i)
-	{
-		r[i] = hp35_add((x ? x[i] : 0), (y ? y[i] : 0));
-	}
+	hp35_iterate_field(r[i] = hp35_add(x[i], y[i]));
 }
 
-void hp35_swap_regs(hp35_register x, hp35_register y)
+void hp35_reg_sub(hp35_register r, hp35_register x, hp35_register y)
 {
-	hp35_nibble temp;
-	for (uint8_t i = hp35_fn; i <= hp35_ln; ++i)
-	{
-		temp = x[i];
-		x[i] = y[i];
-		y[i] = temp;
-	}
+	hp35_iterate_field(r[i] = hp35_sub(x[i], y[i]));
 }
 
-void hp35_shr_reg(hp35_register r)
+void hp35_reg_inc(hp35_register r)
+{
+	hp35_carry = 1;
+	hp35_iterate_field(r[i] = hp35_add(r[i], 0));
+}
+
+void hp35_reg_dec(hp35_register r)
+{
+	hp35_carry = 1;
+	hp35_iterate_field(r[i] = hp35_sub(r[i], 0));
+}
+
+void hp35_reg_shr(hp35_register r)
 {
 	for (uint8_t i = hp35_fn; i < hp35_ln; i++) r[i] = r[i + 1];
 	r[hp35_ln] = 0;
 }
 
-void hp35_shl_reg(hp35_register r)
+void hp35_reg_shl(hp35_register r)
 {
 	for (int8_t i = hp35_ln; i > hp35_fn; i--) r[i] = r[i - 1];
 	r[hp35_fn] = 0;
 }
 
-void hp35_zero_reg(hp35_register r)
+void hp35_reg_copy(hp35_register x, hp35_register y)
 {
-	for (uint8_t i = hp35_fn; i <= hp35_ln; i++) r[i] = 0;
+	hp35_iterate_field(x[i] = y[i]);
 }
 
-void hp35_copy_regs(hp35_register x, hp35_register y)
+void hp35_reg_swap(hp35_register x, hp35_register y)
 {
-	for (uint8_t i = hp35_fn; i <= hp35_ln; i++) x[i] = y[i];
+	hp35_nibble temp;
+	hp35_iterate_field(temp = x[i]; x[i] = y[i]; y[i] = temp);
 }
 
-uint8_t hp35_fetch_index()
-{
-	return (((fetch_h & 0x03) << 2) | ((fetch_l & 0xc0) >> 6));
-}
+void hp35_math_00000() { hp35_iterate_field(hp35_carry |= (b[i] != 0)); }
+void hp35_math_00001() { hp35_reg_clr(b); }
+void hp35_math_00010() { hp35_iterate_field(hp35_sub(a[i], c[i])); }
+void hp35_math_00011() { hp35_carry = 1; hp35_iterate_field(hp35_carry &= (c[i] == 0)); }
+void hp35_math_00100() { hp35_reg_copy(c, b); }
+void hp35_math_00101() { hp35_iterate_field(c[i] = hp35_sub(0, c[i])); }
+void hp35_math_00110() { hp35_reg_clr(c); }
+void hp35_math_00111() { hp35_carry = 1; hp35_iterate_field(c[i] = hp35_sub(0, c[i])); }
+void hp35_math_01000() { hp35_reg_shl(a); }
+void hp35_math_01001() { hp35_reg_copy(b, a); }
+void hp35_math_01010() { hp35_reg_sub(c, a, c); }
+void hp35_math_01011() { hp35_reg_dec(c); }
+void hp35_math_01100() { hp35_reg_copy(a, c); }
+void hp35_math_01101() { hp35_iterate_field(hp35_carry |= (c[i] != 0)); }
+void hp35_math_01110() { hp35_reg_add(c, a, c); }
+void hp35_math_01111() { hp35_reg_inc(c); }
+void hp35_math_10000() { hp35_iterate_field(hp35_sub(a[i], b[i])); }
+void hp35_math_10001() { hp35_reg_swap(b, c); }
+void hp35_math_10010() { hp35_reg_shr(c); }
+void hp35_math_10011() { hp35_carry = 1; hp35_iterate_field(hp35_carry &= (a[i] == 0)); }
+void hp35_math_10100() { hp35_reg_shr(b); }
+void hp35_math_10101() { hp35_reg_add(c, c, c); }
+void hp35_math_10110() { hp35_reg_shr(a); }
+void hp35_math_10111() { hp35_reg_clr(a); }
+void hp35_math_11000() { hp35_reg_sub(a, a, b); }
+void hp35_math_11001() { hp35_reg_swap(a, b); }
+void hp35_math_11010() { hp35_reg_sub(a, a, c); }
+void hp35_math_11011() { hp35_reg_dec(a); }
+void hp35_math_11100() { hp35_reg_add(a, a, b); }
+void hp35_math_11101() { hp35_reg_swap(a, c); }
+void hp35_math_11110() { hp35_reg_add(a, a, c); }
+void hp35_math_11111() { hp35_reg_inc(a); }
 
-void hp35_update_display()
+typedef void (*hp35_math_fn)();
+const hp35_math_fn hp35_math_handlers[] PROGMEM = 
 {
-	// Create X with register a and b
-	for (int8_t i = WSIZE - 1, d = 0; i >= 0; --i)
-	{
-		if (h35_display_enable)
-		{
-			HP35_Display[d++] = ' ';
-		}
-		else
-		{
-			if (b[i] >= 8)
-			{
-				HP35_Display[d++] = ' ';
-			}
-			else if (i == 2 || i == 13)
-			{
-				HP35_Display[d++] = (a[i] >= 8 ? '-' : ' ');
-			}
-			else
-			{
-				HP35_Display[d++] = ('0' + a[i]);
-			}
+	&hp35_math_00000, // IF B[f] = 0
+	&hp35_math_00001, // 0 -> B[f]
+	&hp35_math_00010, // IF A >= C[f]
+	&hp35_math_00011, // IF C[f] >= 1
+	&hp35_math_00100, // B -> C[f]
+	&hp35_math_00101, // 0 – C -> C[f]
+	&hp35_math_00110, // 0 -> C[f]
+	&hp35_math_00111, // 0 – C – 1 -> C[f]
+	&hp35_math_01000, // SHIFT LEFT A[f]
+	&hp35_math_01001, // A -> B[f]
+	&hp35_math_01010, // A – C -> C[f]
+	&hp35_math_01011, // C – 1 -> C[f]
+	&hp35_math_01100, // C -> A[f]
+	&hp35_math_01101, // IF C[f] = 0
+	&hp35_math_01110, // A + C -> C[f]
+	&hp35_math_01111, // C + 1 -> C[f]
+	&hp35_math_10000, // IF A >= B[f]
+	&hp35_math_10001, // B EXCHANGE C[f]
+	&hp35_math_10010, // SHIFT RIGHT C[f]
+	&hp35_math_10011, // IF A[f] >= 1
+	&hp35_math_10100, // SHIFT RIGHT B[f]
+	&hp35_math_10101, // C + C -> C[f]
+	&hp35_math_10110, // SHIFT RIGHT A[f]
+	&hp35_math_10111, // 0 -> A[f]
+	&hp35_math_11000, // A – B -> A[f]
+	&hp35_math_11001, // A EXCHANGE B[f]
+	&hp35_math_11010, // A – C -> A[f]
+	&hp35_math_11011, // A – 1 -> A[f]
+	&hp35_math_11100, // A + B -> A[f]
+	&hp35_math_11101, // A EXCHANGE C[f]
+	&hp35_math_11110, // A + C -> A[f]
+	&hp35_math_11111, // A + 1 -> A[f]
+};
 
-			if (b[i] == 2)
-			{
-				HP35_Display[d++] = '.';
-			}
-		}
-	}
-}
+// -----------------------------------------------------------------------------
 
 void HP35_Operation(uint8_t key)
 {
 	hp35_key_in = key;
 }
 
-bool HP35_Cycle2()
+bool HP35_Cycle()
 {
+	// Error handling
+	if ((pc == 0xBF) & (offset == 0x00))
+	{
+		HP35_Error = true;
+	}
+
+	// Process received key
+	if (hp35_key_in != HP35_NONE)
+	{
+		HP35_Error  = false;
+		hp35_key_pc = hp35_key_in;
+		hp35_key_in = HP35_NONE;
+		s[0] = 1;
+	}
+
 	// Fetch ROM
 	uint16_t addr_l = (offset << 8 | pc);
 	uint8_t  addr_h = (addr_l >> 2);
@@ -289,215 +364,96 @@ bool HP35_Cycle2()
 	// Operation decode
 	uint8_t op_type = (fetch_l & 0x03);
 	uint8_t op_code = (fetch_l >> 2 | fetch_h << 6);
-}
 
-bool HP35_Cycle()
-{
-	// Error handling
-	if ((pc == 0xBF) & (offset == 0))
+	// Type 00: Misc Instructions
+	if (op_type == 0x00)
 	{
-		HP35_Error = true;
-	}
-
-	// Fetch ROM
-	uint16_t addr_l = (offset << 8 | pc);
-	uint8_t  addr_h = (addr_l >> 2);
-	uint8_t  shift  = (addr_l & 0x03) << 1;
-	fetch_l = pgm_read_byte(hp35_rom_l + addr_l);
-	fetch_h = pgm_read_byte(hp35_rom_h + addr_h) >> shift & 0x03;
-
-	hp35_carry_alu = hp35_carry;
-	hp35_carry = 0;
-	pc++;
-
-	// Process received key
-	if (hp35_key_in != HP35_NONE)
-	{
-		HP35_Error  = false;
-		hp35_key_pc = hp35_key_in;
-		hp35_key_in = HP35_NONE;
-		s[0] = 1;
-	}
-
-	// NOP
-	if (fetch_l == 0x00)
-	{ 
-		/* do nothing */
-	}
-
-	// Jump to pc + rom if key is available
-	if (fetch_l == 0xD0)
-	{
-		pc = hp35_key_pc;
-		s[0] = 0;
-	}
-
-	uint8_t fetch_l_03 = (fetch_l & 0x03);
-	if (fetch_l_03 == 0x00)
-	{
-		// Return from subroutine
-		if ((fetch_l & 0x7F) == 0x30)
+		switch(op_code)
 		{
-			pc = ret;
-		}
-
-		// ROM select
-		if ((fetch_l & 0x7F) == 0x10)
-		{
-			offset  = (fetch_h << 1) & 06;
-			offset |= (fetch_l >> 7) & 01;
-		}
-
-		switch(fetch_l & 0x3f)
-		{
-			case 0x14: // Set carry due to status
-				hp35_carry = s[hp35_fetch_index()];
+			case 0b00000000: // NO OPERATION
 				break;
-
-			case 0x04: // Set s bit
-				s[hp35_fetch_index()] = 1;
+			case 0b00110100: // KEY -> ROM ADDRESS
+				pc = hp35_key_pc; s[0] = 0;
 				break;
-
-			case 0x24: // Clear s bit
-				s[hp35_fetch_index()] = 0;
+			case 0b00000111: // P – 1 -> P
+				p -= 0x01; p &= 0x0F;
 				break;
-
-			case 0x34: // [!] Clear s reg
+			case 0b00001010: // DISPLAY TOGGLE
+				h35_display_enable = !h35_display_enable; h35_display_update = true;
+				break;
+			case 0b00101010: // C EXCHANGE M
+				hp35_iterate_word(hp35_nibble temp = c[i]; c[i] = m[i]; m[i] = temp);
+				break;
+			case 0b01001010: // C -> STACK
+				hp35_iterate_word(f[i] = e[i]; e[i] = d[i]; d[i] = c[i]);
+				break;
+			case 0b01101010: // STACK -> A
+				hp35_iterate_word(a[i] = d[i]; d[i] = e[i]; e[i] = f[i]);
+				break;
+			case 0b10001010: // DISPLAY OFF
+				if (h35_display_enable) { h35_display_enable = false; h35_display_update = true; }
+				break;
+			case 0b10101010: // M -> C
+				hp35_iterate_word(c[i] = m[i]);
+				break;
+			case 0b11001010: // DOWN ROTATE
+				hp35_iterate_word(hp35_nibble temp = c[i]; c[i] = d[i]; d[i] = e[i]; e[i] = f[i]; f[i] = temp);
+				break;
+			case 0b11101010: // CLEAR REGISTERS
+				hp35_iterate_word(a[i] = b[i] = c[i] = d[i] = e[i] = f[i] = m[i] = 0);
+				break;
+			case 0b00001100: // RETURN
+				pc = ret;
+				break;
+			case 0b00001101: // CLEAR STATUS
 				for (uint8_t i = 0; i < SSIZE; i++) s[i] = 0;
 				break;
-
-			case 0x2C: // [!] Set carry
-				hp35_carry = (p == hp35_fetch_index());
+			case 0b00001111: // P + 1 -> P
+				p += 0x01; p &= 0x0F;
 				break;
-
-			// Set p
-			case 0x0C:
-				p = hp35_fetch_index();
-				break;
-			
-			case 0x3C:
-				p += 0x01;
-				p &= 0x0F;
-				break;
-			
-			case 0x1C:
-				p -= 0x01;
-				p &= 0x0F;
-				break;
-
-			case 0x18: // Load constant
-				c[p]  = (fetch_l >> 6);
-				c[p] |= (fetch_h << 2);
-				p -= 0x01;
-				p &= 0x0F;
-				break;
-		}
-
-		uint8_t fetch_h_03 = (fetch_h & 0x03);
-		uint8_t fetch_l_EF = (fetch_l & 0xEF);
-
-		if (fetch_h_03 == 0x00)
-		{
-			// No display
-			if (fetch_l_EF == 0x28)
-			{
-				if (h35_display_enable)
+			default:
+				uint8_t index = op_code >> 4;
+				switch(op_code & 0x0F)
 				{
-					h35_display_enable = false;
-					h35_display_update = true;
+					case 0b0001: // 1 -> Sn
+						s[index] = 1;
+						break;
+					case 0b0011: // n -> P
+						p = index;
+						break;
+					case 0b0100: // ROM SELECT n
+						offset = (index >> 1);
+						break;
+					case 0b0101: // IF Sn = 0
+						hp35_carry = s[index];
+						break;
+					case 0b0110: // n -> C
+						c[p] = index; p -= 0x01; p &= 0x0F;
+						break;
+					case 0b1001: // 0 -> Sn
+						s[index] = 0;
+						break;
+					case 0b1011: // IF p # n
+						hp35_carry = (p == index);
+						break;
 				}
-			}
-
-			// c<->m
-			if (fetch_l_EF == 0xA8)
-			{
-				for (uint8_t i = 0; i < WSIZE; i++)
-				{
-					int tmp = c[i];
-					c[i] = m[i];
-					m[i] = tmp;
-				}
-			}
-		}
-		else if (fetch_h_03 == 0x01)
-		{
-			// c to stack
-			if (fetch_l_EF == 0x28)
-			{
-				for (uint8_t i = 0; i < WSIZE; i++)
-				{
-					f[i] = e[i];
-					e[i] = d[i];
-					d[i] = c[i];
-				}
-			}
-
-			// stack to a
-			if (fetch_l_EF == 0xA8)
-			{
-				for (uint8_t i = 0; i < WSIZE; i++)
-				{
-					a[i] = d[i];
-					d[i] = e[i];
-					e[i] = f[i];
-				}
-			}
-		}
-		else if (fetch_h_03 == 0x02)
-		{
-			// Toggle display
-			if (fetch_l_EF == 0x28)
-			{
-				h35_display_enable = !h35_display_enable;
-				h35_display_update = true;
-			}
-
-			// m to c
-			if (fetch_l_EF == 0xA8)
-			{
-				for (uint8_t i = 0; i < WSIZE; i++)
-					c[i] = m[i];
-			}
-		}
-		else // fetch_h_03 == 0x03
-		{
-			// Rotate down
-			if (fetch_l_EF == 0x28)
-			{
-				for (uint8_t i = 0; i < WSIZE; i++)
-				{
-					int tmp = c[i];
-					c[i] = d[i];
-					d[i] = e[i];
-					e[i] = f[i];
-					f[i] = tmp;
-				}
-			}
-
-			// Clear all register
-			if (fetch_l_EF == 0xA8)
-			{
-				for (uint8_t i = 0; i < WSIZE; i++)
-					a[i] = b[i] = c[i] = d[i] = e[i] = f[i] = m[i] = 0;
-			}
 		}
 	}
-	else if (fetch_l_03 == 0x01)
+
+	// Type 01: Branching Instructions
+	else if (op_type == 0x01)
 	{
-		// Jump subroutine
+		// JSB addr
+		// Jump to address, store return address
 		ret = pc;
-		pc  = (fetch_l >> 2) & 0x3f;
-		pc |= (fetch_h << 6) & 0xc0;
+		pc  = op_code;
 	}
-	else if (fetch_l_03 == 0x02)
-	{
-		// A&R calculations due to opcode
-		uint8_t op_code;
-		op_code  = ((fetch_l >> 5) & 0x07);
-		op_code |= ((fetch_h << 3) & 0x18);
 
+	// Type 10: Arithmetic Instructions
+	else if (op_type == 0x02)
+	{
 		// Get register boundaries first/last
-		switch ((fetch_l >> 2) & 0x07)
+		switch (op_code & 0x07)
 		{
 		case 0: hp35_fn = hp35_ln = p; break;
 		case 1: hp35_fn = 3; hp35_ln = 12; break;
@@ -511,159 +467,22 @@ bool HP35_Cycle()
 
 		// Process opcode
 		hp35_carry = 0;
-		switch (op_code)
-		{
-		case 0x00: // 0+B
-			for (uint8_t i = hp35_fn; i <= hp35_ln; i++)
-				if (b[i] != 0) hp35_carry = 1;
-			break;
-
-		case 0x01: // 0->B
-			hp35_zero_reg(b);
-			break;
-
-		case 0x02: //  A-C
-			hp35_sub_regs(t, a, c);
-			break;
-
-		case 0x03: // C-1
-			hp35_carry = 1;
-			for (uint8_t i = hp35_fn; i <= hp35_ln; i++)
-				if (c[i] != 0) hp35_carry = 0;
-			break;
-
-		case 0x04: // B->C
-			hp35_copy_regs(c, b);
-			break;
-
-		case 0x05: // 0-C->C
-			hp35_sub_regs(c, ZERO, c);
-			break;
-
-		case 0x06: // 0->C
-			hp35_zero_reg(c);
-			break;
-
-		case 0x07: // 0-C-1->C
-			hp35_carry = 1;
-			hp35_sub_regs(c, ZERO, c);
-			break;
-
-		case 0x08: // Sh A Left
-			hp35_shl_reg(a);
-			break;
-
-		case 0x09: // A->B
-			hp35_copy_regs(b, a);
-			break;
-
-		case 0x0a: // A-C->C
-			hp35_sub_regs(c, a, c);
-			break;
-
-		case 0x0b: // C-1->C
-			hp35_carry = 1;
-			hp35_sub_regs(c, c, ZERO);
-			break;
-
-		case 0x0c: // C->A
-			hp35_copy_regs(a, c);
-			break;
-
-		case 0x0d: // 0-C
-			for (uint8_t i = hp35_fn; i <= hp35_ln; i++)
-				if (c[i] != 0) hp35_carry = 1;
-			break;
-
-		case 0x0e: // A+C->C
-			hp35_add_regs(c, a, c);
-			break;
-
-		case 0x0f: // C+1->C
-			hp35_carry = 1;
-			hp35_add_regs(c, c, ZERO);
-			break;
-
-		case 0x10: // A-B
-			hp35_sub_regs(t, a, b);
-			break;
-
-		case 0x11: // B<->C
-			hp35_swap_regs(b, c);
-			break;
-
-		case 0x12: // Sh C Right
-			hp35_shr_reg(c);
-			break;
-
-		case 0x13: // A-1
-			hp35_carry = 1;
-			for (uint8_t i = hp35_fn; i <= hp35_ln; i++)
-				if (a[i] != 0) hp35_carry = 0;
-			break;
-
-		case 0x14: // Sh B Right
-			hp35_shr_reg(b);
-			break;
-
-		case 0x15: // C+C->A
-			hp35_add_regs(c, c, c); // ???
-			break;
-
-		case 0x16: // Sh A Right
-			hp35_shr_reg(a);
-			break;
-
-		case 0x17: // 0->A
-			hp35_zero_reg(a);
-			break;
-
-		case 0x18: // A-B->A
-			hp35_sub_regs(a, a, b);
-			break;
-
-		case 0x19: // A<->B
-			hp35_swap_regs(a, b);
-			break;
-
-		case 0x1a: // A-C->A
-			hp35_sub_regs(a, a, c);
-			break;
-
-		case 0x1b: // A-1->A
-			hp35_carry = 1;
-			hp35_sub_regs(a, a, ZERO);
-			break;
-
-		case 0x1c: // A+B->A
-			hp35_add_regs(a, a, b);
-			break;
-
-		case 0x1d: // C<->A
-			hp35_swap_regs(a, c);
-			break;
-
-		case 0x1e: // A+C->A
-			hp35_add_regs(a, a, c);
-			break;
-
-		case 0x1f: // A+1->A
-			hp35_carry = 1;
-			hp35_add_regs(a, a, ZERO);
-			break;
-		}
+		hp35_math_fn math_handler = (hp35_math_fn)pgm_read_word(&hp35_math_handlers[op_code >> 3]);
+		math_handler();
 	}
-	else // fetch_l_03 == 0x03
+
+	// Type 11: Branching Instructions
+	else // op_type == 0x03
 	{
-		// Conditional branch
+		// (THEN) GO TO addr
+		// If no Carry, jump to address
 		if (hp35_carry_alu != 1)
 		{
-			pc  = (fetch_l & 0xfc) >> 2;
-			pc |= (fetch_h & 0x03) << 6;
+			pc = op_code;
 		}
 	}
 
-	// Display
+	// Display update
 	if (h35_display_update)
 	{
 		hp35_update_display();

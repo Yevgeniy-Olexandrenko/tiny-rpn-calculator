@@ -1,7 +1,7 @@
 #pragma once
 
 // Firmware parts
-#define SUPPORT_RTC 1
+#define SUPPORT_RTC 0
 
 // Firmware configuration
 #define DEBUG_ON_R1_0  1

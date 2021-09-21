@@ -191,8 +191,9 @@ void enterMenu(u08 type)
 
 #define CALC_FRAMES_PER_SEC      (15)
 #define HP35_CYCLES_PER_FRAME    (HP35_CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
-#define OPERATION_UPDATE_CYCLES  (HP35_CYCLES_PER_FRAME * 3)
+#define OPERATION_UPDATE_CYCLES  (HP35_CYCLES_PER_FRAME * 1)
 #define OPERATION_EXECUTE_CYCLES (HP35_CYCLES_PER_FRAME * 5)
+#define OPERATION_ERROR_CYCLES   (HP35_CYCLES_PER_FRAME)
 
 void updateHP35ForCycles(uint16_t cycles)
 {
@@ -205,7 +206,12 @@ void updateHP35ForCycles(uint16_t cycles)
 void executeOperationAndWait(u08 operation)
 {
 	HP35_Operation(operation);
-	updateHP35ForCycles(OPERATION_EXECUTE_CYCLES);
+	//updateHP35ForCycles(OPERATION_EXECUTE_CYCLES);
+	uint16_t cycles = OPERATION_EXECUTE_CYCLES;
+	while (cycles--)
+	{
+		HP35_Cycle();
+	}
 }
 
 void executeOperation(u08 operation)
@@ -233,17 +239,17 @@ void executeOperation(u08 operation)
 		
 		case TRIG_ASIN:
 			executeOperationAndWait(HP35_ARC);
-			executeOperationAndWait(HP35_SIN);
+			executeOperation(HP35_SIN);
 			break;
 
 		case TRIG_ACOS:
 			executeOperationAndWait(HP35_ARC);
-			executeOperationAndWait(HP35_COS);
+			executeOperation(HP35_COS);
 			break;
 		
 		case TRIG_ATAN:
 			executeOperationAndWait(HP35_ARC);
-			executeOperationAndWait(HP35_TAN);
+			executeOperation(HP35_TAN);
 			break;
 	}
 }
@@ -280,7 +286,7 @@ void updateCalcMode()
 		}
 		else
 		{
-			updateHP35ForCycles(OPERATION_UPDATE_CYCLES);
+			updateHP35ForCycles(HP35_Error ? OPERATION_ERROR_CYCLES : OPERATION_UPDATE_CYCLES);
 		}
 	}
 }
