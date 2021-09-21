@@ -53,7 +53,7 @@ uint8_t HP35_Display[15]; // output
 uint8_t HP35_Error;       // output
 
 void HP35_Operation(uint8_t key);
-bool HP35_Update(uint16_t cycles);
+bool HP35_Cycle();
 
 // firmware ROM (768 words)
 const uint8_t hp35_rom_l[] PROGMEM =
@@ -506,8 +506,8 @@ bool HP35_Cycle()
 	// display update
 	if (hp35_disp_update)
 	{
-		hp35_disp_update = false;
-		for (int8_t i = 13, d = 0; i >= 0; --i)
+		hp35_disp_update = 0;
+		for (int8_t d = 0, i = 13; i >= 0; --i)
 		{
 			if (hp35_disp_enable)
 			{

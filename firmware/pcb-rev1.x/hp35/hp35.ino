@@ -1,6 +1,6 @@
 
 // Firmware parts
-#define SUPPORT_RTC 0
+#define SUPPORT_RTC 1
 
 // Firmware configuration
 #define DEBUG_ON_R1_0  1

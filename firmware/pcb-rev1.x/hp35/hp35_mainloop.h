@@ -142,7 +142,7 @@ void PrintStack()
 
 			PrintCharAt(HP35_Display[i], pos, 0);
 			//pos += ((FONT_WIDTH * CHAR_SIZE_S) + 1);
-			pos += 8;
+			pos += 7 + 1;
 		}
 	}
 }
@@ -190,29 +190,14 @@ void enterMenu(u08 type)
 	select = 0;
 }
 
-#define CALC_FRAMES_PER_SEC      (15)
-#define HP35_CYCLES_PER_FRAME    (HP35_CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
-#define OPERATION_UPDATE_CYCLES  (HP35_CYCLES_PER_FRAME * 1)
-#define OPERATION_EXECUTE_CYCLES (HP35_CYCLES_PER_FRAME * 5)
-#define OPERATION_ERROR_CYCLES   (HP35_CYCLES_PER_FRAME)
+#define CALC_FRAMES_PER_SEC   (15)
+#define HP35_CYCLES_PER_FRAME (HP35_CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
+#define HP35_OPERATION_CYCLES (HP35_CYCLES_PER_FRAME * 5)
 
-void updateHP35ForCycles(uint16_t cycles)
-{
-	while (cycles--)
-	{
-		if (HP35_Cycle()) PrintCalculator();
-	}
-}
-
-void executeOperationAndWait(u08 operation)
+void HP35_OperationWithWait(u08 operation)
 {
 	HP35_Operation(operation);
-	//updateHP35ForCycles(OPERATION_EXECUTE_CYCLES);
-	uint16_t cycles = OPERATION_EXECUTE_CYCLES;
-	while (cycles--)
-	{
-		HP35_Cycle();
-	}
+	for (u16 i = 0; i < HP35_OPERATION_CYCLES; ++i) HP35_Cycle();
 }
 
 void executeOperation(u08 operation)
@@ -239,18 +224,18 @@ void executeOperation(u08 operation)
 			break;
 		
 		case TRIG_ASIN:
-			executeOperationAndWait(HP35_ARC);
-			executeOperation(HP35_SIN);
+			HP35_OperationWithWait(HP35_ARC);
+			HP35_Operation(HP35_SIN);
 			break;
 
 		case TRIG_ACOS:
-			executeOperationAndWait(HP35_ARC);
-			executeOperation(HP35_COS);
+			HP35_OperationWithWait(HP35_ARC);
+			HP35_Operation(HP35_COS);
 			break;
 		
 		case TRIG_ATAN:
-			executeOperationAndWait(HP35_ARC);
-			executeOperation(HP35_TAN);
+			HP35_OperationWithWait(HP35_ARC);
+			HP35_Operation(HP35_TAN);
 			break;
 	}
 }
@@ -287,7 +272,10 @@ void updateCalcMode()
 		}
 		else
 		{
-			updateHP35ForCycles(HP35_Error ? OPERATION_ERROR_CYCLES : OPERATION_UPDATE_CYCLES);
+			for (u16 i = 0; i < HP35_CYCLES_PER_FRAME; ++i)
+			{
+				if (HP35_Cycle()) PrintCalculator();
+			}
 		}
 	}
 }
