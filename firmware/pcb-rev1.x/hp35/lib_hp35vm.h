@@ -103,6 +103,7 @@ namespace HP35
 	typedef uint8_t nib; typedef nib * reg;
 	#define hp35_iterate_word(a)  for (uint8_t i = 0; i < 14; ++i)   { a; }
 	#define hp35_iterate_field(a) for (uint8_t i = ff; i <= fl; ++i) { a; }
+	enum fld { P = 0, M, X, W, WP, MS, XS, S };
 
 	// registers
 	nib A[16]; // A register
@@ -196,15 +197,12 @@ namespace HP35
 	bool Cycle()
 	{
 		// error handling
-		if ((pc == 0xBF) & (rom_offset == 0x00))
-		{
-			Error = true;
-		}
+		if ((pc == 0xBF) & (rom_offset == 0x00)) Error = 1;
 
 		// process received key
 		if (key_in != OpNONE)
 		{
-			Error  = false;
+			Error  = 0;
 			key_pc = key_in;
 			key_in = OpNONE;
 			s[0] = 1;
@@ -239,29 +237,28 @@ namespace HP35
 					p -= 0x01; p &= 0x0F;
 					break;
 				case 0b00001010: // DISPLAY TOGGLE
-					disp_enable = !disp_enable;
-					disp_update = 1;
+					disp_enable = !disp_enable; disp_update = 1;
 					break;
 				case 0b00101010: // C EXCHANGE M
-					hp35_hp35_iterate_word(nib t = C[i]; C[i] = M[i]; M[i] = t);
+					hp35_iterate_word(nib t = C[i]; C[i] = M[i]; M[i] = t);
 					break;
 				case 0b01001010: // C -> STACK
-					hp35_hp35_iterate_word(F[i] = E[i]; E[i] = D[i]; D[i] = C[i]);
+					hp35_iterate_word(F[i] = E[i]; E[i] = D[i]; D[i] = C[i]);
 					break;
 				case 0b01101010: // STACK -> A
-					hp35_hp35_iterate_word(A[i] = D[i]; D[i] = E[i]; E[i] = F[i]);
+					hp35_iterate_word(A[i] = D[i]; D[i] = E[i]; E[i] = F[i]);
 					break;
 				case 0b10001010: // DISPLAY OFF
 					if (disp_enable) { disp_enable = 0; disp_update = 1; }
 					break;
 				case 0b10101010: // M -> C
-					hp35_hp35_iterate_word(C[i] = M[i]);
+					hp35_iterate_word(C[i] = M[i]);
 					break;
 				case 0b11001010: // DOWN ROTATE
-					hp35_hp35_iterate_word(nib t = C[i]; C[i] = D[i]; D[i] = E[i]; E[i] = F[i]; F[i] = t);
+					hp35_iterate_word(nib t = C[i]; C[i] = D[i]; D[i] = E[i]; E[i] = F[i]; F[i] = t);
 					break;
 				case 0b11101010: // CLEAR REGISTERS
-					hp35_hp35_iterate_word(A[i] = B[i] = C[i] = D[i] = E[i] = F[i] = M[i] = 0);
+					hp35_iterate_word(A[i] = B[i] = C[i] = D[i] = E[i] = F[i] = M[i] = 0);
 					break;
 				case 0b00001100: // RETURN
 					pc = ret;
@@ -305,7 +302,7 @@ namespace HP35
 		else if (op_type == 0x01)
 		{
 			// JSB addr
-			ret = pc; pc  = op_code;
+			ret = pc; pc = op_code;
 		}
 
 		// Type 10: Arithmetic Instructions
@@ -314,14 +311,14 @@ namespace HP35
 			// get register boundaries
 			switch (op_code & 0x07)
 			{
-				case 0: ff = fl = p; break;
-				case 1: ff = 3; fl = 12; break;
-				case 2: ff = 0; fl = 2; break;
-				case 3: ff = 0; fl = 13; break;
-				case 4: ff = 0; fl = p; break;
-				case 5: ff = 3; fl = 13; break;
-				case 6: ff = fl = 2; break;
-				case 7: ff = fl = 13; break;
+				case fld::P : ff = fl = p; break;
+				case fld::M : ff = 3; fl = 12; break;
+				case fld::X : ff = 0; fl = 2;  break;
+				case fld::W : ff = 0; fl = 13; break;
+				case fld::WP: ff = 0; fl = p;  break;
+				case fld::MS: ff = 3; fl = 13; break;
+				case fld::XS: ff = fl = 2;  break;
+				case fld::S : ff = fl = 13; break;
 			}
 
 			// process opcode
