@@ -7,7 +7,7 @@ namespace HP35
 	// -----------------------------------------------------------------------------
 
 	// public interface
-	enum Operation
+	enum
 	{
 		OpCLR  = 0x00, OpEXP  = 0x02, OpLN   = 0x03, OpLOG  = 0x04, OpPOW  = 0x06, OpRCL  = 0x08,
 		OpSTO  = 0x0A, OpROT  = 0x0B, OpSWAP = 0x0C, OpINV  = 0x0E, OpNUM6 = 0x12, OpNUM5 = 0x13,
@@ -20,7 +20,7 @@ namespace HP35
 	uint8_t Display[15]; // output
 	uint8_t Error;       // output
 
-	void Operation(Operation op);
+	void Operation(uint8_t op);
 	bool Cycle();
 
 	// clock parameters
@@ -103,7 +103,7 @@ namespace HP35
 	typedef uint8_t nib; typedef nib * reg;
 	#define hp35_iterate_word(a)  for (uint8_t i = 0; i < 14; ++i)   { a; }
 	#define hp35_iterate_field(a) for (uint8_t i = ff; i <= fl; ++i) { a; }
-	enum fld { P = 0, M, X, W, WP, MS, XS, S };
+	namespace fld { enum { P = 0, M, X, W, WP, MS, XS, S }; }
 
 	// registers
 	nib A[16]; // A register
@@ -189,7 +189,7 @@ namespace HP35
 	}
 
 	// implementation
-	void Operation(Operation op)
+	void Operation(uint8_t op)
 	{
 		key_in = op;
 	}

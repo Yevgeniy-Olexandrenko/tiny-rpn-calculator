@@ -45,9 +45,12 @@ typedef int32_t  s32;
 #define isb_set(sfr, bit) ((sfr) & _BV(bit))
 #define isb_clr(sfr, bit) (!((sfr) & _BV(bit)))
 
+// necessary undefs
+#undef ADC
+#undef FPSTR
+#undef F
+
 // support for strings in PROGMEM
-#undef  FPSTR
-#undef  F
 class __FlashStringHelper;
 #define FPSTR(pstr_pointer) (reinterpret_cast<const __FlashStringHelper *>(pstr_pointer))
 #define F(string_literal) (FPSTR(PSTR(string_literal)))
@@ -136,7 +139,7 @@ namespace WDT
 	#define WDT_TIMEOUT_4S     0x08 // (4096 ± 409.6) ms
 	#define WDT_TIMEOUT_8S     0x09 // (8192 ± 819.2) ms
 
-	void WDT::Init(u08 mode, u08 prescaler)
+	void Init(u08 mode, u08 prescaler)
 	{
 		// does not change global interrupts enable flag
 		u08 wdtr = mode | ((prescaler > 7) ? 0x20 | (prescaler - 8) : prescaler);

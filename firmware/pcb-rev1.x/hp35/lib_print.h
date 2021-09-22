@@ -358,7 +358,7 @@ NOINLINE void PrintCharAt(int8_t c, uint8_t x, uint8_t y)
 	c -= FONT_BEGIN;
 	for (uint8_t cy = 0; cy < ch; ++cy)
 	{
-		LCD_Position(x, y + cy);
+		LCD::Position(x, y + cy);
 		for (uint8_t i = 0; i < FONT_WIDTH; ++i)
 		{
 			uint8_t bitmap = 0x00;
@@ -370,7 +370,7 @@ NOINLINE void PrintCharAt(int8_t c, uint8_t x, uint8_t y)
 				else if (ch == CHAR_SIZE_L)
 					bitmap = expand2bit((bitmap >> (cy << 1)) & 0x03); // Expand 000000ab
 			}
-			LCD_Write(bitmap, cw);
+			LCD::Write(bitmap, cw);
 		}
 	}
 }

@@ -6,43 +6,43 @@
 
 enum 
 {
-	KEY_FUNC = KBD_A0, KEY_NUM7 = KBD_B0, KEY_NUM8 = KBD_C0, KEY_NUM9 = KBD_D0,
-	KEY_EEXP = KBD_A1, KEY_NUM4 = KBD_B1, KEY_NUM5 = KBD_C1, KEY_NUM6 = KBD_D1,
-	KEY_NEG  = KBD_A2, KEY_NUM1 = KBD_B2, KEY_NUM2 = KBD_C2, KEY_NUM3 = KBD_D2,
-	KEY_DROP = KBD_A3, KEY_NUM0 = KBD_B3, KEY_DOT  = KBD_C3, KEY_DUP  = KBD_D3,
-	KEY_NONE = KBD_NO
+	KEY_FUNC = KBD::KeyA0, KEY_NUM7 = KBD::KeyB0, KEY_NUM8 = KBD::KeyC0, KEY_NUM9 = KBD::KeyD0,
+	KEY_EEXP = KBD::KeyA1, KEY_NUM4 = KBD::KeyB1, KEY_NUM5 = KBD::KeyC1, KEY_NUM6 = KBD::KeyD1,
+	KEY_NEG  = KBD::KeyA2, KEY_NUM1 = KBD::KeyB2, KEY_NUM2 = KBD::KeyC2, KEY_NUM3 = KBD::KeyD2,
+	KEY_DROP = KBD::KeyA3, KEY_NUM0 = KBD::KeyB3, KEY_DOT  = KBD::KeyC3, KEY_DUP  = KBD::KeyD3,
+	KEY_NONE = KBD::KeyNO
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // HP35 Operation (basic + extended)
 ////////////////////////////////////////////////////////////////////////////////
 
-#define FUNC_KEY  (HP35_NONE - 1)
-#define MENU_MATH (HP35_NONE - 2)
-#define MENU_TRIG (HP35_NONE - 3)
-#define TRIG_ASIN (HP35_NONE - 4)
-#define TRIG_ACOS (HP35_NONE - 5)
-#define TRIG_ATAN (HP35_NONE - 6)
+#define FUNC_KEY  (HP35::OpNONE - 1)
+#define MENU_MATH (HP35::OpNONE - 2)
+#define MENU_TRIG (HP35::OpNONE - 3)
+#define TRIG_ASIN (HP35::OpNONE - 4)
+#define TRIG_ACOS (HP35::OpNONE - 5)
+#define TRIG_ATAN (HP35::OpNONE - 6)
 
 const uint8_t main_operations[16 + 16] PROGMEM =
 {
-	HP35_NUM0, HP35_NUM1, HP35_NUM2, HP35_NUM3, HP35_NUM4, HP35_NUM5, HP35_NUM6, HP35_NUM7,
-	HP35_NUM8, HP35_NUM9, HP35_DOT,  HP35_PUSH, HP35_CLX,  HP35_CHS,  HP35_EEX,  FUNC_KEY,
+	HP35::OpNUM0, HP35::OpNUM1, HP35::OpNUM2, HP35::OpNUM3, HP35::OpNUM4, HP35::OpNUM5, HP35::OpNUM6, HP35::OpNUM7,
+	HP35::OpNUM8, HP35::OpNUM9, HP35::OpDOT,  HP35::OpPUSH, HP35::OpCLX,  HP35::OpCHS,  HP35::OpEEX,  FUNC_KEY,
 
-	HP35_NONE, HP35_RCL,  HP35_STO,  HP35_SUB,  HP35_PI,   HP35_NONE, HP35_MUL,  MENU_TRIG,
-	HP35_NONE, HP35_DIV,  HP35_SWAP, HP35_ADD,  HP35_CLR,  HP35_ROT,  HP35_NONE, MENU_MATH
+	HP35::OpNONE, HP35::OpRCL,  HP35::OpSTO,  HP35::OpSUB,  HP35::OpPI,   HP35::OpNONE, HP35::OpMUL,  MENU_TRIG,
+	HP35::OpNONE, HP35::OpDIV,  HP35::OpSWAP, HP35::OpADD,  HP35::OpCLR,  HP35::OpROT,  HP35::OpNONE, MENU_MATH
 };
 
 const uint8_t math_operations[6] PROGMEM =
 {
-	HP35_POW, HP35_SQRT, HP35_INV,
-	HP35_LOG, HP35_LN,   HP35_EXP
+	HP35::OpPOW, HP35::OpSQRT, HP35::OpINV,
+	HP35::OpLOG, HP35::OpLN,   HP35::OpEXP
 };
 
 const uint8_t trig_operations[6] PROGMEM =
 {
-	HP35_SIN,  HP35_COS,  HP35_TAN,
-	TRIG_ASIN, TRIG_ACOS, TRIG_ATAN
+	HP35::OpSIN, HP35::OpCOS,  HP35::OpTAN,
+	TRIG_ASIN,   TRIG_ACOS,    TRIG_ATAN
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -140,7 +140,7 @@ void PrintStack()
 			// 	PrintCharSize(CHAR_SIZE_S, ch >> 1);
 			// }
 
-			PrintCharAt(HP35_Display[i], pos, 0);
+			PrintCharAt(HP35::Display[i], pos, 0);
 			//pos += ((FONT_WIDTH * CHAR_SIZE_S) + 1);
 			pos += 7 + 1;
 		}
@@ -149,7 +149,7 @@ void PrintStack()
 
 void PrintCalculator()
 {
-	LCD_Clear();
+	LCD::Clear();
 
 	if (isFunc)
 	{
@@ -172,7 +172,7 @@ void PrintCalculator()
 
 	PrintStack();
 
-	LCD_Flip();
+	LCD::Flip();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -196,8 +196,8 @@ void enterMenu(u08 type)
 
 void HP35_OperationWithWait(u08 operation)
 {
-	HP35_Operation(operation);
-	for (u16 i = 0; i < HP35_OPERATION_CYCLES; ++i) HP35_Cycle();
+	HP35::Operation(operation);
+	for (u16 i = 0; i < HP35_OPERATION_CYCLES; ++i) HP35::Cycle();
 }
 
 void executeOperation(u08 operation)
@@ -208,7 +208,7 @@ void executeOperation(u08 operation)
 	switch (operation)
 	{
 		default:
-			HP35_Operation(operation);
+			HP35::Operation(operation);
 			break;
 
 		case FUNC_KEY:
@@ -224,18 +224,18 @@ void executeOperation(u08 operation)
 			break;
 		
 		case TRIG_ASIN:
-			HP35_OperationWithWait(HP35_ARC);
-			HP35_Operation(HP35_SIN);
+			HP35_OperationWithWait(HP35::OpARC);
+			HP35::Operation(HP35::OpSIN);
 			break;
 
 		case TRIG_ACOS:
-			HP35_OperationWithWait(HP35_ARC);
-			HP35_Operation(HP35_COS);
+			HP35_OperationWithWait(HP35::OpARC);
+			HP35::Operation(HP35::OpCOS);
 			break;
 		
 		case TRIG_ATAN:
-			HP35_OperationWithWait(HP35_ARC);
-			HP35_Operation(HP35_TAN);
+			HP35_OperationWithWait(HP35::OpARC);
+			HP35::Operation(HP35::OpTAN);
 			break;
 	}
 }
@@ -274,7 +274,7 @@ void updateCalcMode()
 		{
 			for (u16 i = 0; i < HP35_CYCLES_PER_FRAME; ++i)
 			{
-				if (HP35_Cycle()) PrintCalculator();
+				if (HP35::Cycle()) PrintCalculator();
 			}
 		}
 	}
@@ -287,51 +287,51 @@ u08 battery;
 void switchToCalcMode(bool yes = true)
 {
 	calcMode = yes;
-	FPS_SyncStart();
+	FPS::SyncStart();
 }
 
 void switchToRTCMode()
 {
-	LCD_TurnOn();
-	battery = (uint8_t)((PWR_Level() * 4 + 50) / 100);
+	LCD::TurnOn();
+	battery = (uint8_t)((PWR::Level() * 4 + 50) / 100);
 	switchToCalcMode(false);
-	oldkey = KBD_Read();
+	oldkey = KBD::Read();
 }
 
 NOINLINE void setupAndSwitchToRTCMode()
 {
-	RTC_WriteTimeDate();
+	RTC::WriteTimeDate();
 	switchToRTCMode();
 }
 
 void PrintClock()
 {
-	LCD_Clear();
+	LCD::Clear();
 
 	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_L);
 	PrintCharAt(':', 20, 0);
 	PrintCharAt(':', 47, 0);
-	PrintTensOnesAt(rtc_hours, 0, 0);
-	PrintTensOnesAt(rtc_minutes, 27, 0);
-	PrintTensOnesAt(rtc_seconds, 54, 0);
+	PrintTensOnesAt(RTC::Hours, 0, 0);
+	PrintTensOnesAt(RTC::Minutes, 27, 0);
+	PrintTensOnesAt(RTC::Seconds, 54, 0);
 
 	PrintCharSize(CHAR_SIZE_S, CHAR_SIZE_S);
-	PrintStringAt(FPSTR(strMonth), rtc_month - 1, 85, 0);
+	PrintStringAt(FPSTR(strMonth), RTC::Month - 1, 85, 0);
 
 	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_S);
-	PrintTensOnesAt(rtc_date, 107, 0);
+	PrintTensOnesAt(RTC::Date, 107, 0);
 	PrintTensOnesAt(20, 85, 1);
-	PrintTensOnesAt(rtc_year, 107, 1);
+	PrintTensOnesAt(RTC::Year, 107, 1);
 
 	u08 i = battery;
 	while (i) PrintCharAt('-', 85 + (--i) * dx, 2);
 	
-	LCD_Flip();
+	LCD::Flip();
 }
 
 void updateRTCMode()
 {
-	if (RTC_ReadTimeDate())
+	if (RTC::ReadTimeDate())
 	{
 		PrintClock();
 	}
@@ -340,82 +340,82 @@ void updateRTCMode()
 int main() 
 {
 	// init hardware and switch to rtc operation mode
-	PCB_Init();
+	PCB::Init();
 	setupAndSwitchToRTCMode();
 
 	while (true)
 	{
 		// get time passed since last operation mode switch
-		uint16_t timePassedMs = FPS_SyncMillis();
+		uint16_t timePassedMs = FPS::SyncMillis();
 
 		// handle display brightness change
-		LCD_Brightness(calcMode && timePassedMs < DIMOUT_MILLIS ? 0xFF : 0x00);
+		LCD::Brightness(calcMode && timePassedMs < DIMOUT_MILLIS ? 0xFF : 0x00);
 
 		// handle power down condition
 		if (timePassedMs >= POWEROFF_MILLIS)
 		{
 			// power down and go to sleeping
-			FPS_SyncStop();
-			LCD_TurnOff();
-			PWR_Down();
+			FPS::SyncStop();
+			LCD::TurnOff();
+			PWR::Down();
 
 			// power up an switch to rtc operation mode
 			switchToRTCMode();
 		}
 
 		// read key press and switch to calculator operation mode
-		key = KBD_Read();
+		key = KBD::Read();
 		if (key != oldkey) oldkey = key; else key = KEY_NONE;
 		if (key != KEY_NONE) switchToCalcMode();
 
 		// update current operation mode and idle until next frame
 		if (calcMode) updateCalcMode(); else updateRTCMode();
-		FPS_SyncWait();
+		FPS::SyncWait();
 	}
 	return 0;
 }
 #else
 void switchToCalcMode()
 {
-	LCD_TurnOn();
-	FPS_SyncStart();
-	oldkey = KBD_Read();
+	LCD::TurnOn();
+	FPS::SyncStart();
+	oldkey = KBD::Read();
 }
 
 int main() 
 {
 	// init hardware and switch to calculator operation mode
-	PCB_Init();
+	PCB::Init();
 	switchToCalcMode();
 
 	while (true)
 	{
 		// get time passed since last operation mode switch
-		uint16_t timePassedMs = FPS_SyncMillis();
+		uint16_t timePassedMs = FPS::SyncMillis();
 
 		// handle display brightness change
-		LCD_Brightness(timePassedMs < DIMOUT_MILLIS ? 0xFF : 0x00);
+		LCD::Brightness(timePassedMs < DIMOUT_MILLIS ? 0xFF : 0x00);
 
 		// handle power down condition
 		if (timePassedMs >= POWEROFF_MILLIS)
 		{
 			// power down and go to sleeping
-			FPS_SyncStop();
-			LCD_TurnOff();
-			PWR_Down();
+			FPS::SyncStop();
+			LCD::TurnOff();
+			PWR::Down();
 
 			// power up an switch to calculator operation mode
 			switchToCalcMode();
 		}
 
 		// read key press and switch to calculator operation mode
-		key = KBD_Read();
+		key = KBD::Read();
 		if (key != oldkey) oldkey = key; else key = KEY_NONE;
-		if (key != KEY_NONE) FPS_SyncStart();
+		if (key != KEY_NONE) FPS::SyncStart();
 
 		// update current operation mode and idle until next frame
 		updateCalcMode();
-		FPS_SyncWait();
+		FPS::SyncWait();
 	}
 	return 0;
 }
