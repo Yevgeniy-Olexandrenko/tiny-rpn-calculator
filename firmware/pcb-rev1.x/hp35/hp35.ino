@@ -17,6 +17,7 @@
 
 // Includes
 #include "lib_hardware.h"
+#include "lib_print.h"
+#include "lib_watch.h"
 #include "lib_hp35vm.h"
-#include "hp35_printing.h"
-#include "hp35_mainloop.h"
+#include "mainloop.h"
