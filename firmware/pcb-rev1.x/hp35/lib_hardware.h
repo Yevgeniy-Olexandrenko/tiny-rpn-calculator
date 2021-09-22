@@ -101,283 +101,298 @@ class __FlashStringHelper;
 // Packed Binary-Coded Decimals
 // -----------------------------------------------------------------------------
 
-NOINLINE u08 BCD_Decode(u08 data)
+namespace BCD
 {
-  return (data / 16 * 10) + (data % 16);
-}
+	NOINLINE u08 Decode(u08 data)
+	{
+		return (data / 16 * 10) + (data % 16);
+	}
 
-NOINLINE u08 BCD_Encode(u08 data)
-{
-  return (data / 10 * 16) + (data % 10);
+	NOINLINE u08 Encode(u08 data)
+	{
+		return (data / 10 * 16) + (data % 10);
+	}
 }
 
 // -----------------------------------------------------------------------------
 // Watch Dog Timer
 // -----------------------------------------------------------------------------
 
-#define WDT_MODE_DISABLED  0x00 // disabled
-#define WDT_MODE_RES       0x08 // to reset the CPU if there is a timeout
-#define WDT_MODE_INT       0x40 // timeout will cause an interrupt
-#define WDT_MODE_INT_RES   0x48 // first time-out interrupt, the second time out - reset
-
-#define WDT_TIMEOUT_16MS   0x00 // (16 ± 1.6) ms
-#define WDT_TIMEOUT_32MS   0x01 // (32 ± 3.2) ms
-#define WDT_TIMEOUT_64MS   0x02 // (64 ± 6.4) ms
-#define WDT_TIMEOUT_125MS  0x03 // (128 ± 12.8) ms
-#define WDT_TIMEOUT_250MS  0x04 // (256 ± 25.6) ms
-#define WDT_TIMEOUT_500MS  0x05 // (512 ± 51.2) ms
-#define WDT_TIMEOUT_1S     0x06 // (1024 ± 102.4) ms
-#define WDT_TIMEOUT_2S     0x07 // (2048 ± 204.8) ms
-#define WDT_TIMEOUT_4S     0x08 // (4096 ± 409.6) ms
-#define WDT_TIMEOUT_8S     0x09 // (8192 ± 819.2) ms
-
-void WDT_Init(u08 mode, u08 prescaler)
+namespace WDT
 {
-	// does not change global interrupts enable flag
-	u08 wdtr = mode | ((prescaler > 7) ? 0x20 | (prescaler - 8) : prescaler);
-	u08 sreg = SREG;
-	cli();
-	WDTCR = _BV(WDCE) | _BV(WDE);
-	WDTCR = wdtr;
-	SREG  = sreg;
+	#define WDT_MODE_DISABLED  0x00 // disabled
+	#define WDT_MODE_RES       0x08 // to reset the CPU if there is a timeout
+	#define WDT_MODE_INT       0x40 // timeout will cause an interrupt
+	#define WDT_MODE_INT_RES   0x48 // first time-out interrupt, the second time out - reset
+
+	#define WDT_TIMEOUT_16MS   0x00 // (16 ± 1.6) ms
+	#define WDT_TIMEOUT_32MS   0x01 // (32 ± 3.2) ms
+	#define WDT_TIMEOUT_64MS   0x02 // (64 ± 6.4) ms
+	#define WDT_TIMEOUT_125MS  0x03 // (128 ± 12.8) ms
+	#define WDT_TIMEOUT_250MS  0x04 // (256 ± 25.6) ms
+	#define WDT_TIMEOUT_500MS  0x05 // (512 ± 51.2) ms
+	#define WDT_TIMEOUT_1S     0x06 // (1024 ± 102.4) ms
+	#define WDT_TIMEOUT_2S     0x07 // (2048 ± 204.8) ms
+	#define WDT_TIMEOUT_4S     0x08 // (4096 ± 409.6) ms
+	#define WDT_TIMEOUT_8S     0x09 // (8192 ± 819.2) ms
+
+	void WDT::Init(u08 mode, u08 prescaler)
+	{
+		// does not change global interrupts enable flag
+		u08 wdtr = mode | ((prescaler > 7) ? 0x20 | (prescaler - 8) : prescaler);
+		u08 sreg = SREG;
+		cli();
+		WDTCR = _BV(WDCE) | _BV(WDE);
+		WDTCR = wdtr;
+		SREG  = sreg;
+	}
 }
 
 // -----------------------------------------------------------------------------
 // Analog to Digital Converter (10 bit)
 // -----------------------------------------------------------------------------
 
-#define ADC_0_PB5 (0b0000)
-#define ADC_1_PB2 (0b0001)
-#define ADC_2_PB4 (0b0010)
-#define ADC_3_PB3 (0b0011)
-#define ADC_VCC   (0b1100)
-#define ADC_TEMP  (0b1111 | _BV(REFS1))
-
-void ADC_Init()
+namespace ADC
 {
-	ADCSRA = _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
-}
+	#define ADC_0_PB5 (0b0000)
+	#define ADC_1_PB2 (0b0001)
+	#define ADC_2_PB4 (0b0010)
+	#define ADC_3_PB3 (0b0011)
+	#define ADC_VCC   (0b1100)
+	#define ADC_TEMP  (0b1111 | _BV(REFS1))
 
-NOINLINE u16 ADC_Read(u08 channel, u08 delay)
-{
-	ADMUX = channel;
-	while (delay--) _delay_ms(1);
+	void Init()
+	{
+		ADCSRA = _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
+	}
 
-	set_bit(ADCSRA, ADSC);
-	while (isb_set(ADCSRA, ADSC));
+	NOINLINE u16 Read(u08 channel, u08 delay)
+	{
+		ADMUX = channel;
+		while (delay--) _delay_ms(1);
 
-	u08 adcl = ADCL;
-	u08 adch = ADCH;
-	return (adcl | adch << 8);
+		set_bit(ADCSRA, ADSC);
+		while (isb_set(ADCSRA, ADSC));
+
+		u08 adcl = ADCL;
+		u08 adch = ADCH;
+		return (adcl | adch << 8);
+	}
 }
 
 // -----------------------------------------------------------------------------
 // I2C Bus
 // -----------------------------------------------------------------------------
 
-#define I2C_DDR DDRB
-#define I2C_PIN PINB
-#define I2C_SDA PB0
-#define I2C_SCL PB2
-
-#define I2C_SDA_H() clr_bit(I2C_DDR, I2C_SDA)
-#define I2C_SDA_L() set_bit(I2C_DDR, I2C_SDA)
-#define I2C_SDA_I() isb_set(I2C_PIN, I2C_SDA)
-
-#define I2C_SCL_H() clr_bit(I2C_DDR, I2C_SCL)
-#define I2C_SCL_L() set_bit(I2C_DDR, I2C_SCL)
-#define I2C_SCL_I() isb_set(I2C_PIN, I2C_SCL)
-
-#define I2C_DELAY() _delay_us(1)
-
-NOINLINE void i2c_scl_h_wait()
+namespace I2C
 {
-	I2C_SCL_H();
-	while (!I2C_SCL_I());
-}
+	#define I2C_DDR DDRB
+	#define I2C_PIN PINB
+	#define I2C_SDA PB0
+	#define I2C_SCL PB2
 
-NOINLINE u08 i2c_read_write(u08 data)
-{
-	for (u08 sda_i, i = 8; i > 0; --i)
+	#define I2C_SDA_H() clr_bit(I2C_DDR, I2C_SDA)
+	#define I2C_SDA_L() set_bit(I2C_DDR, I2C_SDA)
+	#define I2C_SDA_I() isb_set(I2C_PIN, I2C_SDA)
+
+	#define I2C_SCL_H() clr_bit(I2C_DDR, I2C_SCL)
+	#define I2C_SCL_L() set_bit(I2C_DDR, I2C_SCL)
+	#define I2C_SCL_I() isb_set(I2C_PIN, I2C_SCL)
+
+	#define I2C_DELAY() _delay_us(1)
+
+	NOINLINE void scl_h_wait()
 	{
-		I2C_SDA_H();
-		if (!(data & 0x80)) I2C_SDA_L();
-		i2c_scl_h_wait();
-
-		sda_i = I2C_SDA_I();
-		I2C_SCL_L();
-
-		data <<= 1;
-		if (sda_i) data |= 0x01;
+		I2C_SCL_H();
+		while (!I2C_SCL_I());
 	}
-	I2C_SDA_H();
-	return data;
-}
 
-NOINLINE void i2c_start()
-{
-	i2c_scl_h_wait();
-	I2C_SDA_L();
-	I2C_DELAY();
-	I2C_SCL_L();
-}
+	NOINLINE u08 read_write(u08 data)
+	{
+		for (u08 sda_i, i = 8; i > 0; --i)
+		{
+			I2C_SDA_H();
+			if (!(data & 0x80)) I2C_SDA_L();
+			scl_h_wait();
 
-NOINLINE b08 I2C_Write(u08 data)
-{
-	i2c_read_write(data);
-	i2c_scl_h_wait();
+			sda_i = I2C_SDA_I();
+			I2C_SCL_L();
 
-	b08 ack = true;
-	if (I2C_SDA_I()) ack = false;
+			data <<= 1;
+			if (sda_i) data |= 0x01;
+		}
+		I2C_SDA_H();
+		return data;
+	}
 
-	I2C_SCL_L();
-	return ack;
-}
+	NOINLINE void start()
+	{
+		scl_h_wait();
+		I2C_SDA_L();
+		I2C_DELAY();
+		I2C_SCL_L();
+	}
 
-NOINLINE u08 I2C_Read(b08 ack)
-{
-	u08 data = i2c_read_write(0xFF);
-	if (ack) I2C_SDA_L();
-	i2c_scl_h_wait();
-	I2C_DELAY();
+	NOINLINE b08 Write(u08 data)
+	{
+		read_write(data);
+		scl_h_wait();
 
-	I2C_SCL_L();
-	return data;
-}
+		b08 ack = true;
+		if (I2C_SDA_I()) ack = false;
 
-u08 I2C_ReadAck()
-{ 
-	return I2C_Read(true);
-}
+		I2C_SCL_L();
+		return ack;
+	}
 
-u08 I2C_ReadNack()
-{
-	return I2C_Read(false);
-}
+	NOINLINE u08 Read(b08 ack)
+	{
+		u08 data = read_write(0xFF);
+		if (ack) I2C_SDA_L();
+		scl_h_wait();
+		I2C_DELAY();
 
-b08 I2C_StartWrite(u08 addr)
-{
-	i2c_start();
-	return I2C_Write(addr << 1);
-}
+		I2C_SCL_L();
+		return data;
+	}
 
-b08 I2C_StartRead(u08 addr)
-{
-	i2c_start();
-	return I2C_Write(addr << 1 | 1);
-}
+	u08 ReadAck()
+	{ 
+		return Read(true);
+	}
 
-NOINLINE void I2C_Stop()
-{
-	I2C_SDA_L();
-	i2c_scl_h_wait();
-	I2C_DELAY();
-	I2C_SDA_H();
+	u08 ReadNack()
+	{
+		return Read(false);
+	}
+
+	b08 StartWrite(u08 addr)
+	{
+		start();
+		return Write(addr << 1);
+	}
+
+	b08 StartRead(u08 addr)
+	{
+		start();
+		return Write(addr << 1 | 1);
+	}
+
+	NOINLINE void Stop()
+	{
+		I2C_SDA_L();
+		scl_h_wait();
+		I2C_DELAY();
+		I2C_SDA_H();
+	}
 }
 
 // -----------------------------------------------------------------------------
 // SSD1306 128x32 Display on I2C Bus
 // -----------------------------------------------------------------------------
 
-#define LCD_ADDR  0x3C
-#define LCD_COMM  0x00
-#define LCD_DATA  0x40
-#define LCD_WIDTH 128 
-#define LCD_PAGES 4
-
-u08 lcd_draw_buf = 0xB4;
-u08 lcd_rend_buf = 0x40;
-
-const u08 lcd_init_data[] PROGMEM =
+namespace LCD
 {
-	0xC8,       // set scan direction (C0 scan from COM0 to COM[N-1] or C8 mirroring)
-	0xA1,       // set segment remap (A0 regular or A1 flip)
-	0xA8, 0x1F, // set mux ratio (N+1) where: 14<N<64 ... 3F or 1F
-	0xDA, 0x02, // COM config pin mapping:
-	            //                  right/left left/right
-	            //      sequential      02        22
-	            //      alternate       12        32
-	0x20, 0x00, // horizontal addressing mode (line feed after EOL)
-	0x8D, 0x14  // charge pump (0x14 enable or 0x10 disable)
-};
+	#define LCD_ADDR  0x3C
+	#define LCD_COMM  0x00
+	#define LCD_DATA  0x40
+	#define LCD_WIDTH 128 
+	#define LCD_PAGES 4
 
-void lcd_start_command()
-{ 
-	I2C_StartWrite(LCD_ADDR);
-	I2C_Write(LCD_COMM);
-}
+	u08 draw_buf = 0xB4;
+	u08 rend_buf = 0x40;
 
-void lcd_start_data()
-{ 
-	I2C_StartWrite(LCD_ADDR);
-	I2C_Write(LCD_DATA);
-}
-
-NOINLINE void lcd_command(u08 cmd)
-{ 
-	lcd_start_command();
-	I2C_Write(cmd);
-	I2C_Stop();
-}
-
-void LCD_Init()
-{
-	lcd_start_command();
-	for (u08 i = 0; i < sizeof(lcd_init_data); i++)
+	const u08 init_data[] PROGMEM =
 	{
-		I2C_Write(pgm_read_byte(&lcd_init_data[i]));
+		0xC8,       // set scan direction (C0 scan from COM0 to COM[N-1] or C8 mirroring)
+		0xA1,       // set segment remap (A0 regular or A1 flip)
+		0xA8, 0x1F, // set mux ratio (N+1) where: 14<N<64 ... 3F or 1F
+		0xDA, 0x02, // COM config pin mapping:
+					//                  right/left left/right
+					//      sequential      02        22
+					//      alternate       12        32
+		0x20, 0x00, // horizontal addressing mode (line feed after EOL)
+		0x8D, 0x14  // charge pump (0x14 enable or 0x10 disable)
+	};
+
+	void start_command()
+	{ 
+		I2C::StartWrite(LCD_ADDR);
+		I2C::Write(LCD_COMM);
 	}
-	I2C_Stop();
-}
 
-void LCD_TurnOn()
-{
-	lcd_command(0xAF);
-}
+	void start_data()
+	{ 
+		I2C::StartWrite(LCD_ADDR);
+		I2C::Write(LCD_DATA);
+	}
 
-void LCD_TurnOff()
-{ 
-	lcd_command(0xAE);
-}
+	NOINLINE void command(u08 cmd)
+	{ 
+		start_command();
+		I2C::Write(cmd);
+		I2C::Stop();
+	}
 
-void LCD_Brightness(u08 brightness)
-{ 
-	lcd_start_command();
-	I2C_Write(0x81);
-	I2C_Write(brightness);
-	I2C_Stop();
-}
-
-void LCD_Position(u08 x, u08 y)
-{ 
-	lcd_start_command();
-	I2C_Write(lcd_draw_buf | (y & 0x07));
-	I2C_Write(0x10 | (x >> 4));
-	I2C_Write(x & 0x0F);
-	I2C_Stop();
-}
-
-NOINLINE void LCD_Write(u08 b, u08 s)
-{
-	lcd_start_data();
-	while (s--) I2C_Write(b);
-	I2C_Stop();
-}
-
-void LCD_Clear()
-{
-	LCD_Position(0, 0);
-	for (u08 i = LCD_PAGES; i > 0; --i)
+	void Init()
 	{
-		LCD_Write(0x00, LCD_WIDTH);
+		start_command();
+		for (u08 i = 0; i < sizeof(init_data); i++)
+		{
+			I2C::Write(pgm_read_byte(&init_data[i]));
+		}
+		I2C::Stop();
 	}
-}
 
-void LCD_Flip()
-{
-	lcd_rend_buf ^= 0x20;
-	lcd_draw_buf ^= 0x04;
-	lcd_command(lcd_rend_buf);
+	void TurnOn()
+	{
+		command(0xAF);
+	}
+
+	void TurnOff()
+	{ 
+		command(0xAE);
+	}
+
+	void Brightness(u08 brightness)
+	{ 
+		start_command();
+		I2C::Write(0x81);
+		I2C::Write(brightness);
+		I2C::Stop();
+	}
+
+	void Position(u08 x, u08 y)
+	{ 
+		start_command();
+		I2C::Write(draw_buf | (y & 0x07));
+		I2C::Write(0x10 | (x >> 4));
+		I2C::Write(x & 0x0F);
+		I2C::Stop();
+	}
+
+	NOINLINE void Write(u08 b, u08 s)
+	{
+		start_data();
+		while (s--) I2C::Write(b);
+		I2C::Stop();
+	}
+
+	void Clear()
+	{
+		Position(0, 0);
+		for (u08 i = LCD_PAGES; i > 0; --i)
+		{
+			Write(0x00, LCD_WIDTH);
+		}
+	}
+
+	void Flip()
+	{
+		rend_buf ^= 0x20;
+		draw_buf ^= 0x04;
+		command(rend_buf);
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -389,256 +404,273 @@ void LCD_Flip()
 // Century flag is not supported!
 // Alarms are not supported!
 
-#define RTC_ADDR         0x68
-#define RTC_SECONDS      0x00
-#define RTC_MINUTES      0x01
-#define RTC_HOURS        0x02
-#define RTC_DAY          0x03
-#define RTC_DATE         0x04
-#define RTC_MONTH        0x05
-#define RTC_YEAR         0x06
-#define RTC_A1_SECONDS   0x07
-#define RTC_A1_MINUTES   0x08
-#define RTC_A1_HOUR      0x09
-#define RTC_A1_DAY_DATE  0x0A
-#define RTC_A2_MINUTES   0x0B
-#define RTC_A2_HOUR      0x0C
-#define RTC_A2_DAY_DATE  0x0D
-#define RTC_CONTROL      0x0E
-#define RTC_STATUS       0x0F
-#define RTC_AGING_OFFSET 0x10
-#define RTC_TEMP_MSB     0x11
-#define RTC_TEMP_LSB     0x12
-
-u08 rtc_old_sec = 0xFF;
-u08 rtc_seconds = BUILD_SEC;   // 0 - 59
-u08 rtc_minutes = BUILD_MIN;   // 0 - 59
-u08 rtc_hours   = BUILD_HOUR;  // 0 - 23
-u08 rtc_date    = BUILD_DAY;   // 1 - 31
-u08 rtc_month   = BUILD_MONTH; // 1 - 12
-u08 rtc_year    = BUILD_YEAR;  // 0 - 99
-s16 rtc_temp;                  // MSB degrees, LSB fractional
-
-bool RTC_ReadTimeDate()
+namespace RTC
 {
-	if (I2C_StartWrite(RTC_ADDR))
-	{
-		I2C_Write(RTC_SECONDS);
-		I2C_StartRead(RTC_ADDR);
-		rtc_seconds = BCD_Decode(I2C_ReadAck());
-		rtc_minutes = BCD_Decode(I2C_ReadAck());
-		rtc_hours   = BCD_Decode(I2C_ReadAck());
-		I2C_ReadAck();
-		rtc_date    = BCD_Decode(I2C_ReadAck());
-		rtc_month   = BCD_Decode(I2C_ReadAck() & 0x1F);
-		rtc_year    = BCD_Decode(I2C_ReadNack() % 100);
-		I2C_Stop();
-	}
-	if (rtc_seconds != rtc_old_sec)
-	{
-		rtc_old_sec = rtc_seconds;
-		return true;
-	}
-	return false;
-}
+	#define RTC_ADDR         0x68
+	#define RTC_SECONDS      0x00
+	#define RTC_MINUTES      0x01
+	#define RTC_HOURS        0x02
+	#define RTC_DAY          0x03
+	#define RTC_DATE         0x04
+	#define RTC_MONTH        0x05
+	#define RTC_YEAR         0x06
+	#define RTC_A1_SECONDS   0x07
+	#define RTC_A1_MINUTES   0x08
+	#define RTC_A1_HOUR      0x09
+	#define RTC_A1_DAY_DATE  0x0A
+	#define RTC_A2_MINUTES   0x0B
+	#define RTC_A2_HOUR      0x0C
+	#define RTC_A2_DAY_DATE  0x0D
+	#define RTC_CONTROL      0x0E
+	#define RTC_STATUS       0x0F
+	#define RTC_AGING_OFFSET 0x10
+	#define RTC_TEMP_MSB     0x11
+	#define RTC_TEMP_LSB     0x12
 
-void RTC_WriteTimeDate()
-{
-	if(I2C_StartWrite(RTC_ADDR))
-	{
-		rtc_old_sec = 0xFF;
-		I2C_Write(RTC_SECONDS);
-		I2C_Write(BCD_Encode(rtc_seconds));
-		I2C_Write(BCD_Encode(rtc_minutes));
-		I2C_Write(BCD_Encode(rtc_hours));
-		I2C_Write(1);
-		I2C_Write(BCD_Encode(rtc_date));
-		I2C_Write(BCD_Encode(rtc_month));
-		I2C_Write(BCD_Encode(rtc_year));
-		I2C_Stop();
-	}
-}
+	u08 old_sec = 0xFF;
+	u08 Seconds = BUILD_SEC;   // 0 - 59
+	u08 Minutes = BUILD_MIN;   // 0 - 59
+	u08 Hours   = BUILD_HOUR;  // 0 - 23
+	u08 Date    = BUILD_DAY;   // 1 - 31
+	u08 Month   = BUILD_MONTH; // 1 - 12
+	u08 Year    = BUILD_YEAR;  // 0 - 99
+	s16 TempC;                 // MSB degrees, LSB fractional
 
-void RTC_ReadTemperature()
-{
-#if !DEBUG_ON_R1_0
-	if (I2C_StartWrite(RTC_ADDR))
+	bool ReadTimeDate()
 	{
-		I2C_Write(RTC_TEMP_MSB);
-		I2C_StartRead(RTC_ADDR);
-		u08 msb = I2C_ReadAck();
-		u08 lsb = I2C_ReadNack();
-		rtc_temp = msb << 8 | lsb;
-		I2C_Stop();
+		if (I2C::StartWrite(RTC_ADDR))
+		{
+			I2C::Write(RTC_SECONDS);
+			I2C::StartRead(RTC_ADDR);
+			Seconds = BCD::Decode(I2C::ReadAck());
+			Minutes = BCD::Decode(I2C::ReadAck());
+			Hours   = BCD::Decode(I2C::ReadAck());
+			I2C::ReadAck();
+			Date    = BCD::Decode(I2C::ReadAck());
+			Month   = BCD::Decode(I2C::ReadAck() & 0x1F);
+			Year    = BCD::Decode(I2C::ReadNack() % 100);
+			I2C::Stop();
+		}
+		if (Seconds != old_sec)
+		{
+			old_sec = Seconds;
+			return true;
+		}
+		return false;
 	}
-#endif
+
+	void WriteTimeDate()
+	{
+		if(I2C::StartWrite(RTC_ADDR))
+		{
+			old_sec = 0xFF;
+			I2C::Write(RTC_SECONDS);
+			I2C::Write(BCD::Encode(Seconds));
+			I2C::Write(BCD::Encode(Minutes));
+			I2C::Write(BCD::Encode(Hours));
+			I2C::Write(1);
+			I2C::Write(BCD::Encode(Date));
+			I2C::Write(BCD::Encode(Month));
+			I2C::Write(BCD::Encode(Year));
+			I2C::Stop();
+		}
+	}
+
+	void ReadTemperature()
+	{
+	#if !DEBUG_ON_R1_0
+		if (I2C::StartWrite(RTC_ADDR))
+		{
+			I2C::Write(RTC_TEMP_MSB);
+			I2C::StartRead(RTC_ADDR);
+			u08 msb = I2C::ReadAck();
+			u08 lsb = I2C::ReadNack();
+			TempC = msb << 8 | lsb;
+			I2C::Stop();
+		}
+	#endif
+	}
 }
 
 // -----------------------------------------------------------------------------
 // One Pin Analog 16-Key Keyboard
 // -----------------------------------------------------------------------------
 
-#if DEBUG_ON_R1_0
-#define KBD_PIN PB3
-#define KBD_ADC ADC_3_PB3
-#else
-#define KBD_PIN PB4
-#define KBD_ADC ADC_2_PB4
-#endif
-
-// Keyboard layout on PCB:
-// A0 B0 C0 D0
-// A1 B1 C1 D1
-// A2 B2 C2 D2
-// A3 B3 C3 D3
-
-#define KBD_NO 0xFF
-#define KBD_A0 0x0F // F
-#define KBD_B0 0x07 // 7
-#define KBD_C0 0x08 // 8
-#define KBD_D0 0x09 // 9
-#define KBD_A1 0x0E // E
-#define KBD_B1 0x04 // 4
-#define KBD_C1 0x05 // 5
-#define KBD_D1 0x06 // 6
-#define KBD_A2 0x0D // S
-#define KBD_B2 0x01 // 1
-#define KBD_C2 0x02 // 2
-#define KBD_D2 0x03 // 3
-#define KBD_A3 0x0C // C
-#define KBD_B3 0x00 // 0
-#define KBD_C3 0x0A // D
-#define KBD_D3 0x0B // P
-
-const u16 kbd_adc[] PROGMEM =
+namespace KBD
 {
-	147, 182, 221, 269, 324, 383, 442, 505,
-	573, 635, 692, 762, 827, 863, 893, 913
-};
+	#if DEBUG_ON_R1_0
+	#define KBD_PIN PB3
+	#define KBD_ADC ADC_3_PB3
+	#else
+	#define KBD_PIN PB4
+	#define KBD_ADC ADC_2_PB4
+	#endif
 
-const u08 kbd_code[] PROGMEM = 
-{
-	KBD_A0, KBD_B0, KBD_C0, KBD_D0, KBD_A1, KBD_B1, KBD_C1, KBD_D1,
-	KBD_A2, KBD_B2, KBD_C2, KBD_D2, KBD_A3, KBD_B3, KBD_C3, KBD_D3
-};
+	// Keyboard layout on PCB:
+	// A0 B0 C0 D0
+	// A1 B1 C1 D1
+	// A3 B3 C3 D3
 
-void KBD_Init()
-{
-	clr_bit(DDRB,  KBD_PIN);
-	clr_bit(PORTB, KBD_PIN);
-	set_bit(PCMSK, KBD_PIN);
-	set_bit(GIFR,  PCIF);
-	set_bit(GIMSK, PCIE);
-}
-
-uint8_t KBD_Read()
-{
-	u16 adcVal = ADC_Read(KBD_ADC, 1);
-	if (adcVal > 110)
+	enum Key
 	{
-		for (u08 i = 0; i < 16; ++i)
-		{
-			u16 adcMax = pgm_read_word(&kbd_adc[i]);
-			if (adcVal < adcMax) return pgm_read_byte(&kbd_code[i]);
-		}
-	}
-	return KBD_NO;
-}
+		KeyA0 = 0x0F, // F
+		KeyB0 = 0x07, // 7
+		KeyC0 = 0x08, // 8
+		KeyD0 = 0x09, // 9
+		KeyA1 = 0x0E, // E
+		KeyB1 = 0x04, // 4
+		KeyC1 = 0x05, // 5
+		KeyD1 = 0x06, // 6
+		KeyA2 = 0x0D, // S
+		KeyB2 = 0x01, // 1
+		KeyC2 = 0x02, // 2
+		KeyD2 = 0x03, // 3
+		KeyA3 = 0x0C, // C
+		KeyB3 = 0x00, // 0
+		KeyC3 = 0x0A, // D
+		KeyD3 = 0x0B, // P
+		KeyNO = 0xFF
+	};
 
-ISR(PCINT0_vect)
-{
-	// do nothing
-	// just interrupt sleeping
+	const u16 adc[] PROGMEM =
+	{
+		147, 182, 221, 269, 324, 383, 442, 505,
+		573, 635, 692, 762, 827, 863, 893, 913
+	};
+
+	const Key code[] PROGMEM = 
+	{
+		KeyA0, KeyB0, KeyC0, KeyD0, KeyA1, KeyB1, KeyC1, KeyD1,
+		KeyA2, KeyB2, KeyC2, KeyD2, KeyA3, KeyB3, KeyC3, KeyD3
+	};
+
+	void Init()
+	{
+		clr_bit(DDRB,  KBD_PIN);
+		clr_bit(PORTB, KBD_PIN);
+		set_bit(PCMSK, KBD_PIN);
+		set_bit(GIFR,  PCIF);
+		set_bit(GIMSK, PCIE);
+	}
+
+	Key Read()
+	{
+		u16 adcVal = ADC::Read(KBD_ADC, 1);
+		if (adcVal > 110)
+		{
+			for (u08 i = 0; i < 16; ++i)
+			{
+				u16 adcMax = pgm_read_word(&adc[i]);
+				if (adcVal < adcMax) return pgm_read_byte(&code[i]);
+			}
+		}
+		return KeyNO;
+	}
+
+	ISR(PCINT0_vect)
+	{
+		// do nothing
+		// just interrupt sleeping
+	}
 }
 
 // -----------------------------------------------------------------------------
 // Power Management
 // -----------------------------------------------------------------------------
 
-#define BAT_FULL  4100 // mV
-#define BAT_EMPTY 3500 // mV
-
-void pwr_saving(u08 mode)
+namespace PWR
 {
-	clr_bit(ADCSRA, ADEN);
-	power_all_disable();
-	set_sleep_mode(mode);
-	sleep_enable();
-	sleep_cpu();
-	sleep_disable();
-	power_adc_enable();
-	set_bit(ADCSRA, ADEN);
-}
+	#define BAT_FULL  4100 // mV
+	#define BAT_EMPTY 3500 // mV
 
-NOINLINE u16 PWR_Voltage()
-{
-	return (1125300L / ADC_Read(ADC_VCC, 10));
-}
+	void saving(u08 mode)
+	{
+		clr_bit(ADCSRA, ADEN);
+		power_all_disable();
+		set_sleep_mode(mode);
+		sleep_enable();
+		sleep_cpu();
+		sleep_disable();
+		power_adc_enable();
+		set_bit(ADCSRA, ADEN);
+	}
 
-u08 PWR_Level()
-{
-	u16 voltage = PWR_Voltage();
-	if (voltage >= BAT_FULL ) return 100;
-	if (voltage <= BAT_EMPTY) return 0;
-	return ((voltage - BAT_EMPTY) / (BAT_FULL - BAT_EMPTY));
-}
+	NOINLINE u16 Voltage()
+	{
+		return (1125300L / ADC::Read(ADC_VCC, 10));
+	}
 
-void PWR_Idle()
-{ 	
-	pwr_saving(SLEEP_MODE_IDLE);
-}
+	u08 Level()
+	{
+		u16 voltage = Voltage();
+		if (voltage >= BAT_FULL ) return 100;
+		if (voltage <= BAT_EMPTY) return 0;
+		return ((voltage - BAT_EMPTY) / (BAT_FULL - BAT_EMPTY));
+	}
 
-void PWR_Down()
-{
-	do pwr_saving(SLEEP_MODE_PWR_DOWN);
-	while (PWR_Voltage() <= BAT_EMPTY);
+	void Idle()
+	{ 	
+		saving(SLEEP_MODE_IDLE);
+	}
+
+	void Down()
+	{
+		do saving(SLEEP_MODE_PWR_DOWN);
+		while (Voltage() <= BAT_EMPTY);
+	}
 }
 
 // -----------------------------------------------------------------------------
 // Frames per Second Synchronization
 // -----------------------------------------------------------------------------
 
-#define FRAME_TIMEOUT WDT_TIMEOUT_64MS  // 15 fps
-
-volatile b08 fps_waiting;
-volatile u16 fps_counter;
-
-NOINLINE void FPS_SyncStart()
+namespace FPS
 {
-	WDT_Init(WDT_MODE_INT, FRAME_TIMEOUT);
-	fps_counter = 0;
-}
+	#define FRAME_TIMEOUT WDT_TIMEOUT_64MS  // 15 fps
 
-NOINLINE void FPS_SyncStop()
-{
-	WDT_Init(WDT_MODE_DISABLED, 0);
-}
+	volatile b08 waiting;
+	volatile u16 counter;
 
-NOINLINE void FPS_SyncWait()
-{
-	fps_waiting = true;
-	while (fps_waiting) PWR_Idle();
-}
+	NOINLINE void SyncStart()
+	{
+		WDT::Init(WDT_MODE_INT, FRAME_TIMEOUT);
+		counter = 0;
+	}
 
-NOINLINE u16 FPS_SyncMillis()
-{
-	return (fps_counter * (16 << FRAME_TIMEOUT));
-}
+	NOINLINE void SyncStop()
+	{
+		WDT::Init(WDT_MODE_DISABLED, 0);
+	}
 
-ISR(WDT_vect)
-{
-	fps_waiting = false;
-	fps_counter++;
+	NOINLINE void SyncWait()
+	{
+		waiting = true;
+		while (waiting) PWR::Idle();
+	}
+
+	NOINLINE u16 SyncMillis()
+	{
+		return (counter * (16 << FRAME_TIMEOUT));
+	}
+
+	ISR(WDT_vect)
+	{
+		waiting = false;
+		counter++;
+	}
 }
 
 // -----------------------------------------------------------------------------
 // PCB Hardware Initialization
 // -----------------------------------------------------------------------------
 
-void PCB_Init()
+namespace PCB
 {
-	ADC_Init();
-	LCD_Init();
-	KBD_Init();
-	sei();
+	void Init()
+	{
+		ADC::Init();
+		LCD::Init();
+		KBD::Init();
+		sei();
+	}
 }
