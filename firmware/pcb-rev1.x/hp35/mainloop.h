@@ -331,10 +331,8 @@ void PrintClock()
 
 void updateRTCMode()
 {
-	if (RTC::ReadTimeDate())
-	{
-		PrintClock();
-	}
+	RTC::ReadTimeDate();
+	PrintClock();
 }
 
 int main() 

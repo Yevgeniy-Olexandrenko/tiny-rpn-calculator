@@ -197,7 +197,7 @@ namespace HP35
 	bool Cycle()
 	{
 		// error handling
-		if ((pc == 0xBF) & (rom_offset == 0x00)) Error = 1;
+		if ((pc == 0xBF) && (rom_offset == 0x00)) Error = 1;
 
 		// process received key
 		if (key_in != OpNONE)

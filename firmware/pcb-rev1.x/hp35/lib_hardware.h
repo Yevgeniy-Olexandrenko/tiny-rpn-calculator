@@ -20,15 +20,21 @@
 // Includes and Helping Defines
 // -----------------------------------------------------------------------------
 
-#undef  F_CPU
-#define F_CPU 16000000UL  // 16 MHz internal
+// check for MCU type, clock source and frequency
+#if !defined(__AVR_ATtiny45__) && !defined(__AVR_ATtiny85__)
+#error "Microcontroller not supported!"
+#endif
+#if (F_CPU != 16000000UL) || (CLOCK_SOURCE != 6)
+#error "Clock source/frequency not supported!"
+#endif
 
 // includes
-#include <avr/pgmspace.h> // needed for reading data from PROGMEM
-#include <avr/eeprom.h>   // needed for saving data to EEPROM
-#include <avr/power.h>    // needed for power management
-#include <avr/sleep.h>    // needed for sleeping
-#include <util/delay.h>   // needed for delays
+#include <avr/pgmspace.h>  // reading data from PROGMEM
+#include <avr/eeprom.h>    // reading/writing data to EEPROM
+#include <avr/interrupt.h> // mcu interrupts
+#include <avr/power.h>     // mcu power management
+#include <avr/sleep.h>     // mcu sleeping
+#include <util/delay.h>    // delays
 
 // data types definition
 typedef bool     b08;
@@ -430,7 +436,6 @@ namespace RTC
 	#define RTC_TEMP_MSB     0x11
 	#define RTC_TEMP_LSB     0x12
 
-	u08 old_sec = 0xFF;
 	u08 Seconds = BUILD_SEC;   // 0 - 59
 	u08 Minutes = BUILD_MIN;   // 0 - 59
 	u08 Hours   = BUILD_HOUR;  // 0 - 23
@@ -439,7 +444,7 @@ namespace RTC
 	u08 Year    = BUILD_YEAR;  // 0 - 99
 	s16 TempC;                 // MSB degrees, LSB fractional
 
-	bool ReadTimeDate()
+	void ReadTimeDate()
 	{
 		if (I2C::StartWrite(RTC_ADDR))
 		{
@@ -454,19 +459,12 @@ namespace RTC
 			Year    = BCD::Decode(I2C::ReadNack() % 100);
 			I2C::Stop();
 		}
-		if (Seconds != old_sec)
-		{
-			old_sec = Seconds;
-			return true;
-		}
-		return false;
 	}
 
 	void WriteTimeDate()
 	{
 		if(I2C::StartWrite(RTC_ADDR))
 		{
-			old_sec = 0xFF;
 			I2C::Write(RTC_SECONDS);
 			I2C::Write(BCD::Encode(Seconds));
 			I2C::Write(BCD::Encode(Minutes));
@@ -481,7 +479,6 @@ namespace RTC
 
 	void ReadTemperature()
 	{
-	#if !DEBUG_ON_R1_0
 		if (I2C::StartWrite(RTC_ADDR))
 		{
 			I2C::Write(RTC_TEMP_MSB);
@@ -491,7 +488,6 @@ namespace RTC
 			TempC = msb << 8 | lsb;
 			I2C::Stop();
 		}
-	#endif
 	}
 }
 
@@ -549,11 +545,11 @@ namespace KBD
 
 	void Init()
 	{
-		clr_bit(DDRB,  KBD_PIN);
-		clr_bit(PORTB, KBD_PIN);
-		set_bit(PCMSK, KBD_PIN);
-		set_bit(GIFR,  PCIF);
-		set_bit(GIMSK, PCIE);
+		clr_bit(DDRB,  KBD_PIN); // chose pin as input
+		clr_bit(PORTB, KBD_PIN); // disable pull-up resistor
+		set_bit(PCMSK, KBD_PIN); // chose pin as interrupt source
+		set_bit(GIMSK, PCIE);    // enable pin change interruptions
+		set_bit(GIFR,  PCIF);    // clear the interruption flag
 	}
 
 	Key Read()
@@ -570,11 +566,8 @@ namespace KBD
 		return KeyNO;
 	}
 
-	ISR(PCINT0_vect)
-	{
-		// do nothing
-		// just interrupt sleeping
-	}
+	// just interrupt sleeping
+	EMPTY_INTERRUPT(PCINT0_vect);
 }
 
 // -----------------------------------------------------------------------------
