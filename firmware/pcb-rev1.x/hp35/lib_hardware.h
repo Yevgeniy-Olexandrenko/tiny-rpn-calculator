@@ -518,7 +518,7 @@ namespace KBD
 	// A1 B1 C1 D1
 	// A3 B3 C3 D3
 
-	enum Key
+	enum
 	{
 		KeyA0 = 0x0F, // F
 		KeyB0 = 0x07, // 7
@@ -545,22 +545,15 @@ namespace KBD
 		573, 635, 692, 762, 827, 863, 893, 913
 	};
 
-	const Key code[] PROGMEM = 
+	const u08 code[] PROGMEM = 
 	{
 		KeyA0, KeyB0, KeyC0, KeyD0, KeyA1, KeyB1, KeyC1, KeyD1,
 		KeyA2, KeyB2, KeyC2, KeyD2, KeyA3, KeyB3, KeyC3, KeyD3
 	};
 
-	void Init()
-	{
-		clr_bit(DDRB,  KBD_PIN); // chose pin as input
-		clr_bit(PORTB, KBD_PIN); // disable pull-up resistor
-		set_bit(PCMSK, KBD_PIN); // chose pin as interrupt source
-		set_bit(GIMSK, PCIE);    // enable pin change interruptions
-		set_bit(GIFR,  PCIF);    // clear the interruption flag
-	}
+	u08 key;
 
-	Key Read()
+	u08 read_raw_key()
 	{
 		u16 adcVal = ADC::Read(KBD_ADC);
 		if (adcVal > 110)
@@ -572,6 +565,24 @@ namespace KBD
 			}
 		}
 		return KeyNO;
+	}
+
+	void Init()
+	{
+		clr_bit(DDRB,  KBD_PIN); // chose pin as input
+		clr_bit(PORTB, KBD_PIN); // disable pull-up resistor
+		set_bit(PCMSK, KBD_PIN); // chose pin as interrupt source
+		set_bit(GIMSK, PCIE);    // enable pin change interruptions
+		set_bit(GIFR,  PCIF);    // clear the interruption flag
+		key = KeyNO;
+	}
+
+	u08 Read()
+	{
+		u08 new_key = read_raw_key();
+		if (new_key == KeyNO && key != KeyNO) key = KeyNO;
+		if (new_key != KeyNO && key == KeyNO) key = new_key;
+		return key;
 	}
 
 	// just interrupt sleeping
