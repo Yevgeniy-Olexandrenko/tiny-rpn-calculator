@@ -609,7 +609,7 @@ namespace PWR
 		u16 voltage = Voltage();
 		if (voltage >= BAT_FULL ) return 100;
 		if (voltage <= BAT_EMPTY) return 0;
-		return ((voltage - BAT_EMPTY) / (BAT_FULL - BAT_EMPTY));
+		return ((voltage - BAT_EMPTY) / ((BAT_FULL - BAT_EMPTY) / 100));
 	}
 
 	void Idle()
