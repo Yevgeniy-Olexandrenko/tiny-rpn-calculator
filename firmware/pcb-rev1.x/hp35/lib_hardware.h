@@ -172,21 +172,29 @@ namespace ADC
 
 	void Init()
 	{
-		ADCSRA = _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
+		// enable adc, clear interrupt flag, prescaler is 32
+		ADCSRA = _BV(ADEN) | _BV(ADIF) | _BV(ADPS2) | _BV(ADPS0);
 	}
 
-	NOINLINE u16 Read(u08 channel, u08 delay)
+	NOINLINE u16 Read(u08 channel)
 	{
 		ADMUX = channel;
-		while (delay--) _delay_ms(1);
 
-		set_bit(ADCSRA, ADSC);
-		while (isb_set(ADCSRA, ADSC));
+		set_sleep_mode (SLEEP_MODE_ADC);
+		ADCSRA |= _BV(ADSC) | _BV(ADIE);
+		while (isb_set(ADCSRA, ADSC))
+		{
+			sleep_enable();
+			sleep_cpu ();
+			sleep_disable ();
+		}
 
 		u08 adcl = ADCL;
 		u08 adch = ADCH;
 		return (adcl | adch << 8);
 	}
+
+	EMPTY_INTERRUPT (ADC_vect);
 }
 
 // -----------------------------------------------------------------------------
@@ -554,7 +562,7 @@ namespace KBD
 
 	Key Read()
 	{
-		u16 adcVal = ADC::Read(KBD_ADC, 1);
+		u16 adcVal = ADC::Read(KBD_ADC);
 		if (adcVal > 110)
 		{
 			for (u08 i = 0; i < 16; ++i)
@@ -593,7 +601,7 @@ namespace PWR
 
 	NOINLINE u16 Voltage()
 	{
-		return (1125300L / ADC::Read(ADC_VCC, 10));
+		return (1125300L / ADC::Read(ADC_VCC));
 	}
 
 	u08 Level()
