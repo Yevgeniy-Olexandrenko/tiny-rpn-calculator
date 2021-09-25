@@ -18,6 +18,7 @@ namespace HP35
 	};
 
 	uint8_t Display[15]; // output
+	uint8_t Idling;      // output
 	uint8_t Error;       // output
 
 	void Operation(uint8_t op);
@@ -116,11 +117,10 @@ namespace HP35
 
 	// state
 	uint8_t s[12];                    // status
-	uint8_t p, pc, ret;               // pointer
+	uint8_t p, pc, ret, key_pc;       // pointers
 	uint8_t rom_offset;               // ROM offset
 	uint8_t ff, fl;                   // register boundaries
 	uint8_t carry, carry_alu;         // carry bits
-	uint8_t key_in, key_pc;           // key variables
 	uint8_t disp_enable, disp_update; // display control
 
 	// basic math
@@ -191,21 +191,21 @@ namespace HP35
 	// implementation
 	void Operation(uint8_t op)
 	{
-		key_in = op;
+		if (op != OpNONE)
+		{
+			Idling = Error = 0;
+			key_pc = op;
+			s[0] = 1;
+		}
 	}
 
 	bool Cycle()
 	{
-		// error handling
-		if ((pc == 0xBF) && (rom_offset == 0x00)) Error = 1;
-
-		// process received key
-		if (key_in != OpNONE)
+		// handling state change breakpoints
+		if (rom_offset == 0x00)
 		{
-			Error  = 0;
-			key_pc = key_in;
-			key_in = OpNONE;
-			s[0] = 1;
+			if (pc == 0xC5) Idling = 1;
+			if (pc == 0xBF) Error  = 1;
 		}
 
 		// fetch ROM
@@ -231,7 +231,7 @@ namespace HP35
 				case 0b00000000: // NO OPERATION
 					break;
 				case 0b00110100: // KEY -> ROM ADDRESS
-					pc = key_pc; s[0] = 0;
+					pc = key_pc;
 					break;
 				case 0b00000111: // P – 1 -> P
 					p -= 0x01; p &= 0x0F;

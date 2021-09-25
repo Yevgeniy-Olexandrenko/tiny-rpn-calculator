@@ -192,12 +192,16 @@ void enterMenu(u08 type)
 
 #define CALC_FRAMES_PER_SEC   (15)
 #define HP35_CYCLES_PER_FRAME (HP35_CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
-#define HP35_OPERATION_CYCLES (HP35_CYCLES_PER_FRAME * 5)
 
-void HP35_OperationWithWait(u08 operation)
+const u08 seqASIN[] PROGMEM = { HP35::OpARC, HP35::OpSIN, HP35::OpNONE };
+const u08 seqACOS[] PROGMEM = { HP35::OpARC, HP35::OpCOS, HP35::OpNONE };
+const u08 seqATAN[] PROGMEM = { HP35::OpARC, HP35::OpTAN, HP35::OpNONE };
+
+const u08 * hp35seq = 0;
+
+void executeSequence(const u08 * seq)
 {
-	HP35::Operation(operation);
-	for (u16 i = 0; i < HP35_OPERATION_CYCLES; ++i) HP35::Cycle();
+	hp35seq = seq;
 }
 
 void executeOperation(u08 operation)
@@ -224,24 +228,25 @@ void executeOperation(u08 operation)
 			break;
 		
 		case TRIG_ASIN:
-			HP35_OperationWithWait(HP35::OpARC);
-			HP35::Operation(HP35::OpSIN);
+			executeSequence(seqASIN);
 			break;
 
 		case TRIG_ACOS:
-			HP35_OperationWithWait(HP35::OpARC);
-			HP35::Operation(HP35::OpCOS);
+			executeSequence(seqACOS);
 			break;
 		
 		case TRIG_ATAN:
-			HP35_OperationWithWait(HP35::OpARC);
-			HP35::Operation(HP35::OpTAN);
+			executeSequence(seqATAN);
 			break;
 	}
 }
 
+u16 cycles = 0;
+
 void updateCalcMode()
 {
+	bool print = false;
+
 	if (isMenu)
 	{
 		if (key != KEY_NONE)
@@ -255,8 +260,8 @@ void updateCalcMode()
 				case KEY_NUM7: enterMenu(MENU_TRIG_OPS); break;
 				case KEY_NUM1: case KEY_NUM2: case KEY_NUM3:
 					u08 index = select * MENU_OPS_PER_LINE + (key - KEY_NUM1);
-					u08 operation = pgm_read_byte(menu.opsBase + index);
-					executeOperation(operation);
+					u08 calcOp = pgm_read_byte(menu.opsBase + index);
+					executeOperation(calcOp);
 					break;
 			}
 			PrintCalculator();
@@ -264,17 +269,29 @@ void updateCalcMode()
 	}
 	else
 	{
-		if (key != KEY_NONE)
+		if (hp35seq)
 		{
-			u08 operation = pgm_read_byte(main_operations + (isFunc ? 16 : 0) + key);
-			executeOperation(operation);
+			if (!cycles && HP35::Idling)
+			{
+				u08 hp35op = pgm_read_byte(hp35seq++);
+				if (hp35op == HP35::OpNONE) hp35seq = 0;
+				else HP35::Operation(hp35op);
+			}
+		}
+
+		else if (key != KEY_NONE)
+		{
+			u08 calcOp = pgm_read_byte(main_operations + (isFunc ? 16 : 0) + key);
+			executeOperation(calcOp);
 			PrintCalculator();
 		}
-		else
+		
+		for (cycles += HP35_CYCLES_PER_FRAME; cycles > 0; --cycles)
 		{
-			for (u16 i = 0; i < HP35_CYCLES_PER_FRAME; ++i)
+			if (HP35::Cycle()) 
 			{
-				if (HP35::Cycle()) PrintCalculator();
+				PrintCalculator();
+				break;
 			}
 		}
 	}
