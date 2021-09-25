@@ -333,16 +333,16 @@ void PrintClock()
 	PrintTensOnesAt(RTC::Seconds, 54, 0);
 
 	PrintCharSize(CHAR_SIZE_S, CHAR_SIZE_S);
-	PrintStringAt(FPSTR(strMonth), RTC::Month - 1, 85, 0);
+	PrintStringAt(FPSTR(strMonth), RTC::Month - 1, 79, 0);
+	PrintTensOnesAt(RTC::Date, 99, 0);
+	PrintTensOnesAt(RTC::Year, 117, 0);
+	PrintCharAt('/', 111, 0);
 
 	PrintCharSize(CHAR_SIZE_M, CHAR_SIZE_S);
-	PrintTensOnesAt(RTC::Date, 107, 0);
-	PrintTensOnesAt(20, 85, 1);
-	PrintTensOnesAt(RTC::Year, 107, 1);
-
+	PrintStringAt(FPSTR("HP35"), 79, 2);
 	u08 i = battery;
-	while (i) PrintCharAt('-', 85 + (--i) * dx, 2);
-	
+	while (i) PrintCharAt('-', 79 + (--i) * dx, 1);
+
 	LCD::Flip();
 }
 

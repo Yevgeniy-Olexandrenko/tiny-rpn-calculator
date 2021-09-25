@@ -384,6 +384,16 @@ NOINLINE void PrintStringAt(const char* s, uint8_t x, uint8_t y)
 	}
 }
 
+NOINLINE void PrintStringAt(const __FlashStringHelper* s, uint8_t x, uint8_t y)
+{
+	const char* ptr = (const char*)s;
+	while (char c = *ptr++)
+	{
+		PrintCharAt(c, x, y);
+		x += dx;
+	}
+}
+
 NOINLINE void PrintStringAt(const __FlashStringHelper* s, uint8_t i, uint8_t x, uint8_t y)
 {
 	const char* ptr = (const char*)s;
