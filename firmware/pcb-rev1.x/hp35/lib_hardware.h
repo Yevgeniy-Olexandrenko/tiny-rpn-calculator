@@ -172,29 +172,27 @@ namespace ADC
 
 	void Init()
 	{
-		// enable adc, clear interrupt flag, prescaler is 32
-		ADCSRA = _BV(ADEN) | _BV(ADIF) | _BV(ADPS2) | _BV(ADPS0);
+		// enable adc, enable interrupt, clear interrupt flag, prescaler is 32
+		ADCSRA = _BV(ADEN) | _BV(ADIE) | _BV(ADIF) | _BV(ADPS2) | _BV(ADPS0);
 	}
 
 	NOINLINE u16 Read(u08 channel)
 	{
 		ADMUX = channel;
-
-		set_sleep_mode (SLEEP_MODE_ADC);
-		ADCSRA |= _BV(ADSC) | _BV(ADIE);
-		while (isb_set(ADCSRA, ADSC))
+		set_sleep_mode(SLEEP_MODE_ADC);
+		do
 		{
 			sleep_enable();
 			sleep_cpu ();
 			sleep_disable ();
 		}
-
+		while (isb_set(ADCSRA, ADSC));
 		u08 adcl = ADCL;
 		u08 adch = ADCH;
 		return (adcl | adch << 8);
 	}
 
-	EMPTY_INTERRUPT (ADC_vect);
+	EMPTY_INTERRUPT(ADC_vect);
 }
 
 // -----------------------------------------------------------------------------
