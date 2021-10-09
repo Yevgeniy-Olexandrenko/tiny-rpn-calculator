@@ -297,7 +297,6 @@ void updateCalcMode()
 	}
 }
 
-#if SUPPORT_RTC
 b08 calcMode;
 u08 battery;
 
@@ -389,49 +388,3 @@ int main()
 	}
 	return 0;
 }
-#else
-void switchToCalcMode()
-{
-	LCD::TurnOn();
-	FPS::SyncStart();
-	oldkey = KBD::Read();
-}
-
-int main() 
-{
-	// init hardware and switch to calculator operation mode
-	PCB::Init();
-	switchToCalcMode();
-
-	while (true)
-	{
-		// get time passed since last operation mode switch
-		uint16_t timePassedMs = FPS::SyncMillis();
-
-		// handle display brightness change
-		LCD::Brightness(timePassedMs < DIMOUT_MILLIS ? 0xFF : 0x00);
-
-		// handle power down condition
-		if (timePassedMs >= POWEROFF_MILLIS)
-		{
-			// power down and go to sleeping
-			FPS::SyncStop();
-			LCD::TurnOff();
-			PWR::Down();
-
-			// power up an switch to calculator operation mode
-			switchToCalcMode();
-		}
-
-		// read key press and switch to calculator operation mode
-		key = KBD::Read();
-		if (key != oldkey) oldkey = key; else key = KEY_NONE;
-		if (key != KEY_NONE) FPS::SyncStart();
-
-		// update current operation mode and idle until next frame
-		updateCalcMode();
-		FPS::SyncWait();
-	}
-	return 0;
-}
-#endif

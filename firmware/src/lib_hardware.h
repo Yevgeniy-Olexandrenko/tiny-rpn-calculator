@@ -52,6 +52,7 @@ typedef int32_t  s32;
 #define isb_clr(sfr, bit) (!((sfr) & _BV(bit)))
 
 // necessary undefs
+#undef NOINLINE
 #undef ADC
 #undef FPSTR
 #undef F
@@ -105,6 +106,13 @@ class __FlashStringHelper;
 #define BUILD_HOUR        ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_HOUR)
 #define BUILD_MIN         ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_MIN)
 #define BUILD_SEC         ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_SEC)
+
+// additional defines
+#if ENABLE_NOINLINE
+#define NOINLINE __attribute__ ((noinline))
+#else
+#define NOINLINE
+#endif
 
 // -----------------------------------------------------------------------------
 // Packed Binary-Coded Decimals

@@ -1,0 +1,4 @@
+#pragma once
+
+#define FIRMWARE FW_HARDWARE_TESTER
+// #define FIRMWARE FW_CALCULATOR_HP35
