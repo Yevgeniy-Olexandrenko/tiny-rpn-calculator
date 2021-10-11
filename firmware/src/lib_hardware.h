@@ -654,42 +654,35 @@ namespace KBD
 	#define KBD_ADC ADC_2_PB4
 	#endif
 
-	// Keyboard layout on PCB:
-	// A0 B0 C0 D0
-	// A1 B1 C1 D1
-	// A3 B3 C3 D3
-
 	enum
 	{
-		KeyA0 = 0x0F, // F
-		KeyB0 = 0x07, // 7
-		KeyC0 = 0x08, // 8
-		KeyD0 = 0x09, // 9
-		KeyA1 = 0x0E, // E
-		KeyB1 = 0x04, // 4
-		KeyC1 = 0x05, // 5
-		KeyD1 = 0x06, // 6
-		KeyA2 = 0x0D, // S
-		KeyB2 = 0x01, // 1
-		KeyC2 = 0x02, // 2
-		KeyD2 = 0x03, // 3
-		KeyA3 = 0x0C, // C
-		KeyB3 = 0x00, // 0
-		KeyC3 = 0x0A, // D
-		KeyD3 = 0x0B, // P
-		KeyNO = 0xFF
+		NONE = 0xFF,
+
+		FUNC = 0x0F, NUM7 = 0x07, NUM8 = 0x08, NUM9 = 0x09,
+		EEX  = 0x0E, NUM4 = 0x04, NUM5 = 0x05, NUM6 = 0x06,
+		CHS  = 0x0D, NUM1 = 0x01, NUM2 = 0x02, NUM3 = 0x03,
+		CLR  = 0x0C, NUM0 = 0x00, DOT  = 0x0A, DUP  = 0x0B,
+
+		ROTU = EEX,	 ROTD = CHS,
+		SEL1 = NUM1, SEL2 = NUM2, SEL3 = NUM3,
+		MATH = FUNC, TRIG = NUM7, PROG = NUM8,
+		CONS = NUM4, SETS = DOT
 	};
 
 	const u16 adc[] PROGMEM =
 	{
-		147, 182, 221, 269, 324, 383, 442, 505,
-		573, 635, 692, 762, 827, 863, 893, 913
+		147, 182, 221, 269, // A0 B0 C0 D0
+		324, 383, 442, 505, // A1 B1 C1 D1
+		573, 635, 692, 762, // A2 B2 C2 D2
+		827, 863, 893, 913  // A3 B3 C3 D3
 	};
 
 	const u08 code[] PROGMEM = 
 	{
-		KeyA0, KeyB0, KeyC0, KeyD0, KeyA1, KeyB1, KeyC1, KeyD1,
-		KeyA2, KeyB2, KeyC2, KeyD2, KeyA3, KeyB3, KeyC3, KeyD3
+		FUNC, NUM7, NUM8, NUM9, // A0 B0 C0 D0
+		EEX,  NUM4, NUM5, NUM6, // A1 B1 C1 D1
+		CHS,  NUM1, NUM2, NUM3, // A2 B2 C2 D2
+		CLR,  NUM0, DOT,  DUP   // A3 B3 C3 D3
 	};
 
 	u08 key;
@@ -705,7 +698,7 @@ namespace KBD
 				if (adcVal < adcMax) return pgm_read_byte(&code[i]);
 			}
 		}
-		return KeyNO;
+		return NONE;
 	}
 
 	void Init()
@@ -715,14 +708,14 @@ namespace KBD
 		set_bit(PCMSK, KBD_PIN); // chose pin as interrupt source
 		set_bit(GIMSK, PCIE);    // enable pin change interruptions
 		set_bit(GIFR,  PCIF);    // clear the interruption flag
-		key = KeyNO;
+		key = NONE;
 	}
 
 	u08 Read()
 	{
 		u08 new_key = read_raw_key();
-		if (new_key == KeyNO && key != KeyNO) key = KeyNO;
-		if (new_key != KeyNO && key == KeyNO) key = new_key;
+		if (new_key == NONE && key != NONE) key = NONE;
+		if (new_key != NONE && key == NONE) key = new_key;
 		return key;
 	}
 

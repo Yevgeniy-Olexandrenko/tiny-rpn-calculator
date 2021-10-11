@@ -20,8 +20,8 @@
 
 #elif FIRMWARE == FW_CALCULATOR_HP35
     #include "src/lib_hardware.h"
-//    #include "src/lib_print.h"
-    #include "src/lib_hp35vm.h"
-    #include "src/calculators/hp35/mainloop.h"
+    #include "src/lib_hpvm.h"
+    #include "src/calculators/hp35/data.h"
+    #include "src/calculators/hp35/main.h"
 
 #endif
