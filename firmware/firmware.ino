@@ -1,6 +1,6 @@
 #pragma once
 
-#define DEBUG_ON_R1_0   0
+#define DEBUG_ON_R1_0   1
 #define FONT_IN_EEMEM   0
 #define ENABLE_NOINLINE 0
 
@@ -20,7 +20,7 @@
 
 #elif FIRMWARE == FW_CALCULATOR_HP35
     #include "src/lib_hardware.h"
-    #include "src/lib_print.h"
+//    #include "src/lib_print.h"
     #include "src/lib_hp35vm.h"
     #include "src/calculators/hp35/mainloop.h"
 

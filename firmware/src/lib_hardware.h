@@ -11,6 +11,7 @@
 // ADC - Analog to Digital Converter reading
 // I2C - I2C Bus devices reading/writing
 // LCD - SSD1306 128x32 Display control
+// TXT - Display text using custom fonts
 // RTC - DS3231M Real Time Clock control
 // KBD - One Pin Analog 16-Key Keyboard reading
 // PWR - MPU Power management (Idle + Power down)
@@ -415,6 +416,140 @@ namespace LCD
 		rend_buf ^= 0x20;
 		draw_buf ^= 0x04;
 		command(rend_buf);
+	}
+}
+
+// -----------------------------------------------------------------------------
+// Text output
+// -----------------------------------------------------------------------------
+
+namespace TXT
+{
+	#define SCALE_X1 1
+	#define SCALE_X2 2
+	#define SCALE_X4 4
+
+	struct Font
+	{
+		u08 widthBytes;
+		u08 heightRows;
+		u08 asciiFirst;
+		u08 asciiLast;
+		const u08 * data;
+	};
+
+	Font font;
+	u08  font_sx;
+	u08  font_sy;
+	u08  char_dx;
+
+	u08 expand4bit(u08 b)
+	{	
+		// 0000abcd -> aabbccdd
+		b = (b | (b << 2)) & 0x33;
+		b = (b | (b << 1)) & 0x55;
+		return b | (b << 1);
+	}
+
+	u08 expand2bit(u08 b)
+	{							   
+		// 000000ab -> aaaabbbb
+		b = (b | (b << 3)) & 0x11;
+		for (u08 i = 3; i > 0; --i) b |= (b << 1);
+		return b;
+	}
+
+	void SetScale(u08 sx, u08 sy)
+	{
+		font_sx = sx;
+		font_sy = sy;
+		char_dx = font.widthBytes * font_sx + 1;
+	}
+
+	void SetFont(const Font& f, u08 sx, u08 sy)
+	{
+		memcpy_P(&font, &f, sizeof(Font));
+		SetScale(sx, sy);
+	}
+
+	void NextCharPos(u08 & x)
+	{
+		x += char_dx;
+	}
+	
+	NOINLINE void PrintChar(u08 ch, u08 x, u08 y)
+	{
+		// compute pointer to char data
+		u16 dp = 0;
+		if (ch >= font.asciiFirst && ch <= font.asciiLast)
+		{
+			dp = (ch - font.asciiFirst) * (font.widthBytes * font.heightRows);
+		}
+
+		// iterate through screen pages and char data rows
+		for (u08 yi = 0; yi < font.heightRows; ++yi)
+		{
+			for (u08 si = 0; si < font_sy; ++si)
+			{
+				LCD::Position(x, y + si);
+
+				// iterate through screen columns and char data bytes
+				for (u08 xi = 0, ch = 0; xi < font.widthBytes; ++xi)
+				{
+					// get char data if available
+					if (dp)
+					{
+						ch = pgm_read_byte(&font.data[dp + xi]);
+						if (font_sy == SCALE_X2)
+							ch = expand4bit((ch >> (si << 2)) & 0x0F);
+						else if (font_sy == SCALE_X4)
+							ch = expand2bit((ch >> (si << 1)) & 0x03);
+					}
+					LCD::Write(ch, font_sx);
+				}
+			}
+
+			// next row of bytes in char data
+			if (dp) dp += font.widthBytes;
+			y += font_sy;
+		}
+	}
+
+	NOINLINE void PrintString(const u08* s, u08 x, u08 y)
+	{
+		while (u08 c = *s++)
+		{
+			PrintChar(c, x, y);
+			x += char_dx;
+		}
+	}
+
+	NOINLINE void PrintString(const __FlashStringHelper* s, u08 x, u08 y)
+	{
+		const u08 * p = (const u08 *)s;
+		while (u08 c = pgm_read_byte(p++))
+		{
+			PrintChar(c, x, y);
+			x += char_dx;
+		}
+	}
+
+	NOINLINE void PrintString(const __FlashStringHelper* s, u08 i, u08 x, u08 y)
+	{
+		const u08 * p = (const u08 *)s;
+		u08 w = pgm_read_byte(p++);
+
+		for (p += (i * w); w > 0; --w)
+		{
+			PrintChar(pgm_read_byte(p++), x, y);
+			x += char_dx;
+		}
+	}
+
+	NOINLINE void PrintTensOnes(u08 n, u08 x, u08 y)
+	{
+		PrintChar('0' + u08(n / 10 % 10), x, y);
+		PrintChar('0' + u08(n % 10), x + char_dx, y);
 	}
 }
 
