@@ -318,37 +318,37 @@ const TXT::Font font PROGMEM =
 // HP35 Operations (basic + extended)
 // -----------------------------------------------------------------------------
 
-#define FUNC_KEY  (HP35::OpNONE - 1)
-#define MENU_MATH (HP35::OpNONE - 2)
-#define MENU_TRIG (HP35::OpNONE - 3)
-#define TRIG_ASIN (HP35::OpNONE - 4)
-#define TRIG_ACOS (HP35::OpNONE - 5)
-#define TRIG_ATAN (HP35::OpNONE - 6)
+#define FUNC_KEY  (HPVM::OpNONE - 1)
+#define MENU_MATH (HPVM::OpNONE - 2)
+#define MENU_TRIG (HPVM::OpNONE - 3)
+#define TRIG_ASIN (HPVM::OpNONE - 4)
+#define TRIG_ACOS (HPVM::OpNONE - 5)
+#define TRIG_ATAN (HPVM::OpNONE - 6)
 
 const uint8_t mainOps[16 + 16] PROGMEM =
 {
-	HP35::OpNUM0, HP35::OpNUM1, HP35::OpNUM2, HP35::OpNUM3, HP35::OpNUM4, HP35::OpNUM5, HP35::OpNUM6, HP35::OpNUM7,
-	HP35::OpNUM8, HP35::OpNUM9, HP35::OpDOT,  HP35::OpPUSH, HP35::OpCLX,  HP35::OpCHS,  HP35::OpEEX,  FUNC_KEY,
+	HPVM::OpNUM0, HPVM::OpNUM1, HPVM::OpNUM2, HPVM::OpNUM3, HPVM::OpNUM4, HPVM::OpNUM5, HPVM::OpNUM6, HPVM::OpNUM7,
+	HPVM::OpNUM8, HPVM::OpNUM9, HPVM::OpDOT,  HPVM::OpPUSH, HPVM::OpCLX,  HPVM::OpCHS,  HPVM::OpEEX,  FUNC_KEY,
 
-	HP35::OpNONE, HP35::OpRCL,  HP35::OpSTO,  HP35::OpSUB,  HP35::OpPI,   HP35::OpNONE, HP35::OpMUL,  MENU_TRIG,
-	HP35::OpNONE, HP35::OpDIV,  HP35::OpSWAP, HP35::OpADD,  HP35::OpCLR,  HP35::OpROT,  HP35::OpNONE, MENU_MATH
+	HPVM::OpNONE, HPVM::OpRCL,  HPVM::OpSTO,  HPVM::OpSUB,  HPVM::OpPI,   HPVM::OpNONE, HPVM::OpMUL,  MENU_TRIG,
+	HPVM::OpNONE, HPVM::OpDIV,  HPVM::OpSWAP, HPVM::OpADD,  HPVM::OpCLR,  HPVM::OpROT,  HPVM::OpNONE, MENU_MATH
 };
 
 const uint8_t mathOps[6] PROGMEM =
 {
-	HP35::OpPOW, HP35::OpSQRT, HP35::OpINV,
-	HP35::OpLOG, HP35::OpLN,   HP35::OpEXP
+	HPVM::OpPOW, HPVM::OpSQRT, HPVM::OpINV,
+	HPVM::OpLOG, HPVM::OpLN,   HPVM::OpEXP
 };
 
 const uint8_t trigOps[6] PROGMEM =
 {
-	HP35::OpSIN, HP35::OpCOS,  HP35::OpTAN,
+	HPVM::OpSIN, HPVM::OpCOS,  HPVM::OpTAN,
 	TRIG_ASIN,   TRIG_ACOS,    TRIG_ATAN
 };
 
-const u08 seqASIN[] PROGMEM = { HP35::OpARC, HP35::OpSIN, HP35::OpNONE };
-const u08 seqACOS[] PROGMEM = { HP35::OpARC, HP35::OpCOS, HP35::OpNONE };
-const u08 seqATAN[] PROGMEM = { HP35::OpARC, HP35::OpTAN, HP35::OpNONE };
+const u08 seqASIN[] PROGMEM = { HPVM::OpARC, HPVM::OpSIN, HPVM::OpNONE };
+const u08 seqACOS[] PROGMEM = { HPVM::OpARC, HPVM::OpCOS, HPVM::OpNONE };
+const u08 seqATAN[] PROGMEM = { HPVM::OpARC, HPVM::OpTAN, HPVM::OpNONE };
 
 // -----------------------------------------------------------------------------
 // String arrays

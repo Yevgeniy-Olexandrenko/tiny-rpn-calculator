@@ -27,7 +27,7 @@ void initKeyboardTest()
 {
 	for (u08 i = 0; i < 19; ++i)
 	{
-		keyBuf[i] = KBD::KeyNO;
+		keyBuf[i] = KBD::NONE;
 	}
 	keyPtr = 0;
 }
@@ -46,7 +46,7 @@ u08 readKeyboardKey()
 		}
 		adcMin = adcMax;
 	}
-	return KBD::KeyNO;
+	return KBD::NONE;
 }
 
 void printAdc(u16 adc, u08 pos, u08 y)
@@ -70,7 +70,7 @@ void updateKeyboardTest()
 		keyBuf[keyPtr++] = keyVal;
 		keyPtr %= 19;
 
-		if (keyVal != KBD::KeyNO)
+		if (keyVal != KBD::NONE)
 		{
 			adcBuf[adcPtr++] = adcVal;
 			adcPtr %= 5;
@@ -88,7 +88,7 @@ void updateKeyboardTest()
 	for (u08 i = 0; i < 19; ++i)
 	{
 		u08 key = keyBuf[(keyPtr + i) % 19];
-		if (key == KBD::KeyNO)
+		if (key == KBD::NONE)
 			PrintCharAt('-', i * dx, 1);
 		else
 			PrintStringAt(FPSTR(strKey), key, i * dx, 1);
@@ -140,7 +140,7 @@ void keepAlive()
 	LCD::Brightness(timePassedMs < DIMOUT_MILLIS ? 0xFF : 0x00);
 	if (timePassedMs >= POWEROFF_MILLIS) powerDown();
 		
-	if (KBD::Read() != KBD::KeyNO) FPS::SyncStart();
+	if (KBD::Read() != KBD::NONE) FPS::SyncStart();
 }
 
 void init()

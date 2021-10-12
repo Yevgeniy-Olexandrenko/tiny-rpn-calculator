@@ -1,4 +1,8 @@
 #pragma once
 
-// #define FIRMWARE FW_HARDWARE_TESTER
-   #define FIRMWARE FW_CALCULATOR_HP35
+#define PCB_REV 10
+#define ENABLE_OPT_INLINE 0
+
+//#define FW_HARDWARE_TESTER
+//#define FW_CALCULATOR_NATIVE
+#define FW_CALCULATOR_HP35

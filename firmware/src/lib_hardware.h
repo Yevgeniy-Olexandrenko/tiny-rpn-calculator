@@ -54,6 +54,7 @@ typedef int32_t  s32;
 
 // necessary undefs
 #undef NOINLINE
+#undef INLINE
 #undef ADC
 #undef FPSTR
 #undef F
@@ -109,10 +110,12 @@ class __FlashStringHelper;
 #define BUILD_SEC         ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_SEC)
 
 // additional defines
-#if ENABLE_NOINLINE
+#if ENABLE_OPT_INLINE
 #define NOINLINE __attribute__ ((noinline))
+#define INLINE   __attribute__ ((inline))
 #else
 #define NOINLINE
+#define INLINE
 #endif
 
 // -----------------------------------------------------------------------------
@@ -646,13 +649,13 @@ namespace RTC
 
 namespace KBD
 {
-	#if DEBUG_ON_R1_0
+#if PCB_REV == 10
 	#define KBD_PIN PB3
 	#define KBD_ADC ADC_3_PB3
-	#else
+#else
 	#define KBD_PIN PB4
 	#define KBD_ADC ADC_2_PB4
-	#endif
+#endif
 
 	enum
 	{
@@ -663,7 +666,7 @@ namespace KBD
 		CHS  = 0x0D, NUM1 = 0x01, NUM2 = 0x02, NUM3 = 0x03,
 		CLR  = 0x0C, NUM0 = 0x00, DOT  = 0x0A, DUP  = 0x0B,
 
-		ROTU = EEX,	 ROTD = CHS,
+		ROTU = EEX,  ROTD = CHS,
 		SEL1 = NUM1, SEL2 = NUM2, SEL3 = NUM3,
 		MATH = FUNC, TRIG = NUM7, PROG = NUM8,
 		CONS = NUM4, SETS = DOT

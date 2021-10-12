@@ -31,7 +31,7 @@ void PrintCalculator()
 
 	for (u08 x = 0, i = 0; i < 15; ++i)
 	{
-		TXT::PrintChar(HP35::Display[i], x, 0);
+		TXT::PrintChar(HPVM::Display[i], x, 0);
 		TXT::NextCharPos(x);
 	}
 	LCD::Flip();
@@ -70,7 +70,7 @@ void executeOperation(u08 operation)
 	switch (operation)
 	{
 		default:
-			HP35::Operation(operation);
+			HPVM::Operation(operation);
 			break;
 
 		case FUNC_KEY:
@@ -129,11 +129,11 @@ void updateCalcMode()
 	{
 		if (hp35seq)
 		{
-			if (!cycles && HP35::Idling)
+			if (!cycles && HPVM::Idling)
 			{
 				u08 hp35op = pgm_read_byte(hp35seq++);
-				if (hp35op == HP35::OpNONE) hp35seq = 0;
-				else HP35::Operation(hp35op);
+				if (hp35op == HPVM::OpNONE) hp35seq = 0;
+				else HPVM::Operation(hp35op);
 			}
 		}
 
@@ -146,7 +146,7 @@ void updateCalcMode()
 		
 		for (cycles += HP35_CYCLES_PER_FRAME; cycles > 0; --cycles)
 		{
-			if (HP35::Cycle()) 
+			if (HPVM::Cycle()) 
 			{
 				PrintCalculator();
 				break;

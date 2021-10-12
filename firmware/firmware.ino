@@ -1,24 +1,29 @@
 #pragma once
 
-#define DEBUG_ON_R1_0   1
-#define FONT_IN_EEMEM   0
-#define ENABLE_NOINLINE 0
-
-#define FW_HARDWARE_TESTER   0
-#define FW_CALCULATOR_NATIVE 1
-#define FW_CALCULATOR_HP35   2
-
 #include "firmware-config.h"
 
-#if FIRMWARE == FW_HARDWARE_TESTER
+// -----------------------------------------------------------------------------
+// Hardware Tester
+// -----------------------------------------------------------------------------
+
+#if defined(FW_HARDWARE_TESTER)
     #include "src/lib_hardware.h"
     #include "src/lib_print.h"
-    #include "src/tester/mainloop.h"
+    #include "src/tester/data.h"
+    #include "src/tester/main.h"
 
-#elif FIRMWARE == FW_CALCULATOR_NATIVE
-// TODO
+// -----------------------------------------------------------------------------
+// Native Calculator
+// -----------------------------------------------------------------------------
 
-#elif FIRMWARE == FW_CALCULATOR_HP35
+#elif defined(FW_CALCULATOR_NATIVE)
+    #include "src/lib_hardware.h"
+
+// -----------------------------------------------------------------------------
+// Emulator for HP-35 Calculator 
+// -----------------------------------------------------------------------------
+
+#elif defined(FW_CALCULATOR_HP35)
     #include "src/lib_hardware.h"
     #include "src/lib_hpvm.h"
     #include "src/calculators/hp35/data.h"

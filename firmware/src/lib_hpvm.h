@@ -1,9 +1,9 @@
 #pragma once
 
-namespace HP35
+namespace HPVM
 {
 	// -----------------------------------------------------------------------------
-	// HP35 Calculator Virtual Machine
+	// HP Calculators Virtual Machine
 	// -----------------------------------------------------------------------------
 
 	// public interface
