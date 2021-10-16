@@ -1,55 +1,108 @@
 #pragma once
 
+b08 calcMode;
+u08 battery;
+
 b08 isFunc;
 b08 isMenu;
 
 Menu menu;
 u08  select;
 
+u08 key;
+u08 oldkey;
+u16 cycles = 0;
+
+u08 hidden[15];
+
+
+
+const u08 * hp35seq = 0;
+
+// -----------------------------------------------------------------------------
+
+void switchToCalcMode(bool yes = true)
+{
+	calcMode = yes;
+	FPS::SyncStart();
+}
+
+void switchToRTCMode()
+{
+	LCD::TurnOn();
+	battery = (uint8_t)((PWR::Level() * 4 + 50) / 100);
+	switchToCalcMode(false);
+	oldkey = KBD::Read();
+}
+
+NOINLINE void setupAndSwitchToRTCMode()
+{
+	RTC::WriteTimeDate();
+	switchToRTCMode();
+}
+
+// -----------------------------------------------------------------------------
+
+void PrintNumber(const u08 * buf, u08 y)
+{
+	for (u08 i = 0; i < 15; ++i)
+	{
+		if (i == 12) TXT::SetFont(digits7x16);
+		TXT::PrintChar(buf[i], i * TXT::char_dx, y);
+	}
+}
+
+void PrintMenu()
+{
+	TXT::SetFont(menu5x8);
+	TXT::SetScale(SCALE_X1, SCALE_X2);
+	TXT::SetInverse(true);
+	for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
+	{
+		TXT::PrintString(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 46 * i, 2);
+	}
+	TXT::SetInverse(false);
+}
+
 void PrintCalculator()
 {
 	LCD::Clear();
+	TXT::SetFont(digits7x16);
+
+	for (u08 i = 0; i < 14; ++i)
+	{
+		if (HPVM::M[i])
+		{
+			TXT::PrintChar(INFO_FLAG_STORAGE, INFO_FLAG_POSITION, isMenu ? 0 : 2);
+			break;
+		}
+	}
 
 	if (isFunc)
 	{
-		TXT::SetFont(digits7x16);
-		TXT::PrintChar('/', 128 - TXT::char_dx + 1, 0);
-		TXT::PrintChar(':', 128 - TXT::char_dx + 1, 2);
+		PrintNumber(hidden, 0);
+		PrintNumber(HPVM::Display, 2);
+		TXT::PrintChar(INFO_FLAG_FUNCTION, INFO_FLAG_POSITION, 0);
 	}
 
-	if (isMenu)
+	else if (isMenu)
 	{
-		TXT::SetFont(menu5x8);
-		TXT::SetScale(SCALE_X1, SCALE_X2);
-		TXT::SetInverse(true);
-		for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
-		{
-			TXT::PrintString(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 46 * i, 2);
-		}
-		TXT::SetInverse(false);
-		TXT::SetFont(digits7x16);
+		PrintNumber(HPVM::Display, 0);
+		PrintMenu();
 	}
 	else
 	{
 		TXT::SetFont(digits7x32);
+		PrintNumber(HPVM::Display, 0);
 	}
-
-	for (u08 x = 0, i = 0; i < 15; ++i)
-	{
-		if (i == 12) TXT::SetFont(digits7x16);
-		TXT::PrintChar(HPVM::Display[i], x, 0);
-		x += TXT::char_dx;
-	}
+	
 	LCD::Flip();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#define DIMOUT_MILLIS   10000 // Time before display dim out
-#define POWEROFF_MILLIS 20000 // Time before power off
 
-u08 key;
-u08 oldkey;
+
 
 void enterMenu(u08 type)
 {
@@ -58,14 +111,44 @@ void enterMenu(u08 type)
 	select = 0;
 }
 
-#define CALC_FRAMES_PER_SEC   (15)
-#define HP35_CYCLES_PER_FRAME (HP35_CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
 
-const u08 * hp35seq = 0;
 
 void executeSequence(const u08 * seq)
 {
 	hp35seq = seq;
+}
+
+void executeWithWaiting(u08 operation)
+{
+	HPVM::Operation(operation);
+	do
+	{
+		for (cycles += HP35_CYCLES_PER_FRAME; cycles > 0; --cycles) 
+		{
+			HPVM::Cycle();
+		}
+	}
+	while (!HPVM::Idling);
+}
+
+bool extractNumber(u08& out, u08 min, u08 max)
+{
+	if (HPVM::C[1] == 0 && HPVM::C[0] < 3)
+	{
+		u16 value = 0;
+		for (u08 i = 0; i <= HPVM::C[0]; ++i)
+		{
+			value *= 10;
+			value += HPVM::C[12 - i];
+		}
+		if (value >= min && value <= max)
+		{
+			out = u08(value);
+			executeWithWaiting(HPVM::OpROT);
+			return true;
+		}
+	}
+	return false;
 }
 
 void executeOperation(u08 operation)
@@ -80,6 +163,9 @@ void executeOperation(u08 operation)
 			break;
 
 		case FUNC_KEY:
+			executeWithWaiting(HPVM::OpSWAP);
+			for (u08 i = 0; i < 15; ++i) hidden[i] = HPVM::Display[i];
+			executeWithWaiting(HPVM::OpSWAP);
 			isFunc = true;
 			break;
 
@@ -89,6 +175,10 @@ void executeOperation(u08 operation)
 
 		case MENU_TRIG:
 			enterMenu(MENU_TRIG_OPS);
+			break;
+
+		case MENU_PROG:
+			enterMenu(MENU_PROG_OPS);
 			break;
 		
 		case TRIG_ASIN:
@@ -102,10 +192,35 @@ void executeOperation(u08 operation)
 		case TRIG_ATAN:
 			executeSequence(seqATAN);
 			break;
+
+		case PROG_TIME:
+			RTC::ReadTimeDate();
+			if (extractNumber(RTC::Minutes, 0, 59) && extractNumber(RTC::Hours, 0, 23))
+			{
+				RTC::Seconds = 0;
+				setupAndSwitchToRTCMode();
+			}
+			break;
+
+		case PROG_DATE:
+			RTC::ReadTimeDate();
+			if (extractNumber(RTC::Month, 1, 12) && extractNumber(RTC::Date, 1, 31))
+			{
+				setupAndSwitchToRTCMode();
+			}
+			break;
+
+		case PROG_YEAR:
+			RTC::ReadTimeDate();
+			if (extractNumber(RTC::Year, 0, 99))
+			{
+				setupAndSwitchToRTCMode();
+			}
+			break;
 	}
 }
 
-u16 cycles = 0;
+
 
 void updateCalcMode()
 {
@@ -122,6 +237,7 @@ void updateCalcMode()
 				case KBD::ROTD:  if (select < menu.lastIdx) select++; else select = 0; break;
 				case KBD::MATH: enterMenu(MENU_MATH_OPS); break;
 				case KBD::TRIG: enterMenu(MENU_TRIG_OPS); break;
+				case KBD::PROG: enterMenu(MENU_PROG_OPS); break;
 				case KBD::SEL1: case KBD::SEL2: case KBD::SEL3:
 					u08 index = select * MENU_OPS_PER_LINE + (key - KBD::SEL1);
 					u08 calcOp = pgm_read_byte(menu.opsBase + index);
@@ -161,28 +277,7 @@ void updateCalcMode()
 	}
 }
 
-b08 calcMode;
-u08 battery;
 
-void switchToCalcMode(bool yes = true)
-{
-	calcMode = yes;
-	FPS::SyncStart();
-}
-
-void switchToRTCMode()
-{
-	LCD::TurnOn();
-	battery = (uint8_t)((PWR::Level() * 4 + 50) / 100);
-	switchToCalcMode(false);
-	oldkey = KBD::Read();
-}
-
-NOINLINE void setupAndSwitchToRTCMode()
-{
-	RTC::WriteTimeDate();
-	switchToRTCMode();
-}
 
 void PrintClock()
 {

@@ -1,7 +1,7 @@
 #pragma once
 
 // -----------------------------------------------------------------------------
-// Text fonts
+// Text fonts (menu, big digits, small digits)
 // -----------------------------------------------------------------------------
 
 const uint8_t menu5x8_bytes[] PROGMEM =
@@ -148,8 +148,6 @@ const TXT::Font menu5x8 PROGMEM =
     .bytes = menu5x8_bytes // 220 bytes
 };
 
-// -----------------------------------------------------------------------------
-
 const uint8_t digits7x32_bytes[] PROGMEM =
 {
     // character '-' (0x2D)
@@ -246,8 +244,6 @@ const TXT::Font digits7x32 PROGMEM =
     .bytes = digits7x32_bytes // 392 bytes
 };
 
-// -----------------------------------------------------------------------------
-
 const uint8_t digits7x16_bytes[] PROGMEM =
 {
     // character '-' (0x2D)
@@ -320,12 +316,16 @@ const TXT::Font digits7x16 PROGMEM =
 // HP35 Operations (basic + extended)
 // -----------------------------------------------------------------------------
 
-#define FUNC_KEY  (HPVM::OpNONE - 1)
-#define MENU_MATH (HPVM::OpNONE - 2)
-#define MENU_TRIG (HPVM::OpNONE - 3)
-#define TRIG_ASIN (HPVM::OpNONE - 4)
-#define TRIG_ACOS (HPVM::OpNONE - 5)
-#define TRIG_ATAN (HPVM::OpNONE - 6)
+#define FUNC_KEY  (HPVM::OpNONE -  1)
+#define MENU_MATH (HPVM::OpNONE -  2)
+#define MENU_TRIG (HPVM::OpNONE -  3)
+#define MENU_PROG (HPVM::OpNONE -  4)
+#define TRIG_ASIN (HPVM::OpNONE -  5)
+#define TRIG_ACOS (HPVM::OpNONE -  6)
+#define TRIG_ATAN (HPVM::OpNONE -  7)
+#define PROG_TIME (HPVM::OpNONE -  8)
+#define PROG_DATE (HPVM::OpNONE -  9)
+#define PROG_YEAR (HPVM::OpNONE - 10)
 
 const uint8_t mainOps[16 + 16] PROGMEM =
 {
@@ -333,7 +333,7 @@ const uint8_t mainOps[16 + 16] PROGMEM =
 	HPVM::OpNUM8, HPVM::OpNUM9, HPVM::OpDOT,  HPVM::OpPUSH, HPVM::OpCLX,  HPVM::OpCHS,  HPVM::OpEEX,  FUNC_KEY,
 
 	HPVM::OpNONE, HPVM::OpRCL,  HPVM::OpSTO,  HPVM::OpSUB,  HPVM::OpPI,   HPVM::OpNONE, HPVM::OpMUL,  MENU_TRIG,
-	HPVM::OpNONE, HPVM::OpDIV,  HPVM::OpSWAP, HPVM::OpADD,  HPVM::OpCLR,  HPVM::OpROT,  HPVM::OpNONE, MENU_MATH
+	MENU_PROG,    HPVM::OpDIV,  HPVM::OpSWAP, HPVM::OpADD,  HPVM::OpCLR,  HPVM::OpROT,  HPVM::OpNONE, MENU_MATH
 };
 
 const uint8_t mathOps[6] PROGMEM =
@@ -346,6 +346,11 @@ const uint8_t trigOps[6] PROGMEM =
 {
 	HPVM::OpSIN, HPVM::OpCOS,  HPVM::OpTAN,
 	TRIG_ASIN,   TRIG_ACOS,    TRIG_ATAN
+};
+
+const uint8_t progOps[3] PROGMEM =
+{
+    PROG_TIME, PROG_DATE, PROG_YEAR
 };
 
 const u08 seqASIN[] PROGMEM = { HPVM::OpARC, HPVM::OpSIN, HPVM::OpNONE };
@@ -371,6 +376,10 @@ const char strMenuTrig[] PROGMEM =
 	" SIN  " " COS  " " TAN  "  // Sine, Cosine, Tangent
 	" ASIN " " ACOS " " ATAN "; // Inverse sine, Inverse cosine, Inverse tangent
 
+const char strMenuProg[] PROGMEM =
+    "\06"
+    " TIME " " DATE " " YEAR ";
+
 // -----------------------------------------------------------------------------
 // Menu structures
 // -----------------------------------------------------------------------------
@@ -388,6 +397,22 @@ const Menu menus[] PROGMEM =
 {
 	{ sizeof(mathOps) / MENU_OPS_PER_LINE - 1, strMenuMath, mathOps },
 	{ sizeof(trigOps) / MENU_OPS_PER_LINE - 1, strMenuTrig, trigOps },
+    { sizeof(progOps) / MENU_OPS_PER_LINE - 1, strMenuProg, progOps },
 };
 
-enum { MENU_MATH_OPS, MENU_TRIG_OPS };
+enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS };
+
+// -----------------------------------------------------------------------------
+// Defines
+// -----------------------------------------------------------------------------
+
+#define CALC_FRAMES_PER_SEC   (15)
+#define HP35_CYCLES_PER_FRAME (HP35_CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
+
+#define INFO_FLAG_WIDTH       (7)
+#define INFO_FLAG_POSITION    (128 - INFO_FLAG_WIDTH)
+#define INFO_FLAG_FUNCTION    '/'
+#define INFO_FLAG_STORAGE     ':'
+
+#define DIMOUT_MILLIS         (10000)
+#define POWEROFF_MILLIS       (20000)
