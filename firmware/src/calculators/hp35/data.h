@@ -4,7 +4,7 @@
 // Text fonts (menu, big digits, small digits)
 // -----------------------------------------------------------------------------
 
-const uint8_t menu5x8_bytes[] PROGMEM =
+const u08 menu5x8_bytes[] PROGMEM =
 {
     // character '/' (0x2F)
     0x40, 0x20, 0x10, 0x08, 0x04,
@@ -148,7 +148,7 @@ const TXT::Font menu5x8 PROGMEM =
     .bytes = menu5x8_bytes // 220 bytes
 };
 
-const uint8_t digits7x32_bytes[] PROGMEM =
+const u08 digits7x32_bytes[] PROGMEM =
 {
     // character '-' (0x2D)
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -244,7 +244,7 @@ const TXT::Font digits7x32 PROGMEM =
     .bytes = digits7x32_bytes // 392 bytes
 };
 
-const uint8_t digits7x16_bytes[] PROGMEM =
+const u08 digits7x16_bytes[] PROGMEM =
 {
     // character '-' (0x2D)
     0x00, 0x80, 0x80, 0x80, 0x80, 0x80, 0x00,
@@ -327,7 +327,7 @@ const TXT::Font digits7x16 PROGMEM =
 #define PROG_DATE (HPVM::OpNONE -  9)
 #define PROG_YEAR (HPVM::OpNONE - 10)
 
-const uint8_t mainOps[16 + 16] PROGMEM =
+const u08 mainOps[] PROGMEM =
 {
 	HPVM::OpNUM0, HPVM::OpNUM1, HPVM::OpNUM2, HPVM::OpNUM3, HPVM::OpNUM4, HPVM::OpNUM5, HPVM::OpNUM6, HPVM::OpNUM7,
 	HPVM::OpNUM8, HPVM::OpNUM9, HPVM::OpDOT,  HPVM::OpPUSH, HPVM::OpCLX,  HPVM::OpCHS,  HPVM::OpEEX,  FUNC_KEY,
@@ -336,47 +336,43 @@ const uint8_t mainOps[16 + 16] PROGMEM =
 	MENU_PROG,    HPVM::OpDIV,  HPVM::OpSWAP, HPVM::OpADD,  HPVM::OpCLR,  HPVM::OpROT,  HPVM::OpNONE, MENU_MATH
 };
 
-const uint8_t mathOps[6] PROGMEM =
+const u08 mathOps[] PROGMEM =
 {
 	HPVM::OpPOW, HPVM::OpSQRT, HPVM::OpINV,
 	HPVM::OpLOG, HPVM::OpLN,   HPVM::OpEXP
 };
 
-const uint8_t trigOps[6] PROGMEM =
+const u08 trigOps[] PROGMEM =
 {
 	HPVM::OpSIN, HPVM::OpCOS,  HPVM::OpTAN,
 	TRIG_ASIN,   TRIG_ACOS,    TRIG_ATAN
 };
 
-const uint8_t progOps[3] PROGMEM =
+const u08 progOps[] PROGMEM =
 {
     PROG_TIME, PROG_DATE, PROG_YEAR
 };
-
-const u08 seqASIN[] PROGMEM = { HPVM::OpARC, HPVM::OpSIN, HPVM::OpNONE };
-const u08 seqACOS[] PROGMEM = { HPVM::OpARC, HPVM::OpCOS, HPVM::OpNONE };
-const u08 seqATAN[] PROGMEM = { HPVM::OpARC, HPVM::OpTAN, HPVM::OpNONE };
 
 // -----------------------------------------------------------------------------
 // String arrays
 // -----------------------------------------------------------------------------
 
-const char strMonth[] PROGMEM = 
+const u08 strMonth[] PROGMEM = 
 	"\03"
 	"JAN" "FEB" "MAR" "APR" "MAY" "JUN"
 	"JUL" "AUG" "SEP" "OCT" "NOV" "DEC";
 
-const char strMenuMath[] PROGMEM = 
+const u08 strMenuMath[] PROGMEM = 
 	"\06"
 	" :>   " " ?:   " " 1/:  "  // X^Y, SQRT(X), 1/X
 	" LOG  " " LN   " " @<   "; // LOG(X), LN(X), e^X
 
-const char strMenuTrig[] PROGMEM = 
+const u08 strMenuTrig[] PROGMEM = 
 	"\06"
 	" SIN  " " COS  " " TAN  "  // Sine, Cosine, Tangent
 	" ASIN " " ACOS " " ATAN "; // Inverse sine, Inverse cosine, Inverse tangent
 
-const char strMenuProg[] PROGMEM =
+const u08 strMenuProg[] PROGMEM =
     "\06"
     " TIME " " DATE " " YEAR ";
 
@@ -389,8 +385,8 @@ const char strMenuProg[] PROGMEM =
 struct Menu
 {
 	u08 lastIdx;
-	const char * string;
-	const uint8_t * opsBase;
+	const u08 * string;
+	const u08 * opsBase;
 };
 
 const Menu menus[] PROGMEM =

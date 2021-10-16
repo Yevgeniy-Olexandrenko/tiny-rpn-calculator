@@ -1,27 +1,16 @@
 #pragma once
 
+// -----------------------------------------------------------------------------
+// Switch between working modes
+// -----------------------------------------------------------------------------
+
 b08 calcMode;
 u08 battery;
 
-b08 isFunc;
-b08 isMenu;
-
-Menu menu;
-u08  select;
-
 u08 key;
 u08 oldkey;
-u16 cycles = 0;
 
-u08 hidden[15];
-
-
-
-const u08 * hp35seq = 0;
-
-// -----------------------------------------------------------------------------
-
-void switchToCalcMode(bool yes = true)
+void switchToCalcMode(b08 yes = true)
 {
 	calcMode = yes;
 	FPS::SyncStart();
@@ -30,7 +19,7 @@ void switchToCalcMode(bool yes = true)
 void switchToRTCMode()
 {
 	LCD::TurnOn();
-	battery = (uint8_t)((PWR::Level() * 4 + 50) / 100);
+	battery = (u08)((PWR::Level() * 4 + 50) / 100);
 	switchToCalcMode(false);
 	oldkey = KBD::Read();
 }
@@ -42,67 +31,17 @@ NOINLINE void setupAndSwitchToRTCMode()
 }
 
 // -----------------------------------------------------------------------------
+// Calculator operations execution
+// -----------------------------------------------------------------------------
 
-void PrintNumber(const u08 * buf, u08 y)
-{
-	for (u08 i = 0; i < 15; ++i)
-	{
-		if (i == 12) TXT::SetFont(digits7x16);
-		TXT::PrintChar(buf[i], i * TXT::char_dx, y);
-	}
-}
+b08 isFunc;
+b08 isMenu;
 
-void PrintMenu()
-{
-	TXT::SetFont(menu5x8);
-	TXT::SetScale(SCALE_X1, SCALE_X2);
-	TXT::SetInverse(true);
-	for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
-	{
-		TXT::PrintString(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 46 * i, 2);
-	}
-	TXT::SetInverse(false);
-}
+Menu menu;
+u08  select;
 
-void PrintCalculator()
-{
-	LCD::Clear();
-	TXT::SetFont(digits7x16);
-
-	for (u08 i = 0; i < 14; ++i)
-	{
-		if (HPVM::M[i])
-		{
-			TXT::PrintChar(INFO_FLAG_STORAGE, INFO_FLAG_POSITION, isMenu ? 0 : 2);
-			break;
-		}
-	}
-
-	if (isFunc)
-	{
-		PrintNumber(hidden, 0);
-		PrintNumber(HPVM::Display, 2);
-		TXT::PrintChar(INFO_FLAG_FUNCTION, INFO_FLAG_POSITION, 0);
-	}
-
-	else if (isMenu)
-	{
-		PrintNumber(HPVM::Display, 0);
-		PrintMenu();
-	}
-	else
-	{
-		TXT::SetFont(digits7x32);
-		PrintNumber(HPVM::Display, 0);
-	}
-	
-	LCD::Flip();
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-
-
+u16 cycles;
+u08 hidden[15];
 
 void enterMenu(u08 type)
 {
@@ -111,14 +50,7 @@ void enterMenu(u08 type)
 	select = 0;
 }
 
-
-
-void executeSequence(const u08 * seq)
-{
-	hp35seq = seq;
-}
-
-void executeWithWaiting(u08 operation)
+void executeOperationAndWait(u08 operation)
 {
 	HPVM::Operation(operation);
 	do
@@ -131,7 +63,7 @@ void executeWithWaiting(u08 operation)
 	while (!HPVM::Idling);
 }
 
-bool extractNumber(u08& out, u08 min, u08 max)
+b08 extractNumber(u08& out, u08 min, u08 max)
 {
 	if (HPVM::C[1] == 0 && HPVM::C[0] < 3)
 	{
@@ -144,7 +76,7 @@ bool extractNumber(u08& out, u08 min, u08 max)
 		if (value >= min && value <= max)
 		{
 			out = u08(value);
-			executeWithWaiting(HPVM::OpROT);
+			executeOperationAndWait(HPVM::OpROT);
 			return true;
 		}
 	}
@@ -163,9 +95,9 @@ void executeOperation(u08 operation)
 			break;
 
 		case FUNC_KEY:
-			executeWithWaiting(HPVM::OpSWAP);
+			executeOperationAndWait(HPVM::OpSWAP);
 			for (u08 i = 0; i < 15; ++i) hidden[i] = HPVM::Display[i];
-			executeWithWaiting(HPVM::OpSWAP);
+			executeOperationAndWait(HPVM::OpSWAP);
 			isFunc = true;
 			break;
 
@@ -182,15 +114,18 @@ void executeOperation(u08 operation)
 			break;
 		
 		case TRIG_ASIN:
-			executeSequence(seqASIN);
+			executeOperationAndWait(HPVM::OpARC);
+			HPVM::Operation(HPVM::OpSIN);
 			break;
 
 		case TRIG_ACOS:
-			executeSequence(seqACOS);
+			executeOperationAndWait(HPVM::OpARC);
+			HPVM::Operation(HPVM::OpCOS);
 			break;
 		
 		case TRIG_ATAN:
-			executeSequence(seqATAN);
+			executeOperationAndWait(HPVM::OpARC);
+			HPVM::Operation(HPVM::OpTAN);
 			break;
 
 		case PROG_TIME:
@@ -220,12 +155,68 @@ void executeOperation(u08 operation)
 	}
 }
 
+// -----------------------------------------------------------------------------
+// Calculator mode
+// -----------------------------------------------------------------------------
 
+void renderCalcNumber(const u08 * numStr, u08 y)
+{
+	for (u08 i = 0; i < 15; ++i)
+	{
+		if (i == 12) TXT::SetFont(digits7x16);
+		TXT::PrintChar(numStr[i], i * TXT::char_dx, y);
+	}
+}
+
+void renderCalcMenu()
+{
+	TXT::SetFont(menu5x8);
+	TXT::SetScale(SCALE_X1, SCALE_X2);
+	TXT::SetInverse(true);
+	for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
+	{
+		TXT::PrintString(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 46 * i, 2);
+	}
+	TXT::SetInverse(false);
+}
+
+void renderCalcMode()
+{
+	LCD::Clear();
+	TXT::SetFont(digits7x16);
+
+	for (u08 i = 0; i < 14; ++i)
+	{
+		if (HPVM::M[i])
+		{
+			TXT::PrintChar(INFO_FLAG_STORAGE, INFO_FLAG_POSITION, isMenu ? 0 : 2);
+			break;
+		}
+	}
+
+	if (isFunc)
+	{
+		renderCalcNumber(hidden, 0);
+		renderCalcNumber(HPVM::Display, 2);
+		TXT::PrintChar(INFO_FLAG_FUNCTION, INFO_FLAG_POSITION, 0);
+	}
+
+	else if (isMenu)
+	{
+		renderCalcNumber(HPVM::Display, 0);
+		renderCalcMenu();
+	}
+	else
+	{
+		TXT::SetFont(digits7x32);
+		renderCalcNumber(HPVM::Display, 0);
+	}
+	
+	LCD::Flip();
+}
 
 void updateCalcMode()
 {
-	bool print = false;
-
 	if (isMenu)
 	{
 		if (key != KBD::NONE)
@@ -234,52 +225,44 @@ void updateCalcMode()
 			{
 				default: isMenu = false; break;
 				case KBD::ROTU: if (select > 0) select--; else select = menu.lastIdx; break;
-				case KBD::ROTD:  if (select < menu.lastIdx) select++; else select = 0; break;
+				case KBD::ROTD: if (select < menu.lastIdx) select++; else select = 0; break;
 				case KBD::MATH: enterMenu(MENU_MATH_OPS); break;
 				case KBD::TRIG: enterMenu(MENU_TRIG_OPS); break;
 				case KBD::PROG: enterMenu(MENU_PROG_OPS); break;
 				case KBD::SEL1: case KBD::SEL2: case KBD::SEL3:
 					u08 index = select * MENU_OPS_PER_LINE + (key - KBD::SEL1);
-					u08 calcOp = pgm_read_byte(menu.opsBase + index);
-					executeOperation(calcOp);
+					u08 op = pgm_read_byte(menu.opsBase + index);
+					executeOperation(op);
 					break;
 			}
-			PrintCalculator();
+			renderCalcMode();
 		}
 	}
 	else
 	{
-		if (hp35seq)
+		if (key != KBD::NONE)
 		{
-			if (!cycles && HPVM::Idling)
-			{
-				u08 hp35op = pgm_read_byte(hp35seq++);
-				if (hp35op == HPVM::OpNONE) hp35seq = 0;
-				else HPVM::Operation(hp35op);
-			}
-		}
-
-		else if (key != KBD::NONE)
-		{
-			u08 calcOp = pgm_read_byte(mainOps + (isFunc ? 16 : 0) + key);
-			executeOperation(calcOp);
-			PrintCalculator();
+			u08 op = pgm_read_byte(mainOps + (isFunc ? 16 : 0) + key);
+			executeOperation(op);
+			renderCalcMode();
 		}
 		
 		for (cycles += HP35_CYCLES_PER_FRAME; cycles > 0; --cycles)
 		{
 			if (HPVM::Cycle()) 
 			{
-				PrintCalculator();
+				renderCalcMode();
 				break;
 			}
 		}
 	}
 }
 
+// -----------------------------------------------------------------------------
+// RTC mode
+// -----------------------------------------------------------------------------
 
-
-void PrintClock()
+void renderRTCMode()
 {
 	LCD::Clear();
 	TXT::SetFont(menu5x8);
@@ -308,8 +291,12 @@ void PrintClock()
 void updateRTCMode()
 {
 	RTC::ReadTimeDate();
-	PrintClock();
+	renderRTCMode();
 }
+
+// -----------------------------------------------------------------------------
+// Enter point and main cycle
+// -----------------------------------------------------------------------------
 
 int main() 
 {
