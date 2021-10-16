@@ -19,7 +19,7 @@ void switchToCalcMode(b08 yes = true)
 void switchToRTCMode()
 {
 	LCD::TurnOn();
-	battery = (u08)((PWR::Level() * 4 + 50) / 100);
+	battery = (u08)((PWR::Level() * 5 + 50) / 100);
 	switchToCalcMode(false);
 	oldkey = KBD::Read();
 }
@@ -265,25 +265,25 @@ void updateCalcMode()
 void renderRTCMode()
 {
 	LCD::Clear();
-	TXT::SetFont(menu5x8);
-	TXT::SetScale(SCALE_X2, SCALE_X4);
+	TXT::SetFont(digits7x32);
 
-	TXT::PrintChar(':', 20, 0);
-	TXT::PrintChar(':', 47, 0);
+	TXT::PrintChar(':', 16, 0);
+	TXT::PrintChar(':', 40, 0);
 	TXT::PrintTensOnes(RTC::Hours, 0, 0);
-	TXT::PrintTensOnes(RTC::Minutes, 27, 0);
-	TXT::PrintTensOnes(RTC::Seconds, 54, 0);
+	TXT::PrintTensOnes(RTC::Minutes, 24, 0);
+	TXT::PrintTensOnes(RTC::Seconds, 48, 0);
 
+	TXT::SetFont(menu5x8);
 	TXT::SetScale(SCALE_X1, SCALE_X1);
-	TXT::PrintString(FPSTR(strMonth), RTC::Month - 1, 79, 0);
-	TXT::PrintTensOnes(RTC::Date, 99, 0);
-	TXT::PrintTensOnes(RTC::Year, 117, 0);
-	TXT::PrintChar('/', 111, 0);
+	TXT::PrintString(FPSTR(strMonth), RTC::Month - 1, 72, 0);
+	TXT::PrintTensOnes(RTC::Date, 97, 0);
+	TXT::PrintTensOnes(RTC::Year, 115, 0);
+	TXT::PrintChar('/', 109, 0);
 
 	TXT::SetScale(SCALE_X2, SCALE_X1);
-	TXT::PrintString(F("HP35"), 79, 2);
+	TXT::PrintString(F("HP=35"), 72, 2);
 	u08 i = battery;
-	while (i) TXT::PrintChar('-', 79 + (--i) * TXT::char_dx, 1);
+	while (i) TXT::PrintChar('=', 72 + (--i) * TXT::char_dx, 1);
 
 	LCD::Flip();
 }
