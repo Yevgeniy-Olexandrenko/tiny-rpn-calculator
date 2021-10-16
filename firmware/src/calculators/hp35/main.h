@@ -19,12 +19,12 @@ void PrintCalculator()
 
 	if (isMenu)
 	{
-		TXT::SetFont(font);
+		TXT::SetFont(menu5x8);
 		TXT::SetScale(SCALE_X1, SCALE_X2);
 		TXT::SetInverse(true);
 		for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
 		{
-			TXT::PrintString(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 48 * i, 2);
+			TXT::PrintString(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 46 * i, 2);
 		}
 		TXT::SetInverse(false);
 		TXT::SetFont(digits7x16);
@@ -187,7 +187,7 @@ NOINLINE void setupAndSwitchToRTCMode()
 void PrintClock()
 {
 	LCD::Clear();
-	TXT::SetFont(font);
+	TXT::SetFont(menu5x8);
 	TXT::SetScale(SCALE_X2, SCALE_X4);
 
 	TXT::PrintChar(':', 20, 0);
