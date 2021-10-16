@@ -434,17 +434,18 @@ namespace TXT
 
 	struct Font
 	{
-		u08 widthBytes;
-		u08 heightRows;
+		u08 bytesInRow;
+		u08 rowsOfBytes;
 		u08 asciiFirst;
 		u08 asciiLast;
-		const u08 * data;
+		const u08 * bytes;
 	};
 
 	Font font;
 	u08  font_sx;
 	u08  font_sy;
 	u08  char_dx;
+	u08  inverse;
 
 	u08 expand4bit(u08 b)
 	{	
@@ -462,22 +463,22 @@ namespace TXT
 		return b;
 	}
 
+	void SetInverse(b08 enable)
+	{
+		inverse = enable ? 0xFF : 0x00;
+	}
+
 	void SetScale(u08 sx, u08 sy)
 	{
 		font_sx = sx;
 		font_sy = sy;
-		char_dx = font.widthBytes * font_sx + 1;
+		char_dx = font.bytesInRow * font_sx + 1;
 	}
 
-	void SetFont(const Font& f, u08 sx, u08 sy)
+	void SetFont(const Font& f)
 	{
 		memcpy_P(&font, &f, sizeof(Font));
-		SetScale(sx, sy);
-	}
-
-	void NextCharPos(u08 & x)
-	{
-		x += char_dx;
+		SetScale(SCALE_X1, SCALE_X1);
 	}
 	
 	NOINLINE void PrintChar(u08 ch, u08 x, u08 y)
@@ -486,23 +487,23 @@ namespace TXT
 		u16 dp = 0;
 		if (ch >= font.asciiFirst && ch <= font.asciiLast)
 		{
-			dp = (ch - font.asciiFirst) * (font.widthBytes * font.heightRows);
+			dp = &font.bytes[(ch - font.asciiFirst) * font.bytesInRow * font.rowsOfBytes];
 		}
 
 		// iterate through screen pages and char data rows
-		for (u08 yi = 0; yi < font.heightRows; ++yi)
+		for (u08 yi = 0; yi < font.rowsOfBytes; ++yi)
 		{
 			for (u08 si = 0; si < font_sy; ++si)
 			{
 				LCD::Position(x, y + si);
 
 				// iterate through screen columns and char data bytes
-				for (u08 xi = 0, ch = 0; xi < font.widthBytes; ++xi)
+				for (u08 xi = 0, ch = inverse; xi < font.bytesInRow; ++xi)
 				{
 					// get char data if available
 					if (dp)
 					{
-						ch = pgm_read_byte(&font.data[dp + xi]);
+						ch = pgm_read_byte(dp + xi) ^ inverse;
 						if (font_sy == SCALE_X2)
 							ch = expand4bit((ch >> (si << 2)) & 0x0F);
 						else if (font_sy == SCALE_X4)
@@ -510,10 +511,13 @@ namespace TXT
 					}
 					LCD::Write(ch, font_sx);
 				}
+
+				// draw spacing
+				LCD::Write(inverse, 1);
 			}
 
 			// next row of bytes in char data
-			if (dp) dp += font.widthBytes;
+			if (dp) dp += font.bytesInRow;
 			y += font_sy;
 		}
 	}

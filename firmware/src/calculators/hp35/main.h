@@ -9,30 +9,36 @@ u08  select;
 void PrintCalculator()
 {
 	LCD::Clear();
-	TXT::SetFont(font, SCALE_X1, SCALE_X1);
 
 	if (isFunc)
 	{
-		TXT::PrintChar(CHAR_SHIFT, 127 - 5, 0);
+		TXT::SetFont(digits7x16);
+		TXT::PrintChar('/', 128 - TXT::char_dx + 1, 0);
+		TXT::PrintChar(':', 128 - TXT::char_dx + 1, 2);
 	}
 
 	if (isMenu)
 	{
+		TXT::SetFont(font);
 		TXT::SetScale(SCALE_X1, SCALE_X2);
+		TXT::SetInverse(true);
 		for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
 		{
 			TXT::PrintString(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 48 * i, 2);
 		}
+		TXT::SetInverse(false);
+		TXT::SetFont(digits7x16);
 	}
 	else
 	{
-		TXT::SetScale(SCALE_X1, SCALE_X4);
+		TXT::SetFont(digits7x32);
 	}
 
 	for (u08 x = 0, i = 0; i < 15; ++i)
 	{
+		if (i == 12) TXT::SetFont(digits7x16);
 		TXT::PrintChar(HPVM::Display[i], x, 0);
-		TXT::NextCharPos(x);
+		x += TXT::char_dx;
 	}
 	LCD::Flip();
 }
@@ -181,7 +187,8 @@ NOINLINE void setupAndSwitchToRTCMode()
 void PrintClock()
 {
 	LCD::Clear();
-	TXT::SetFont(font, SCALE_X2, SCALE_X4);
+	TXT::SetFont(font);
+	TXT::SetScale(SCALE_X2, SCALE_X4);
 
 	TXT::PrintChar(':', 20, 0);
 	TXT::PrintChar(':', 47, 0);
