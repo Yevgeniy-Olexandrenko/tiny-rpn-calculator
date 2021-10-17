@@ -316,24 +316,27 @@ const TXT::Font digits7x16 PROGMEM =
 // HP35 Operations (basic + extended)
 // -----------------------------------------------------------------------------
 
-#define FUNC_KEY  (HPVM::OpNONE -  1)
-#define MENU_MATH (HPVM::OpNONE -  2)
-#define MENU_TRIG (HPVM::OpNONE -  3)
-#define MENU_PROG (HPVM::OpNONE -  4)
-#define TRIG_ASIN (HPVM::OpNONE -  5)
-#define TRIG_ACOS (HPVM::OpNONE -  6)
-#define TRIG_ATAN (HPVM::OpNONE -  7)
-#define PROG_TIME (HPVM::OpNONE -  8)
-#define PROG_DATE (HPVM::OpNONE -  9)
-#define PROG_YEAR (HPVM::OpNONE - 10)
+#define KEY_FUNC  (HPVM::OpNONE -  1)
+#define KEY_LAST  (HPVM::OpNONE -  2) //
+#define KEY_ROTU  (HPVM::OpNONE -  3) //
+#define KEY_MADD  (HPVM::OpNONE -  4) //
+#define MENU_MATH (HPVM::OpNONE -  5)
+#define MENU_TRIG (HPVM::OpNONE -  6)
+#define MENU_PROG (HPVM::OpNONE -  7)
+#define TRIG_ASIN (HPVM::OpNONE -  8)
+#define TRIG_ACOS (HPVM::OpNONE -  9)
+#define TRIG_ATAN (HPVM::OpNONE - 10)
+#define PROG_TIME (HPVM::OpNONE - 11)
+#define PROG_DATE (HPVM::OpNONE - 12)
+#define PROG_YEAR (HPVM::OpNONE - 13)
 
 const u08 mainOps[] PROGMEM =
 {
 	HPVM::OpNUM0, HPVM::OpNUM1, HPVM::OpNUM2, HPVM::OpNUM3, HPVM::OpNUM4, HPVM::OpNUM5, HPVM::OpNUM6, HPVM::OpNUM7,
-	HPVM::OpNUM8, HPVM::OpNUM9, HPVM::OpDOT,  HPVM::OpPUSH, HPVM::OpCLX,  HPVM::OpCHS,  HPVM::OpEEX,  FUNC_KEY,
+	HPVM::OpNUM8, HPVM::OpNUM9, HPVM::OpDOT,  HPVM::OpPUSH, HPVM::OpCLX,  HPVM::OpCHS,  HPVM::OpEEX,  KEY_FUNC,
 
-	HPVM::OpNONE, HPVM::OpRCL,  HPVM::OpSTO,  HPVM::OpSUB,  HPVM::OpPI,   HPVM::OpNONE, HPVM::OpMUL,  MENU_TRIG,
-	MENU_PROG,    HPVM::OpDIV,  HPVM::OpSWAP, HPVM::OpADD,  HPVM::OpCLR,  HPVM::OpROT,  HPVM::OpNONE, MENU_MATH
+	KEY_LAST,     HPVM::OpRCL,  HPVM::OpSTO,  HPVM::OpSUB,  HPVM::OpPI,   KEY_MADD,     HPVM::OpMUL,  MENU_TRIG,
+	MENU_PROG,    HPVM::OpDIV,  HPVM::OpSWAP, HPVM::OpADD,  HPVM::OpCLR,  HPVM::OpROT,  KEY_ROTU,     MENU_MATH
 };
 
 const u08 mathOps[] PROGMEM =
@@ -350,7 +353,7 @@ const u08 trigOps[] PROGMEM =
 
 const u08 progOps[] PROGMEM =
 {
-    PROG_TIME, PROG_DATE, PROG_YEAR
+	PROG_TIME, PROG_DATE, PROG_YEAR
 };
 
 // -----------------------------------------------------------------------------
@@ -373,8 +376,8 @@ const u08 strMenuTrig[] PROGMEM =
 	" ASIN " " ACOS " " ATAN "; // Inverse sine, Inverse cosine, Inverse tangent
 
 const u08 strMenuProg[] PROGMEM =
-    "\06"
-    " TIME " " DATE " " YEAR ";
+	"\06"
+	" TIME " " DATE " " YEAR ";
 
 // -----------------------------------------------------------------------------
 // Menu structures
@@ -393,7 +396,7 @@ const Menu menus[] PROGMEM =
 {
 	{ sizeof(mathOps) / MENU_OPS_PER_LINE - 1, strMenuMath, mathOps },
 	{ sizeof(trigOps) / MENU_OPS_PER_LINE - 1, strMenuTrig, trigOps },
-    { sizeof(progOps) / MENU_OPS_PER_LINE - 1, strMenuProg, progOps },
+	{ sizeof(progOps) / MENU_OPS_PER_LINE - 1, strMenuProg, progOps },
 };
 
 enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS };

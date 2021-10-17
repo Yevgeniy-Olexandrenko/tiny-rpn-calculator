@@ -102,8 +102,8 @@ namespace HPVM
 
 	// defines
 	typedef uint8_t nib; typedef nib * reg;
-	#define hp35_iterate_word(a)  for (uint8_t i = 0; i < 14; ++i)   { a; }
-	#define hp35_iterate_field(a) for (uint8_t i = ff; i <= fl; ++i) { a; }
+	#define hpvm_iterate_word(a)  for (uint8_t i = 0; i < 14; ++i)   { a; }
+	#define hpvm_iterate_field(a) for (uint8_t i = ff; i <= fl; ++i) { a; }
 	namespace fld { enum { P = 0, M, X, W, WP, MS, XS, S }; }
 
 	// registers
@@ -140,29 +140,29 @@ namespace HPVM
 
 	void reg_clr(reg r)
 	{
-		hp35_iterate_field(r[i] = 0);
+		hpvm_iterate_field(r[i] = 0);
 	}
 
 	void reg_add(reg r, reg x, reg y)
 	{
-		hp35_iterate_field(r[i] = nib_add(x[i], y[i]));
+		hpvm_iterate_field(r[i] = nib_add(x[i], y[i]));
 	}
 
 	void reg_sub(reg r, reg x, reg y)
 	{
-		hp35_iterate_field(r[i] = nib_sub(x[i], y[i]));
+		hpvm_iterate_field(r[i] = nib_sub(x[i], y[i]));
 	}
 
 	void reg_inc(reg r)
 	{
 		carry = 1;
-		hp35_iterate_field(r[i] = nib_add(r[i], 0));
+		hpvm_iterate_field(r[i] = nib_add(r[i], 0));
 	}
 
 	void reg_dec(reg r)
 	{
 		carry = 1;
-		hp35_iterate_field(r[i] = nib_sub(r[i], 0));
+		hpvm_iterate_field(r[i] = nib_sub(r[i], 0));
 	}
 
 	void reg_shr(reg r)
@@ -179,13 +179,13 @@ namespace HPVM
 
 	void reg_copy(reg x, reg y)
 	{
-		hp35_iterate_field(x[i] = y[i]);
+		hpvm_iterate_field(x[i] = y[i]);
 	}
 
 	void reg_swap(reg x, reg y)
 	{
 		nib t;
-		hp35_iterate_field(t = x[i]; x[i] = y[i]; y[i] = t);
+		hpvm_iterate_field(t = x[i]; x[i] = y[i]; y[i] = t);
 	}
 
 	// implementation
@@ -240,25 +240,25 @@ namespace HPVM
 					disp_enable = !disp_enable; disp_update = 1;
 					break;
 				case 0b00101010: // C EXCHANGE M
-					hp35_iterate_word(nib t = C[i]; C[i] = M[i]; M[i] = t);
+					hpvm_iterate_word(nib t = C[i]; C[i] = M[i]; M[i] = t);
 					break;
 				case 0b01001010: // C -> STACK
-					hp35_iterate_word(F[i] = E[i]; E[i] = D[i]; D[i] = C[i]);
+					hpvm_iterate_word(F[i] = E[i]; E[i] = D[i]; D[i] = C[i]);
 					break;
 				case 0b01101010: // STACK -> A
-					hp35_iterate_word(A[i] = D[i]; D[i] = E[i]; E[i] = F[i]);
+					hpvm_iterate_word(A[i] = D[i]; D[i] = E[i]; E[i] = F[i]);
 					break;
 				case 0b10001010: // DISPLAY OFF
 					if (disp_enable) { disp_enable = 0; disp_update = 1; }
 					break;
 				case 0b10101010: // M -> C
-					hp35_iterate_word(C[i] = M[i]);
+					hpvm_iterate_word(C[i] = M[i]);
 					break;
 				case 0b11001010: // DOWN ROTATE
-					hp35_iterate_word(nib t = C[i]; C[i] = D[i]; D[i] = E[i]; E[i] = F[i]; F[i] = t);
+					hpvm_iterate_word(nib t = C[i]; C[i] = D[i]; D[i] = E[i]; E[i] = F[i]; F[i] = t);
 					break;
 				case 0b11101010: // CLEAR REGISTERS
-					hp35_iterate_word(A[i] = B[i] = C[i] = D[i] = E[i] = F[i] = M[i] = 0);
+					hpvm_iterate_word(A[i] = B[i] = C[i] = D[i] = E[i] = F[i] = M[i] = 0);
 					break;
 				case 0b00001100: // RETURN
 					pc = ret;
@@ -326,28 +326,28 @@ namespace HPVM
 			switch(op_code >> 3)
 			{
 				case 0b00000: // IF B[f] = 0
-					hp35_iterate_field(carry |= (B[i] != 0));
+					hpvm_iterate_field(carry |= (B[i] != 0));
 					break;
 				case 0b00001: // 0 -> B[f]
 					reg_clr(B);
 					break;
 				case 0b00010: // IF A >= C[f]
-					hp35_iterate_field(nib_sub(A[i], C[i]));
+					hpvm_iterate_field(nib_sub(A[i], C[i]));
 					break;
 				case 0b00011: // IF C[f] >= 1
-					carry = 1; hp35_iterate_field(carry &= (C[i] == 0));
+					carry = 1; hpvm_iterate_field(carry &= (C[i] == 0));
 					break;
 				case 0b00100: // B -> C[f]
 					reg_copy(C, B);
 					break;
 				case 0b00101: // 0 – C -> C[f]
-					hp35_iterate_field(C[i] = nib_sub(0, C[i]));
+					hpvm_iterate_field(C[i] = nib_sub(0, C[i]));
 					break;
 				case 0b00110: // 0 -> C[f]
 					reg_clr(C);
 					break;
 				case 0b00111: // 0 – C – 1 -> C[f]
-					carry = 1; hp35_iterate_field(C[i] = nib_sub(0, C[i]));
+					carry = 1; hpvm_iterate_field(C[i] = nib_sub(0, C[i]));
 					break;
 				case 0b01000: // SHIFT LEFT A[f]
 					reg_shl(A);
@@ -365,7 +365,7 @@ namespace HPVM
 					reg_copy(A, C);
 					break;
 				case 0b01101: // IF C[f] = 0
-					hp35_iterate_field(carry |= (C[i] != 0));
+					hpvm_iterate_field(carry |= (C[i] != 0));
 					break;
 				case 0b01110: // A + C -> C[f]
 					reg_add(C, A, C);
@@ -374,7 +374,7 @@ namespace HPVM
 					reg_inc(C);
 					break;
 				case 0b10000: // IF A >= B[f]
-					hp35_iterate_field(nib_sub(A[i], B[i]));
+					hpvm_iterate_field(nib_sub(A[i], B[i]));
 					break;
 				case 0b10001: // B EXCHANGE C[f]
 					reg_swap(B, C);
@@ -383,7 +383,7 @@ namespace HPVM
 					reg_shr(C);
 					break;
 				case 0b10011: // IF A[f] >= 1
-					carry = 1; hp35_iterate_field(carry &= (A[i] == 0));
+					carry = 1; hpvm_iterate_field(carry &= (A[i] == 0));
 					break;
 				case 0b10100: // SHIFT RIGHT B[f]
 					reg_shr(B);

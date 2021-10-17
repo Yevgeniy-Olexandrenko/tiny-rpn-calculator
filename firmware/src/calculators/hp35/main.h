@@ -42,12 +42,42 @@ u08  select;
 
 u16 cycles;
 u08 hidden[15];
+u08 lastOp = HPVM::OpNONE;
 
 void enterMenu(u08 type)
 {
 	isMenu = true;
 	memcpy_P(&menu, &menus[type], sizeof(Menu));
 	select = 0;
+}
+
+void dropStackTop()
+{
+	hpvm_iterate_word(
+		HPVM::C[i] = HPVM::D[i];
+		HPVM::D[i] = HPVM::E[i];
+		HPVM::E[i] = HPVM::F[i];
+	);
+}
+
+b08 getStackTop(u08& out, u08 min, u08 max)
+{
+	if (HPVM::C[1] == 0 && HPVM::C[0] < 3)
+	{
+		u16 value = 0;
+		for (u08 i = 0; i <= HPVM::C[0]; ++i)
+		{
+			value *= 10;
+			value += HPVM::C[12 - i];
+		}
+		if (value >= min && value <= max)
+		{
+			out = u08(value);
+			dropStackTop();
+			return true;
+		}
+	}
+	return false;
 }
 
 void executeOperationAndWait(u08 operation)
@@ -63,26 +93,6 @@ void executeOperationAndWait(u08 operation)
 	while (!HPVM::Idling);
 }
 
-b08 extractNumber(u08& out, u08 min, u08 max)
-{
-	if (HPVM::C[1] == 0 && HPVM::C[0] < 3)
-	{
-		u16 value = 0;
-		for (u08 i = 0; i <= HPVM::C[0]; ++i)
-		{
-			value *= 10;
-			value += HPVM::C[12 - i];
-		}
-		if (value >= min && value <= max)
-		{
-			out = u08(value);
-			executeOperationAndWait(HPVM::OpROT);
-			return true;
-		}
-	}
-	return false;
-}
-
 void executeOperation(u08 operation)
 {
 	isFunc = false;
@@ -94,11 +104,27 @@ void executeOperation(u08 operation)
 			HPVM::Operation(operation);
 			break;
 
-		case FUNC_KEY:
+		case KEY_FUNC:
 			executeOperationAndWait(HPVM::OpSWAP);
 			for (u08 i = 0; i < 15; ++i) hidden[i] = HPVM::Display[i];
 			executeOperationAndWait(HPVM::OpSWAP);
 			isFunc = true;
+			break;
+
+		case KEY_LAST:
+			executeOperation(lastOp);
+			break;
+
+		case KEY_ROTU:
+			executeOperationAndWait(HPVM::OpROT);
+			executeOperationAndWait(HPVM::OpROT);
+			executeOperation(HPVM::OpROT);
+			break;
+
+		case KEY_MADD:
+			//executeOperationAndWait(HPVM::OpRCL);
+			//executeOperationAndWait(HPVM::OpADD);
+			//executeOperation(HPVM::OpSTO);
 			break;
 
 		case MENU_MATH:
@@ -115,22 +141,22 @@ void executeOperation(u08 operation)
 		
 		case TRIG_ASIN:
 			executeOperationAndWait(HPVM::OpARC);
-			HPVM::Operation(HPVM::OpSIN);
+			executeOperation(HPVM::OpSIN);
 			break;
 
 		case TRIG_ACOS:
 			executeOperationAndWait(HPVM::OpARC);
-			HPVM::Operation(HPVM::OpCOS);
+			executeOperation(HPVM::OpCOS);
 			break;
 		
 		case TRIG_ATAN:
 			executeOperationAndWait(HPVM::OpARC);
-			HPVM::Operation(HPVM::OpTAN);
+			executeOperation(HPVM::OpTAN);
 			break;
 
 		case PROG_TIME:
 			RTC::ReadTimeDate();
-			if (extractNumber(RTC::Minutes, 0, 59) && extractNumber(RTC::Hours, 0, 23))
+			if (getStackTop(RTC::Minutes, 0, 59) && getStackTop(RTC::Hours, 0, 23))
 			{
 				RTC::Seconds = 0;
 				setupAndSwitchToRTCMode();
@@ -139,7 +165,7 @@ void executeOperation(u08 operation)
 
 		case PROG_DATE:
 			RTC::ReadTimeDate();
-			if (extractNumber(RTC::Month, 1, 12) && extractNumber(RTC::Date, 1, 31))
+			if (getStackTop(RTC::Month, 1, 12) && getStackTop(RTC::Date, 1, 31))
 			{
 				setupAndSwitchToRTCMode();
 			}
@@ -147,7 +173,7 @@ void executeOperation(u08 operation)
 
 		case PROG_YEAR:
 			RTC::ReadTimeDate();
-			if (extractNumber(RTC::Year, 0, 99))
+			if (getStackTop(RTC::Year, 0, 99))
 			{
 				setupAndSwitchToRTCMode();
 			}
@@ -232,7 +258,7 @@ void updateCalcMode()
 				case KBD::SEL1: case KBD::SEL2: case KBD::SEL3:
 					u08 index = select * MENU_OPS_PER_LINE + (key - KBD::SEL1);
 					u08 op = pgm_read_byte(menu.opsBase + index);
-					executeOperation(op);
+					executeOperation(lastOp = op);
 					break;
 			}
 			renderCalcMode();
