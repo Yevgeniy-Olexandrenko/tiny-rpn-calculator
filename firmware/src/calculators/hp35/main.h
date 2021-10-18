@@ -105,19 +105,24 @@ void executeOperation(u08 operation)
 			break;
 
 		case KEY_LAST:
-			executeOperation(lastOp);
+			HPVM::Operation(lastOp);
 			break;
 
 		case KEY_ROTU:
 			executeOperationAndWait(HPVM::OpROT);
 			executeOperationAndWait(HPVM::OpROT);
-			executeOperation(HPVM::OpROT);
+			HPVM::Operation(HPVM::OpROT);
 			break;
 
 		case KEY_MADD:
-			//executeOperationAndWait(HPVM::OpRCL);
-			//executeOperationAndWait(HPVM::OpADD);
-			//executeOperation(HPVM::OpSTO);
+			executeOperationAndWait(HPVM::OpRCL);
+			executeOperationAndWait(HPVM::OpSWAP);
+			executeOperationAndWait(HPVM::OpSTO);
+			executeOperationAndWait(HPVM::OpADD);
+			executeOperationAndWait(HPVM::OpRCL);
+			executeOperationAndWait(HPVM::OpSWAP);
+			executeOperationAndWait(HPVM::OpSTO);
+			HPVM::Operation(HPVM::OpROT);
 			break;
 
 		case MENU_MATH:
@@ -134,17 +139,17 @@ void executeOperation(u08 operation)
 		
 		case TRIG_ASIN:
 			executeOperationAndWait(HPVM::OpARC);
-			executeOperation(HPVM::OpSIN);
+			HPVM::Operation(HPVM::OpSIN);
 			break;
 
 		case TRIG_ACOS:
 			executeOperationAndWait(HPVM::OpARC);
-			executeOperation(HPVM::OpCOS);
+			HPVM::Operation(HPVM::OpCOS);
 			break;
 		
 		case TRIG_ATAN:
 			executeOperationAndWait(HPVM::OpARC);
-			executeOperation(HPVM::OpTAN);
+			HPVM::Operation(HPVM::OpTAN);
 			break;
 
 		case PROG_TIME:
