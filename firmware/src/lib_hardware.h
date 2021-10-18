@@ -54,7 +54,6 @@ typedef int32_t  s32;
 
 // necessary undefs
 #undef NOINLINE
-#undef INLINE
 #undef ADC
 #undef FPSTR
 #undef F
@@ -110,12 +109,10 @@ class __FlashStringHelper;
 #define BUILD_SEC         ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_SEC)
 
 // additional defines
-#if ENABLE_OPT_INLINE
+#if ENABLE_OPT_NOINLINE
 #define NOINLINE __attribute__ ((noinline))
-#define INLINE   __attribute__ ((inline))
 #else
 #define NOINLINE
-#define INLINE
 #endif
 
 // -----------------------------------------------------------------------------
@@ -228,13 +225,13 @@ namespace I2C
 
 	#define I2C_DELAY() _delay_us(1)
 
-	NOINLINE void scl_h_wait()
+	void scl_h_wait()
 	{
 		I2C_SCL_H();
 		while (!I2C_SCL_I());
 	}
 
-	NOINLINE u08 read_write(u08 data)
+	u08 read_write(u08 data)
 	{
 		for (u08 sda_i, i = 8; i > 0; --i)
 		{
@@ -252,7 +249,7 @@ namespace I2C
 		return data;
 	}
 
-	NOINLINE void start()
+	void start()
 	{
 		scl_h_wait();
 		I2C_SDA_L();
@@ -481,7 +478,7 @@ namespace TXT
 		SetScale(SCALE_X1, SCALE_X1);
 	}
 	
-	NOINLINE void PrintChar(u08 ch, u08 x, u08 y)
+	void PrintChar(u08 ch, u08 x, u08 y)
 	{
 		// compute pointer to char data
 		u16 dp = 0;
@@ -522,7 +519,7 @@ namespace TXT
 		}
 	}
 
-	NOINLINE void PrintString(const u08* s, u08 x, u08 y)
+	void PrintString(const u08* s, u08 x, u08 y)
 	{
 		while (u08 c = *s++)
 		{
@@ -531,7 +528,7 @@ namespace TXT
 		}
 	}
 
-	NOINLINE void PrintString(const __FlashStringHelper* s, u08 x, u08 y)
+	void PrintString(const __FlashStringHelper* s, u08 x, u08 y)
 	{
 		const u08 * p = (const u08 *)s;
 		while (u08 c = pgm_read_byte(p++))
@@ -541,7 +538,7 @@ namespace TXT
 		}
 	}
 
-	NOINLINE void PrintString(const __FlashStringHelper* s, u08 i, u08 x, u08 y)
+	void PrintString(const __FlashStringHelper* s, u08 i, u08 x, u08 y)
 	{
 		const u08 * p = (const u08 *)s;
 		u08 w = pgm_read_byte(p++);
@@ -553,7 +550,7 @@ namespace TXT
 		}
 	}
 
-	NOINLINE void PrintTensOnes(u08 n, u08 x, u08 y)
+	void PrintTensOnes(u08 n, u08 x, u08 y)
 	{
 		PrintChar('0' + u08(n / 10 % 10), x, y);
 		PrintChar('0' + u08(n % 10), x + char_dx, y);
@@ -694,7 +691,7 @@ namespace KBD
 
 	u08 key;
 
-	u08 read_raw_key()
+	NOINLINE u08 read_raw_key()
 	{
 		u16 adcVal = ADC::Read(KBD_ADC);
 		if (adcVal > 110)
@@ -765,7 +762,7 @@ namespace PWR
 	}
 
 	void Idle()
-	{ 	
+	{
 		saving(SLEEP_MODE_IDLE);
 	}
 
@@ -793,18 +790,18 @@ namespace FPS
 		counter = 0;
 	}
 
-	NOINLINE void SyncStop()
+	void SyncStop()
 	{
 		WDT::Init(WDT_MODE_DISABLED, 0);
 	}
 
-	NOINLINE void SyncWait()
+	void SyncWait()
 	{
 		waiting = true;
 		while (waiting) PWR::Idle();
 	}
 
-	NOINLINE u16 SyncMillis()
+	u16 SyncMillis()
 	{
 		return (counter * (16 << FRAME_TIMEOUT));
 	}
