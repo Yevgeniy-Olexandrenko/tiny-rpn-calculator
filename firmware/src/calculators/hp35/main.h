@@ -83,14 +83,7 @@ b08 getStackTop(u08& out, u08 min, u08 max)
 void executeOperationAndWait(u08 operation)
 {
 	HPVM::Operation(operation);
-	do
-	{
-		for (cycles += HP35_CYCLES_PER_FRAME; cycles > 0; --cycles) 
-		{
-			HPVM::Cycle();
-		}
-	}
-	while (!HPVM::Idling);
+	do HPVM::Cycle(); while (!HPVM::Idling());
 }
 
 void executeOperation(u08 operation)

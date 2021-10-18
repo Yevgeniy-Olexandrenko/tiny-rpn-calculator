@@ -17,12 +17,11 @@ namespace HPVM
 		OpSUB  = 0x36, OpCLX  = 0x38, OpEEX  = 0x3A, OpCHS  = 0x3B, OpPUSH = 0x3E, OpNONE = 0xFF,
 	};
 
-	uint8_t Display[15]; // output
-	uint8_t Idling;      // output
-	uint8_t Error;       // output
-
 	void Operation(uint8_t op);
-	bool Cycle();
+	bool Idling();    // true if idling
+	bool Error();     // true if error occured
+	bool Cycle();     // true if display updated
+	char Display[15]; // display state
 
 	// clock parameters
 	#define HP35_CLOCK_RATE       (800 / 4) // kHz
@@ -122,6 +121,7 @@ namespace HPVM
 	uint8_t ff, fl;                   // register boundaries
 	uint8_t carry, carry_alu;         // carry bits
 	uint8_t disp_enable, disp_update; // display control
+	uint8_t idling, error;            // state flags
 
 	// basic math
 	nib nib_add(nib x, nib y)
@@ -191,12 +191,19 @@ namespace HPVM
 	// implementation
 	void Operation(uint8_t op)
 	{
-		if (op != OpNONE)
-		{
-			Idling = Error = 0;
-			key_pc = op;
-			s[0] = 1;
-		}
+		idling = error = 0;
+		key_pc = op;
+		s[0] = 1;
+	}
+
+	bool Idling()
+	{
+		return (idling && s[8]);
+	}
+
+	bool Error()
+	{
+		return (error && Idling());
 	}
 
 	bool Cycle()
@@ -204,8 +211,8 @@ namespace HPVM
 		// handling state change breakpoints
 		if (rom_offset == 0x00)
 		{
-			if (pc == 0xC5) Idling = 1;
-			if (pc == 0xBF) Error  = 1;
+			if (pc == 0xC5) idling = 1;
+			if (pc == 0xBF) error  = 1;
 		}
 
 		// fetch ROM
