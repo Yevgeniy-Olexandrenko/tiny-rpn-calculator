@@ -608,11 +608,11 @@ namespace RTC
 			I2C::StartRead(RTC_ADDR);
 			Seconds = BCD::Decode(I2C::ReadAck());
 			Minutes = BCD::Decode(I2C::ReadAck());
-			Hours   = BCD::Decode(I2C::ReadAck());
+			Hours   = BCD::Decode(I2C::ReadAck() & 0x3F);
 			I2C::ReadAck();
 			Date    = BCD::Decode(I2C::ReadAck());
 			Month   = BCD::Decode(I2C::ReadAck() & 0x1F);
-			Year    = BCD::Decode(I2C::ReadNack() % 100);
+			Year    = BCD::Decode(I2C::ReadNack());
 			I2C::Stop();
 		}
 	}
