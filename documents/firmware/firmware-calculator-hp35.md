@@ -25,3 +25,9 @@ Tiny RPN Calculator | HP-35 Calculator | Description
 `F` `TRIG` | - | Enter Trigonometry menu
 `F` `PROG` | - | Enter Programming menu
 `F` `LAST` | - | **Extension:** Repeat last operation from menu
+`F` `TRIG` `SIN` | `sin` | Sine
+`F` `TRIG` `COS` | `cos` | Cosine
+`F` `TRIG` `TAN` | `tan` | Tangent
+`F` `TRIG` `ASIN` | `arc` `sin` | Arc sine
+`F` `TRIG` `ACOS` | `arc` `cos` | Arc cosine
+`F` `TRIG` `ATAN` | `arc` `tan` | Arc tangent
