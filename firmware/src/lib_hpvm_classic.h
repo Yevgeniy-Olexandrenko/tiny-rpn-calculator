@@ -100,42 +100,46 @@ namespace HPVM
 	};
 
 	// defines
-	typedef uint8_t nib; typedef nib * reg;
-	#define hpvm_iterate_word(a)  for (uint8_t i = 0; i < 14; ++i)   { a; }
-	#define hpvm_iterate_field(a) for (uint8_t i = ff; i <= fl; ++i) { a; }
+	#define WSIZE 14
+	#define SSIZE 12
+	typedef uint8_t digit;
+	typedef digit reg [WSIZE];
+	#define hpvm_iterate_word(a)  for (uint8_t i = 0; i < WSIZE; ++i) { a; }
+	#define hpvm_iterate_field(a) for (uint8_t i = ff; i <= fl; ++i)  { a; }
 	namespace fld { enum { P = 0, M, X, W, WP, MS, XS, S }; }
 
 	// registers
-	nib A[16]; // A register
-	nib B[16]; // B register
-	nib C[16]; // C register (X)
-	nib D[16]; // D register (Y)
-	nib E[16]; // E register (Z)
-	nib F[16]; // F register (T)
-	nib M[16]; // M scratchpad
+	reg A; // A register
+	reg B; // B register
+	reg C; // C register (X)
+	reg D; // D register (Y)
+	reg E; // E register (Z)
+	reg F; // F register (T)
+	reg M; // M scratchpad
 
 	// state
-	uint8_t s[12];                    // status
-	uint8_t p, pc, ret, key_pc;       // pointers
-	uint8_t rom_offset;               // ROM offset
-	uint8_t ff, fl;                   // register boundaries
-	uint8_t carry, carry_alu;         // carry bits
-	uint8_t disp_enable, disp_update; // display control
-	uint8_t idling, error;            // state flags
+	uint8_t rom, pc, ret_pc, key_pc;
+#if defined(HPVM_HP45)
+	uint8_t group, del_rom, del_group;
+#endif
+	uint8_t p, ff, fl, s[SSIZE];
+	uint8_t carry, prev_carry;
+	uint8_t disp_enable, disp_update;
+	uint8_t idling, error;
 
 	// basic math
-	nib nib_add(nib x, nib y)
+	digit nib_add(digit x, digit y)
 	{
 		int8_t res = x + y + carry;
 		if (res > 9) { res -= 10; carry = 1; } else carry = 0;
-		return nib(res);
+		return digit(res);
 	}
 
-	nib nib_sub(nib x, nib y)
+	digit nib_sub(digit x, digit y)
 	{
 		int8_t res = x - y - carry;
 		if (res < 0) { res += 10; carry = 1; } else carry = 0;
-		return nib(res);
+		return digit(res);
 	}
 
 	void reg_clr(reg r)
@@ -184,7 +188,7 @@ namespace HPVM
 
 	void reg_swap(reg x, reg y)
 	{
-		nib t;
+		digit t;
 		hpvm_iterate_field(t = x[i]; x[i] = y[i]; y[i] = t);
 	}
 
@@ -209,20 +213,24 @@ namespace HPVM
 	bool Cycle()
 	{
 		// handling state change breakpoints
-		if (rom_offset == 0x00)
+		if (rom == 0x00)
 		{
 			if (pc == 0xC5) idling = 1;
 			if (pc == 0xBF) error  = 1;
 		}
 
 		// fetch ROM
-		uint16_t addr_l  = (rom_offset << 8 | pc);
+#if defined(HPVM_HP45)
+		uint16_t addr_l  = (group << 11 | rom << 8 | pc);
+#else
+		uint16_t addr_l  = (rom << 8 | pc);
+#endif
 		uint8_t  addr_h  = (addr_l >> 2);
 		uint8_t  shift   = (addr_l & 0x03) << 1;
 		uint8_t  fetch_l = pgm_read_byte(rom_l + addr_l);
 		uint8_t  fetch_h = pgm_read_byte(rom_h + addr_h) >> shift & 0x03;
 
-		carry_alu = carry;
+		prev_carry = carry;
 		carry = 0;
 		pc++;
 
@@ -247,7 +255,7 @@ namespace HPVM
 					disp_enable = !disp_enable; disp_update = 1;
 					break;
 				case 0b00101010: // C EXCHANGE M
-					hpvm_iterate_word(nib t = C[i]; C[i] = M[i]; M[i] = t);
+					hpvm_iterate_word(digit t = C[i]; C[i] = M[i]; M[i] = t);
 					break;
 				case 0b01001010: // C -> STACK
 					hpvm_iterate_word(F[i] = E[i]; E[i] = D[i]; D[i] = C[i]);
@@ -262,17 +270,23 @@ namespace HPVM
 					hpvm_iterate_word(C[i] = M[i]);
 					break;
 				case 0b11001010: // DOWN ROTATE
-					hpvm_iterate_word(nib t = C[i]; C[i] = D[i]; D[i] = E[i]; E[i] = F[i]; F[i] = t);
+					hpvm_iterate_word(digit t = C[i]; C[i] = D[i]; D[i] = E[i]; E[i] = F[i]; F[i] = t);
 					break;
 				case 0b11101010: // CLEAR REGISTERS
 					hpvm_iterate_word(A[i] = B[i] = C[i] = D[i] = E[i] = F[i] = M[i] = 0);
 					break;
 				case 0b00001100: // RETURN
-					pc = ret;
+					pc = ret_pc;
 					break;
 				case 0b00001101: // CLEAR STATUS
-					for (uint8_t i = 0; i < 12; i++) s[i] = 0;
+					for (uint8_t i = 0; i < SSIZE; i++) s[i] = 0;
 					break;
+#if defined(HPVM_HP45)
+				case 0b10001101: // DELAYED GROUP SELECT 0 or 1
+				case 0b10101101:
+					del_group = ((op_code >> 5) & 0x01);
+					break;
+#endif
 				case 0b00001111: // P + 1 -> P
 					p += 0x01; p &= 0x0F;
 					break;
@@ -287,7 +301,11 @@ namespace HPVM
 							p = nnnn;
 							break;
 						case 0b0100: // ROM SELECT n
-							rom_offset = (nnnn >> 1);
+							rom = (nnnn >> 1);
+#if defined(HPVM_HP45)
+							group = del_group;
+							del_rom = rom;
+#endif
 							break;
 						case 0b0101: // IF Sn = 0
 							carry = s[nnnn];
@@ -301,6 +319,11 @@ namespace HPVM
 						case 0b1011: // IF p # n
 							carry = (p == nnnn);
 							break;
+#if defined(HPVM_HP45)
+						case 0b1101: // DELAYED ROM SELECT n
+							del_rom = (nnnn >> 1);
+							break;
+#endif
 					}
 			}
 		}
@@ -309,7 +332,12 @@ namespace HPVM
 		else if (op_type == 0x01)
 		{
 			// JSB addr
-			ret = pc; pc = op_code;
+			ret_pc = pc;
+			pc = op_code;
+#if defined(HPVM_HP45)
+			rom = del_rom;
+			group = del_group;
+#endif
 		}
 
 		// Type 10: Arithmetic Instructions
@@ -435,7 +463,14 @@ namespace HPVM
 		else // op_type == 0x03
 		{
 			// (THEN) GO TO addr
-			if (!carry_alu) pc = op_code;
+			if (!prev_carry)
+			{
+				pc = op_code;
+#if defined(HPVM_HP45)
+				rom = del_rom;
+				group = del_group;
+#endif
+			}
 		}
 
 		// display update

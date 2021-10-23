@@ -23,6 +23,7 @@
 // -----------------------------------------------------------------------------
 
 #elif defined(FW_CALCULATOR_HP35)
+    //#define HPVM_HP45
     #include "src/lib_hardware.h"
     #include "src/lib_hpvm_classic.h"
     #include "src/calculators/hp35/data.h"
