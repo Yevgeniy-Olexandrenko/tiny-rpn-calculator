@@ -8,7 +8,6 @@
 
 #if defined(FW_HARDWARE_TESTER)
     #include "src/lib_hardware.h"
-    #include "src/lib_print.h"
     #include "src/tester/data.h"
     #include "src/tester/main.h"
 
@@ -25,7 +24,7 @@
 
 #elif defined(FW_CALCULATOR_HP35)
     #include "src/lib_hardware.h"
-    #include "src/lib_hpvm.h"
+    #include "src/lib_hpvm_classic.h"
     #include "src/calculators/hp35/data.h"
     #include "src/calculators/hp35/main.h"
 

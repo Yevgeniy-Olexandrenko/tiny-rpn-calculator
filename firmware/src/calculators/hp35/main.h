@@ -271,7 +271,7 @@ void updateCalcMode()
 			renderCalcMode();
 		}
 		
-		for (cycles += HP35_CYCLES_PER_FRAME; cycles > 0; --cycles)
+		for (cycles += HPVM_CYCLES_PER_FRAME; cycles > 0; --cycles)
 		{
 			if (HPVM::Cycle()) 
 			{

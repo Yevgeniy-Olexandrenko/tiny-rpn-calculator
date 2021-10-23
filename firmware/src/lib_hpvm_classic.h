@@ -24,11 +24,11 @@ namespace HPVM
 	char Display[15]; // display state
 
 	// clock parameters
-	#define HP35_CLOCK_RATE       (800 / 4) // kHz
-	#define HP35_BIT_TIME_WIDTH   (1000 / HP35_CLOCK_RATE) // uS
-	#define HP35_BITS_PER_CYCLE   (14 * 4)
-	#define HP35_CYCLE_TIME_WIDTH (HP35_BITS_PER_CYCLE * HP35_BIT_TIME_WIDTH) // uS
-	#define HP35_CYCLES_PER_SEC   (1000000 / HP35_CYCLE_TIME_WIDTH)
+	#define HPVM_CLOCK_RATE       (800 / 4) // kHz
+	#define HPVM_BIT_TIME_WIDTH   (1000 / HPVM_CLOCK_RATE) // uS
+	#define HPVM_BITS_PER_CYCLE   (14 * 4)
+	#define HPVM_CYCLE_TIME_WIDTH (HPVM_BITS_PER_CYCLE * HPVM_BIT_TIME_WIDTH) // uS
+	#define HPVM_CYCLES_PER_SEC   (1000000 / HPVM_CYCLE_TIME_WIDTH)
 
 	// firmware ROM (768 words)
 	const uint8_t rom_l[] PROGMEM =

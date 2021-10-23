@@ -406,7 +406,7 @@ enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS };
 // -----------------------------------------------------------------------------
 
 #define CALC_FRAMES_PER_SEC   (15)
-#define HP35_CYCLES_PER_FRAME (HP35_CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
+#define HPVM_CYCLES_PER_FRAME (HPVM_CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
 
 #define INFO_FLAG_WIDTH       (7)
 #define INFO_FLAG_POSITION    (128 - INFO_FLAG_WIDTH)
