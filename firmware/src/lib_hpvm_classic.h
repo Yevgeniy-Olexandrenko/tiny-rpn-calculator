@@ -6,7 +6,23 @@ namespace HPVM
 	// HP Calculators Virtual Machine
 	// -----------------------------------------------------------------------------
 
+	// clock parameters
+	#define HPVM_CLOCK_RATE       (800 / 4) // kHz
+	#define HPVM_BIT_TIME_WIDTH   (1000 / HPVM_CLOCK_RATE) // uS
+	#define HPVM_BITS_PER_CYCLE   (14 * 4)
+	#define HPVM_CYCLE_TIME_WIDTH (HPVM_BITS_PER_CYCLE * HPVM_BIT_TIME_WIDTH) // uS
+	#define HPVM_CYCLES_PER_SEC   (1000000 / HPVM_CYCLE_TIME_WIDTH)
+
 	// public interface
+	void Operation(uint8_t op);
+	bool Idling();    // true if idling
+	bool Error();     // true if error occured
+	bool Cycle();     // true if display updated
+	char Display[15]; // display state
+
+#if defined(HPVM_HP35)
+
+	// HP35 key operation
 	enum
 	{
 		OpCLR  = 0x00, OpEXP  = 0x02, OpLN   = 0x03, OpLOG  = 0x04, OpPOW  = 0x06, OpRCL  = 0x08,
@@ -17,20 +33,7 @@ namespace HPVM
 		OpSUB  = 0x36, OpCLX  = 0x38, OpEEX  = 0x3A, OpCHS  = 0x3B, OpPUSH = 0x3E, OpNONE = 0xFF,
 	};
 
-	void Operation(uint8_t op);
-	bool Idling();    // true if idling
-	bool Error();     // true if error occured
-	bool Cycle();     // true if display updated
-	char Display[15]; // display state
-
-	// clock parameters
-	#define HPVM_CLOCK_RATE       (800 / 4) // kHz
-	#define HPVM_BIT_TIME_WIDTH   (1000 / HPVM_CLOCK_RATE) // uS
-	#define HPVM_BITS_PER_CYCLE   (14 * 4)
-	#define HPVM_CYCLE_TIME_WIDTH (HPVM_BITS_PER_CYCLE * HPVM_BIT_TIME_WIDTH) // uS
-	#define HPVM_CYCLES_PER_SEC   (1000000 / HPVM_CYCLE_TIME_WIDTH)
-
-	// firmware ROM (768 words)
+	// HP35 firmware ROM (768 words)
 	const uint8_t rom_l[] PROGMEM =
 	{
 		0xDD, 0xFF, 0x24, 0x17, 0x44, 0x44, 0x84, 0x10, 0xD1, 0xFB, 0x5F, 0xC3, 0xA8, 0x67, 0xEE, 0xE2,
@@ -99,49 +102,53 @@ namespace HPVM
 		0x7C, 0xB7, 0x7C, 0x8E, 0x97, 0xD3, 0x7E, 0x9C, 0x00, 0x29, 0xC5, 0x97, 0x65, 0xC7, 0x00, 0x59
 	};
 
-	// defines
-	#define WSIZE 14
-	#define SSIZE 12
+#elif defined(HPVM_HP45)
+
+	// TODO
+
+#endif
+
+	// cpu defines
 	typedef uint8_t digit;
-	typedef digit reg [WSIZE];
-	#define hpvm_iterate_word(a)  for (uint8_t i = 0; i < WSIZE; ++i) { a; }
-	#define hpvm_iterate_field(a) for (uint8_t i = ff; i <= fl; ++i)  { a; }
+	typedef digit reg[16];
+	#define hpvm_iterate_word(a)  for (uint8_t i =  0; i <  14; ++i) { a; }
+	#define hpvm_iterate_field(a) for (uint8_t i = ff; i <= fl; ++i) { a; }
 	namespace fld { enum { P = 0, M, X, W, WP, MS, XS, S }; }
 
-	// display
+	// display defines
 	#define HPVM_DIGIT 0x00
 	#define HPVM_SPACE 0x10
 	#define HPVM_DASH  0x11
 	#define HPVM_DOT   0x12
 
 	// registers
-	reg A; // A register
-	reg B; // B register
-	reg C; // C register (X)
-	reg D; // D register (Y)
-	reg E; // E register (Z)
-	reg F; // F register (T)
-	reg M; // M scratchpad
+	reg A;
+	reg B;
+	reg C; // X
+	reg D; // Y
+	reg E; // Z
+	reg F; // T
+	reg M;
 
 	// state
 	uint8_t rom, pc, ret_pc, key_pc;
 #if defined(HPVM_HP45)
 	uint8_t group, del_rom, del_group;
 #endif
-	uint8_t p, ff, fl, s[SSIZE];
+	uint8_t p, ff, fl, s[12];
 	uint8_t carry, prev_carry;
 	uint8_t disp_enable, disp_update;
 	uint8_t idling, error;
 
 	// basic math
-	digit nib_add(digit x, digit y)
+	digit alu_add(digit x, digit y)
 	{
 		int8_t res = x + y + carry;
 		if (res > 9) { res -= 10; carry = 1; } else carry = 0;
 		return digit(res);
 	}
 
-	digit nib_sub(digit x, digit y)
+	digit alu_sub(digit x, digit y)
 	{
 		int8_t res = x - y - carry;
 		if (res < 0) { res += 10; carry = 1; } else carry = 0;
@@ -155,24 +162,24 @@ namespace HPVM
 
 	void reg_add(reg r, reg x, reg y)
 	{
-		hpvm_iterate_field(r[i] = nib_add(x[i], y[i]));
+		hpvm_iterate_field(r[i] = alu_add(x[i], y[i]));
 	}
 
 	void reg_sub(reg r, reg x, reg y)
 	{
-		hpvm_iterate_field(r[i] = nib_sub(x[i], y[i]));
+		hpvm_iterate_field(r[i] = alu_sub(x[i], y[i]));
 	}
 
 	void reg_inc(reg r)
 	{
 		carry = 1;
-		hpvm_iterate_field(r[i] = nib_add(r[i], 0));
+		hpvm_iterate_field(r[i] = alu_add(r[i], 0));
 	}
 
 	void reg_dec(reg r)
 	{
 		carry = 1;
-		hpvm_iterate_field(r[i] = nib_sub(r[i], 0));
+		hpvm_iterate_field(r[i] = alu_sub(r[i], 0));
 	}
 
 	void reg_shr(reg r)
@@ -285,7 +292,7 @@ namespace HPVM
 					pc = ret_pc;
 					break;
 				case 0b00001101: // CLEAR STATUS
-					for (uint8_t i = 0; i < SSIZE; i++) s[i] = 0;
+					for (uint8_t i = 0; i < 12; i++) s[i] = 0;
 					break;
 #if defined(HPVM_HP45)
 				case 0b10001101: // DELAYED GROUP SELECT 0 or 1
@@ -373,7 +380,7 @@ namespace HPVM
 					reg_clr(B);
 					break;
 				case 0b00010: // IF A >= C[f]
-					hpvm_iterate_field(nib_sub(A[i], C[i]));
+					hpvm_iterate_field(alu_sub(A[i], C[i]));
 					break;
 				case 0b00011: // IF C[f] >= 1
 					carry = 1; hpvm_iterate_field(carry &= (C[i] == 0));
@@ -382,13 +389,13 @@ namespace HPVM
 					reg_copy(C, B);
 					break;
 				case 0b00101: // 0 – C -> C[f]
-					hpvm_iterate_field(C[i] = nib_sub(0, C[i]));
+					hpvm_iterate_field(C[i] = alu_sub(0, C[i]));
 					break;
 				case 0b00110: // 0 -> C[f]
 					reg_clr(C);
 					break;
 				case 0b00111: // 0 – C – 1 -> C[f]
-					carry = 1; hpvm_iterate_field(C[i] = nib_sub(0, C[i]));
+					carry = 1; hpvm_iterate_field(C[i] = alu_sub(0, C[i]));
 					break;
 				case 0b01000: // SHIFT LEFT A[f]
 					reg_shl(A);
@@ -415,7 +422,7 @@ namespace HPVM
 					reg_inc(C);
 					break;
 				case 0b10000: // IF A >= B[f]
-					hpvm_iterate_field(nib_sub(A[i], B[i]));
+					hpvm_iterate_field(alu_sub(A[i], B[i]));
 					break;
 				case 0b10001: // B EXCHANGE C[f]
 					reg_swap(B, C);
