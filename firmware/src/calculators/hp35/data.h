@@ -1,6 +1,46 @@
 #pragma once
 
 // -----------------------------------------------------------------------------
+// Defines
+// -----------------------------------------------------------------------------
+
+#define CALC_FRAMES_PER_SEC   (15)
+#define HPVM_CYCLES_PER_FRAME (HPVM_CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
+
+#define FLAG_CHAR_W           (7)
+#define FLAG_POS              (LCD_WIDTH - FLAG_CHAR_W)
+#define FLAG_FUNCTION         'i'
+#define FLAG_STORAGE          'j'
+
+#define MENU_CHAR_W           (5 + 1)
+#define MENU_ITEM_W           ((1 + 4 + 1) * MENU_CHAR_W)
+#define MENU_ITEMS_PER_LINE   (3)
+#define MENU_SPACING          ((LCD_WIDTH - (MENU_ITEM_W * MENU_ITEMS_PER_LINE)) / (MENU_ITEMS_PER_LINE - 1))
+#define MENU_POS_ITEM         (MENU_ITEM_W + MENU_SPACING)
+
+#define RTC_TIME_CHAR_W       (7 + 1)
+#define RTC_DATE_CHAR_W       (5 + 1)
+#define RTC_TIME_COLON        'i'
+#define RTC_DATE_SLASH        '/'
+#define RTC_BATTERY_LEVEL     '='
+#define RTC_INFO_HP_LABEL     "HP=35"
+
+#define RTC_POS_HOURS         (0)
+#define RTC_POS_COLON_HM      (2 * RTC_TIME_CHAR_W + RTC_POS_HOURS)
+#define RTC_POS_MINUTES       (1 * RTC_TIME_CHAR_W + RTC_POS_COLON_HM)
+#define RTC_POS_COLON_MS      (2 * RTC_TIME_CHAR_W + RTC_POS_MINUTES)
+#define RTC_POS_SECONDS       (1 * RTC_TIME_CHAR_W + RTC_POS_COLON_MS)
+
+#define RTC_POS_INFO          (72)
+#define RTC_POS_MONTH         (RTC_POS_INFO)
+#define RTC_POS_DATE          (3 * RTC_DATE_CHAR_W + RTC_POS_MONTH + 7)
+#define RTC_POS_SLASH         (2 * RTC_DATE_CHAR_W + RTC_POS_DATE)
+#define RTC_POS_YEAR          (1 * RTC_DATE_CHAR_W + RTC_POS_SLASH)
+
+#define DIMOUT_MILLIS         (10000)
+#define POWEROFF_MILLIS       (20000)
+
+// -----------------------------------------------------------------------------
 // Text fonts (menu, big digits, small digits)
 // -----------------------------------------------------------------------------
 
@@ -337,8 +377,6 @@ const u08 strMenuProg[] PROGMEM =
 // Menu structures
 // -----------------------------------------------------------------------------
 
-#define MENU_OPS_PER_LINE 3
-
 struct Menu
 {
 	u08 lastIdx;
@@ -348,42 +386,9 @@ struct Menu
 
 const Menu menus[] PROGMEM =
 {
-	{ sizeof(mathOps) / MENU_OPS_PER_LINE - 1, strMenuMath, mathOps },
-	{ sizeof(trigOps) / MENU_OPS_PER_LINE - 1, strMenuTrig, trigOps },
-	{ sizeof(progOps) / MENU_OPS_PER_LINE - 1, strMenuProg, progOps },
+	{ sizeof(mathOps) / MENU_ITEMS_PER_LINE - 1, strMenuMath, mathOps },
+	{ sizeof(trigOps) / MENU_ITEMS_PER_LINE - 1, strMenuTrig, trigOps },
+	{ sizeof(progOps) / MENU_ITEMS_PER_LINE - 1, strMenuProg, progOps },
 };
 
 enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS };
-
-// -----------------------------------------------------------------------------
-// Defines
-// -----------------------------------------------------------------------------
-
-#define CALC_FRAMES_PER_SEC   (15)
-#define HPVM_CYCLES_PER_FRAME (HPVM_CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
-
-#define INFO_FLAG_WIDTH       (7)
-#define INFO_FLAG_POSITION    (128 - INFO_FLAG_WIDTH)
-#define INFO_FLAG_FUNCTION    'i'
-#define INFO_FLAG_STORAGE     'j'
-
-#define RTC_TIME_CHAR_W       (7 + 1)
-#define RTC_DATE_CHAR_W       (5 + 1)
-#define RTC_TIME_COLON        'i'
-#define RTC_DATE_SLASH        '/'
-#define RTC_BATTERY_LEVEL     '='
-
-#define RTC_POS_HOURS         (0)
-#define RTC_POS_COLON_HM      (2 * RTC_TIME_CHAR_W + RTC_POS_HOURS)
-#define RTC_POS_MINUTES       (1 * RTC_TIME_CHAR_W + RTC_POS_COLON_HM)
-#define RTC_POS_COLON_MS      (2 * RTC_TIME_CHAR_W + RTC_POS_MINUTES)
-#define RTC_POS_SECONDS       (1 * RTC_TIME_CHAR_W + RTC_POS_COLON_MS)
-
-#define RTC_POS_INFO          (72)
-#define RTC_POS_MONTH         (RTC_POS_INFO)
-#define RTC_POS_DATE          (3 * RTC_DATE_CHAR_W + RTC_POS_MONTH + 7)
-#define RTC_POS_SLASH         (2 * RTC_DATE_CHAR_W + RTC_POS_DATE)
-#define RTC_POS_YEAR          (1 * RTC_DATE_CHAR_W + RTC_POS_SLASH)
-
-#define DIMOUT_MILLIS         (10000)
-#define POWEROFF_MILLIS       (20000)

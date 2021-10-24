@@ -571,8 +571,8 @@ namespace TXT
 
 	void PrintBCD(u08 n, u08 x, u08 y)
 	{
-		PrintChar('0' + (n >> 4 & 0x0F), x, y);
-		PrintChar('0' + (n & 0x0F), x + char_dx, y);
+		PrintChar('0' + (n >> 4), x, y);
+		PrintChar('0' + (n & 15), x + char_dx, y);
 	}
 
 	NOINLINE u08 NumToSeg(u08 n)
@@ -605,8 +605,8 @@ namespace TXT
 
 	void PrintSegBCD(u08 n, u08 x, u08 y)
 	{
-		PrintSeg(NumToSeg(n >> 4 & 0x0F), x, y);
-		PrintSeg(NumToSeg(n & 0x0F), x + char_dx, y);
+		PrintSeg(NumToSeg(n >> 4), x, y);
+		PrintSeg(NumToSeg(n & 15), x + char_dx, y);
 	}
 }
 

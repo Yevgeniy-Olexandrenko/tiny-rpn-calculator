@@ -7,7 +7,7 @@
 b08 calcMode;
 u08 battery;
 
-u08 key;
+u08 newKey;
 u08 oldkey;
 
 void switchToCalcMode(b08 yes = true)
@@ -205,9 +205,11 @@ void renderCalcMenu()
 	TXT::SetFont(menu5x8);
 	TXT::SetScale(TXT::x1, TXT::x2);
 	TXT::SetInverse(true);
-	for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
+	for (u08 i = 0; i < MENU_ITEMS_PER_LINE; ++i)
 	{
-		TXT::PrintString(FPSTR(menu.string), select * MENU_OPS_PER_LINE + i, 46 * i, 2);
+		TXT::PrintString(
+			FPSTR(menu.string), select * MENU_ITEMS_PER_LINE + i,
+			MENU_POS_ITEM * i, 2);
 	}
 	TXT::SetInverse(false);
 }
@@ -221,7 +223,7 @@ void renderCalcMode()
 	{
 		if (HPVM::M[i])
 		{
-			TXT::PrintChar(INFO_FLAG_STORAGE, INFO_FLAG_POSITION, isMenu ? 0 : 2);
+			TXT::PrintChar(FLAG_STORAGE, FLAG_POS, isMenu ? 0 : 2);
 			break;
 		}
 	}
@@ -230,7 +232,7 @@ void renderCalcMode()
 	{
 		renderCalcNumber(hidden, 0);
 		renderCalcNumber(HPVM::Display, 2);
-		TXT::PrintChar(INFO_FLAG_FUNCTION, INFO_FLAG_POSITION, 0);
+		TXT::PrintChar(FLAG_FUNCTION, FLAG_POS, 0);
 	}
 
 	else if (isMenu)
@@ -251,9 +253,9 @@ void updateCalcMode()
 {
 	if (isMenu)
 	{
-		if (key != KBD::NONE)
+		if (newKey != KBD::NONE)
 		{
-			switch(key)
+			switch(newKey)
 			{
 				default: isMenu = false; break;
 				case KBD::ROTU: if (select > 0) select--; else select = menu.lastIdx; break;
@@ -262,7 +264,7 @@ void updateCalcMode()
 				case KBD::TRIG: enterMenu(MENU_TRIG_OPS); break;
 				case KBD::PROG: enterMenu(MENU_PROG_OPS); break;
 				case KBD::SEL1: case KBD::SEL2: case KBD::SEL3:
-					u08 index = select * MENU_OPS_PER_LINE + (key - KBD::SEL1);
+					u08 index = select * MENU_ITEMS_PER_LINE + (newKey - KBD::SEL1);
 					u08 op = pgm_read_byte(menu.opsBase + index);
 					executeOperation(lastOp = op);
 					break;
@@ -272,9 +274,9 @@ void updateCalcMode()
 	}
 	else
 	{
-		if (key != KBD::NONE)
+		if (newKey != KBD::NONE)
 		{
-			u08 op = pgm_read_byte(mainOps + (isFunc ? 16 : 0) + key);
+			u08 op = pgm_read_byte(mainOps + (isFunc ? 16 : 0) + newKey);
 			executeOperation(op);
 			renderCalcMode();
 		}
@@ -306,7 +308,6 @@ void renderRTCMode()
 	TXT::PrintSegBCD(RTC::Seconds, RTC_POS_SECONDS, 0);
 
 	TXT::SetFont(menu5x8);
-	TXT::SetScale(TXT::x1, TXT::x1);
 	u08 monthIndex = BCD::Decode(RTC::Month) - 1;
 	TXT::PrintString(FPSTR(strMonth), monthIndex, RTC_POS_MONTH, 0);
 	TXT::PrintBCD(RTC::Date, RTC_POS_DATE, 0);
@@ -314,7 +315,7 @@ void renderRTCMode()
 	TXT::PrintChar(RTC_DATE_SLASH, RTC_POS_SLASH, 0);
 
 	TXT::SetScale(TXT::x2, TXT::x1);
-	TXT::PrintString(F("HP=35"), RTC_POS_INFO, 2);
+	TXT::PrintString(F(RTC_INFO_HP_LABEL), RTC_POS_INFO, 2);
 	for (u08 i = 0; i < battery; ++i) 
 		TXT::PrintChar(RTC_BATTERY_LEVEL, RTC_POS_INFO + i * TXT::char_dx, 1);
 
@@ -358,9 +359,9 @@ int main()
 		}
 
 		// read key press and switch to calculator operation mode
-		key = KBD::Read();
-		if (key != oldkey) oldkey = key; else key = KBD::NONE;
-		if (key != KBD::NONE) switchToCalcMode();
+		newKey = KBD::Read();
+		if (newKey != oldkey) oldkey = newKey; else newKey = KBD::NONE;
+		if (newKey != KBD::NONE) switchToCalcMode();
 
 		// update current operation mode and idle until next frame
 		if (calcMode) updateCalcMode(); else updateRTCMode();
