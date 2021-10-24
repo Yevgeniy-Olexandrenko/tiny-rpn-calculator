@@ -60,14 +60,14 @@ void dropStackTop()
 	);
 }
 
-b08 getStackTop(u08& out, u08 min, u08 max)
+b08 getBCDFromStack(u08& out, u08 min, u08 max)
 {
 	if (HPVM::C[1] == 0 && HPVM::C[0] < 3)
 	{
 		u16 value = 0;
 		for (u08 i = 0; i <= HPVM::C[0]; ++i)
 		{
-			value *= 10;
+			value *= 16;
 			value += HPVM::C[12 - i];
 		}
 		if (value >= min && value <= max)
@@ -154,16 +154,18 @@ void executeOperation(u08 operation)
 
 		case PROG_TIME:
 			RTC::ReadTimeDate();
-			if (getStackTop(RTC::Minutes, 0, 59) && getStackTop(RTC::Hours, 0, 23))
+			if (getBCDFromStack(RTC::Minutes, 0x00, 0x59) && 
+			    getBCDFromStack(RTC::Hours,   0x00, 0x23))
 			{
-				RTC::Seconds = 0;
+				RTC::Seconds = 0x00;
 				setupAndSwitchToRTCMode();
 			}
 			break;
 
 		case PROG_DATE:
 			RTC::ReadTimeDate();
-			if (getStackTop(RTC::Month, 1, 12) && getStackTop(RTC::Date, 1, 31))
+			if (getBCDFromStack(RTC::Month, 0x01, 0x12) &&
+			    getBCDFromStack(RTC::Date,  0x01, 0x31))
 			{
 				setupAndSwitchToRTCMode();
 			}
@@ -171,7 +173,7 @@ void executeOperation(u08 operation)
 
 		case PROG_YEAR:
 			RTC::ReadTimeDate();
-			if (getStackTop(RTC::Year, 0, 99))
+			if (getBCDFromStack(RTC::Year, 0x00, 0x99))
 			{
 				setupAndSwitchToRTCMode();
 			}
@@ -188,14 +190,20 @@ void renderCalcNumber(const u08 * numStr, u08 y)
 	for (u08 i = 0; i < 15; ++i)
 	{
 		if (i == 12) TXT::SetFont(digits7x16);
-		TXT::PrintChar(numStr[i], i * TXT::char_dx, y);
+
+		u08 ch = numStr[i], seg = TXT::SEG_SPACE;
+		if (ch == HPVM_DASH) seg = TXT::SEG_DASH;
+		else if (ch == HPVM_DOT) seg = TXT::SEG_DOT;
+		else if (ch != HPVM_SPACE) seg = TXT::NumToSeg(ch);
+
+		TXT::PrintSeg(seg, i * TXT::char_dx, y);
 	}
 }
 
 void renderCalcMenu()
 {
 	TXT::SetFont(menu5x8);
-	TXT::SetScale(SCALE_X1, SCALE_X2);
+	TXT::SetScale(TXT::x1, TXT::x2);
 	TXT::SetInverse(true);
 	for (u08 i = 0; i < MENU_OPS_PER_LINE; ++i)
 	{
@@ -289,25 +297,26 @@ void updateCalcMode()
 void renderRTCMode()
 {
 	LCD::Clear();
-	TXT::SetFont(digits7x32);
 
-	TXT::PrintChar(':', 16, 0);
-	TXT::PrintChar(':', 40, 0);
-	TXT::PrintTensOnes(RTC::Hours, 0, 0);
-	TXT::PrintTensOnes(RTC::Minutes, 24, 0);
-	TXT::PrintTensOnes(RTC::Seconds, 48, 0);
+	TXT::SetFont(digits7x32);
+	TXT::PrintChar(RTC_TIME_COLON, RTC_POS_COLON_HM, 0);
+	TXT::PrintChar(RTC_TIME_COLON, RTC_POS_COLON_MS, 0);
+	TXT::PrintSegBCD(RTC::Hours, RTC_POS_HOURS, 0);
+	TXT::PrintSegBCD(RTC::Minutes, RTC_POS_MINUTES, 0);
+	TXT::PrintSegBCD(RTC::Seconds, RTC_POS_SECONDS, 0);
 
 	TXT::SetFont(menu5x8);
-	TXT::SetScale(SCALE_X1, SCALE_X1);
-	TXT::PrintString(FPSTR(strMonth), RTC::Month - 1, 72, 0);
-	TXT::PrintTensOnes(RTC::Date, 97, 0);
-	TXT::PrintTensOnes(RTC::Year, 115, 0);
-	TXT::PrintChar('/', 109, 0);
+	TXT::SetScale(TXT::x1, TXT::x1);
+	u08 monthIndex = BCD::Decode(RTC::Month) - 1;
+	TXT::PrintString(FPSTR(strMonth), monthIndex, RTC_POS_MONTH, 0);
+	TXT::PrintBCD(RTC::Date, RTC_POS_DATE, 0);
+	TXT::PrintBCD(RTC::Year, RTC_POS_YEAR, 0);
+	TXT::PrintChar(RTC_DATE_SLASH, RTC_POS_SLASH, 0);
 
-	TXT::SetScale(SCALE_X2, SCALE_X1);
-	TXT::PrintString(F("HP=35"), 72, 2);
-	u08 i = battery;
-	while (i) TXT::PrintChar('=', 72 + (--i) * TXT::char_dx, 1);
+	TXT::SetScale(TXT::x2, TXT::x1);
+	TXT::PrintString(F("HP=35"), RTC_POS_INFO, 2);
+	for (u08 i = 0; i < battery; ++i) 
+		TXT::PrintChar(RTC_BATTERY_LEVEL, RTC_POS_INFO + i * TXT::char_dx, 1);
 
 	LCD::Flip();
 }

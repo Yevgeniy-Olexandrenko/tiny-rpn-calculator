@@ -425,9 +425,28 @@ namespace LCD
 
 namespace TXT
 {
-	#define SCALE_X1 1
-	#define SCALE_X2 2
-	#define SCALE_X4 4
+	enum { x1 = 1, x2 = 2, x4 = 4 };
+
+	enum
+	{
+		SEG_SPACE = 0x00,
+		SEG_DOT   = 0x80,
+		SEG_DASH  = 0x40,
+
+		SEG_0 = 0x3F, SEG_1 = 0x06, SEG_2 = 0x5B, SEG_3 = 0x4F, SEG_4 = 0x66,
+		SEG_5 = 0x6D, SEG_6 = 0x7D, SEG_7 = 0x07, SEG_8 = 0x7F, SEG_9 = 0x6F,
+		
+		SEG_A = 0x77, SEG_b = 0x7C, SEG_C = 0x39,
+		SEG_d = 0x5E, SEG_E = 0x79, SEG_F = 0x71,
+	};
+
+	const u08 num_seg[] PROGMEM =
+	{
+		SEG_0, SEG_1, SEG_2, SEG_3, SEG_4,
+		SEG_5, SEG_6, SEG_7, SEG_8, SEG_9,
+		SEG_A, SEG_b, SEG_C,
+		SEG_d, SEG_E, SEG_F
+	};
 
 	struct Font
 	{
@@ -475,7 +494,7 @@ namespace TXT
 	void SetFont(const Font& f)
 	{
 		memcpy_P(&font, &f, sizeof(Font));
-		SetScale(SCALE_X1, SCALE_X1);
+		SetScale(x1, x1);
 	}
 	
 	void PrintChar(u08 ch, u08 x, u08 y)
@@ -501,9 +520,9 @@ namespace TXT
 					if (dp)
 					{
 						ch = pgm_read_byte(dp + xi) ^ inverse;
-						if (font_sy == SCALE_X2)
+						if (font_sy == x2)
 							ch = expand4bit((ch >> (si << 2)) & 0x0F);
-						else if (font_sy == SCALE_X4)
+						else if (font_sy == x4)
 							ch = expand2bit((ch >> (si << 1)) & 0x03);
 					}
 					LCD::Write(ch, font_sx);
@@ -550,10 +569,44 @@ namespace TXT
 		}
 	}
 
-	void PrintTensOnes(u08 n, u08 x, u08 y)
+	void PrintBCD(u08 n, u08 x, u08 y)
 	{
-		PrintChar('0' + u08(n / 10 % 10), x, y);
-		PrintChar('0' + u08(n % 10), x + char_dx, y);
+		PrintChar('0' + (n >> 4 & 0x0F), x, y);
+		PrintChar('0' + (n & 0x0F), x + char_dx, y);
+	}
+
+	NOINLINE u08 NumToSeg(u08 n)
+	{
+		return pgm_read_byte(num_seg + n);
+	}
+
+	void PrintSeg(u08 seg, u08 x, u08 y)
+	{
+		u08 ds = (font.bytesInRow * font.rowsOfBytes);
+		for (u08 yi = 0; yi < font.rowsOfBytes; ++yi)
+		{
+			LCD::Position(x, y + yi);
+
+			for (u08 xi = 0; xi < font.bytesInRow; ++xi)
+			{
+				u16 dp = &font.bytes[yi * font.bytesInRow + xi];
+				u08 db = 0x00;
+
+				for (u08 ss = seg; ss != 0; ss >>= 1)
+				{
+					if (ss & 0x01) db |= pgm_read_byte(dp);
+					dp += ds;
+				}
+
+				LCD::Write(db, 1);
+			}
+		}
+	}
+
+	void PrintSegBCD(u08 n, u08 x, u08 y)
+	{
+		PrintSeg(NumToSeg(n >> 4 & 0x0F), x, y);
+		PrintSeg(NumToSeg(n & 0x0F), x + char_dx, y);
 	}
 }
 
@@ -589,13 +642,13 @@ namespace RTC
 	#define RTC_TEMP_MSB     0x11
 	#define RTC_TEMP_LSB     0x12
 
-	u08 Seconds = BUILD_SEC;   // 0 - 59
-	u08 Minutes = BUILD_MIN;   // 0 - 59
-	u08 Hours   = BUILD_HOUR;  // 0 - 23
-	u08 Date    = BUILD_DAY;   // 1 - 31
-	u08 Month   = BUILD_MONTH; // 1 - 12
-	u08 Year    = BUILD_YEAR;  // 0 - 99
-	s16 TempC;                 // MSB degrees, LSB fractional
+	u08 Seconds = BCD::Encode(BUILD_SEC);   // 0 - 59
+	u08 Minutes = BCD::Encode(BUILD_MIN);   // 0 - 59
+	u08 Hours   = BCD::Encode(BUILD_HOUR);  // 0 - 23
+	u08 Date    = BCD::Encode(BUILD_DAY);   // 1 - 31
+	u08 Month   = BCD::Encode(BUILD_MONTH); // 1 - 12
+	u08 Year    = BCD::Encode(BUILD_YEAR);  // 0 - 99
+	s16 TempC;         // MSB degrees, LSB fractional
 
 	void ReadTimeDate()
 	{
@@ -603,13 +656,13 @@ namespace RTC
 		{
 			I2C::Write(RTC_SECONDS);
 			I2C::StartRead(RTC_ADDR);
-			Seconds = BCD::Decode(I2C::ReadAck());
-			Minutes = BCD::Decode(I2C::ReadAck());
-			Hours   = BCD::Decode(I2C::ReadAck() & 0x3F);
+			Seconds = I2C::ReadAck();
+			Minutes = I2C::ReadAck();
+			Hours   = I2C::ReadAck() & 0x3F;
 			I2C::ReadAck();
-			Date    = BCD::Decode(I2C::ReadAck());
-			Month   = BCD::Decode(I2C::ReadAck() & 0x1F);
-			Year    = BCD::Decode(I2C::ReadNack());
+			Date    = I2C::ReadAck();
+			Month   = I2C::ReadAck() & 0x1F;
+			Year    = I2C::ReadNack();
 			I2C::Stop();
 		}
 	}
@@ -619,13 +672,13 @@ namespace RTC
 		if(I2C::StartWrite(RTC_ADDR))
 		{
 			I2C::Write(RTC_SECONDS);
-			I2C::Write(BCD::Encode(Seconds));
-			I2C::Write(BCD::Encode(Minutes));
-			I2C::Write(BCD::Encode(Hours));
+			I2C::Write(Seconds);
+			I2C::Write(Minutes);
+			I2C::Write(Hours);
 			I2C::Write(1);
-			I2C::Write(BCD::Encode(Date));
-			I2C::Write(BCD::Encode(Month));
-			I2C::Write(BCD::Encode(Year));
+			I2C::Write(Date);
+			I2C::Write(Month);
+			I2C::Write(Year);
 			I2C::Stop();
 		}
 	}

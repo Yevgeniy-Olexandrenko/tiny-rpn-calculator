@@ -108,6 +108,12 @@ namespace HPVM
 	#define hpvm_iterate_field(a) for (uint8_t i = ff; i <= fl; ++i)  { a; }
 	namespace fld { enum { P = 0, M, X, W, WP, MS, XS, S }; }
 
+	// display
+	#define HPVM_DIGIT 0x00
+	#define HPVM_SPACE 0x10
+	#define HPVM_DASH  0x11
+	#define HPVM_DOT   0x12
+
 	// registers
 	reg A; // A register
 	reg B; // B register
@@ -482,16 +488,16 @@ namespace HPVM
 				if (disp_enable)
 				{
 					if (B[i] == 9)
-						Display[d++] = ' ';
+						Display[d++] = HPVM_SPACE;
 					else if (i == 2 || i == 13)
-						Display[d++] = (A[i] == 9 ? '-' : ' ');
+						Display[d++] = (A[i] == 9 ? HPVM_DASH : HPVM_SPACE);
 					else
-						Display[d++] = ('0' + A[i]);
+						Display[d++] = HPVM_DIGIT + A[i];
 					if (B[i] == 2)
-						Display[d++] = '.';
+						Display[d++] = HPVM_DOT;
 				}
 				else
-					Display[d++] = ' ';
+					Display[d++] = HPVM_SPACE;
 			}
 			return true;
 		}
