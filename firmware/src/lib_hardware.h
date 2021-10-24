@@ -121,12 +121,12 @@ class __FlashStringHelper;
 
 namespace BCD
 {
-	NOINLINE u08 Decode(u08 data)
+	u08 Decode(u08 data)
 	{
 		return (data / 16 * 10) + (data % 16);
 	}
 
-	NOINLINE u08 Encode(u08 data)
+	u08 Encode(u08 data)
 	{
 		return (data / 10 * 16) + (data % 10);
 	}
