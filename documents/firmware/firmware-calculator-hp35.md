@@ -10,6 +10,40 @@ Internally, the calculator was organized around a serial (one-bit) processor chi
 
 The calculator used a traditional floating decimal display for numbers that could be displayed in that format, but automatically switched to scientific notation for other numbers. The fifteen-digit LED display was capable of displaying a ten-digit mantissa plus its sign and a decimal point and a two-digit exponent plus its sign.
 
+# Reverse Polish Notation
+
+In the 1920's, Jan Lukasiewicz developed a formal logic system which allowed mathematical expressions to be specified without parentheses by placing the operators before (prefix notation) or after (postfix notation) the operands. For example, the (infix notation) expression:
+
+```
+(4 + 5) × 6
+```
+
+could be expressed in postfix notation as:
+
+```
+4 5 + 6 ×    or    6 4 5 + ×
+```
+
+HP adjusted the postfix notation for a calculator keyboard, added a stack to hold the operands and functions to reorder the stack. HP dubbed the result Reverse Polish Notation (RPN) in honor of Lukasiewicz.
+
+In the years that followed, computer scientists realized that RPN or postfix notation was very efficient for computer math. As a postfix expression is scanned from left to right, operands are simply placed into a last-in, first-out (LIFO) stack and operators may be immediately applied to the operands at the bottom of the stack. By contrast, expressions with parentheses and precedence (infix notation) require that operators be delayed until some later point.
+
+In comparison, testing of Reverse Polish Notation with algebraic notation, RPN has been found to lead to faster calculations, for two reasons. The first reason is that RPN calculators do not need expressions to be parenthesized, so fewer operations need to be entered to perform typical calculations. Additionally, users of RPN calculators made fewer mistakes than for other types of calculators. Later research clarified that the increased speed from Reverse Polish Notation may be attributed to the smaller number of keystrokes needed to enter this notation, rather than to a smaller cognitive load on its users.
+
+At the time that the HP-35 was introduced, other pocket calculators typically used a partial algebraic model. That meant they could evaluate trivial expressions like 4+5 but couldn't handle anything that involved parentheses or algebraic precedence. RPN allowed HP to produce a pocket calculator that could evaluate arbitrary expressions using the available technology. During the 1970s and 1980s, HP used RPN in all of their desktop and hand-held calculators, and continued to use it in some models into the 2020s.
+
+### Four level RPN introduced on the HP-35 has the following features: ###
+
+- Stack has four levels (X, Y, Z, T)
+- Only X displayed
+- Numbers in T copied down on pop
+- All operations left result in X register
+- Store and Recall commands provided for X register only
+- Store X leaves the X register untouched
+- All Unary functions worked on X register
+- Implied stack lift on new entry (e.g., 5 log 10 resulted in 5 log in Y and 10 in X)
+
+
 # HP-35 Emulator
 
 Tiny RPN Calculator | HP-35 Calculator | Operation
