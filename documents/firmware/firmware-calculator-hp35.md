@@ -1,3 +1,10 @@
+# Introduction
+
+The HP-35 was HP's first pocket calculator. It was introduced at a time when most calculators (including expensive desktop models) had only the four basic functions. The HP-35 was the first pocket calculator with transcendental functions and the first with RPN.
+
+[![HP-35](https://www.hpmuseum.org/3qs/35v33q.jpg)](http://google.com.au/)
+
+
 # HP-35 Emulator
 
 Tiny RPN Calculator | HP-35 Calculator | Operation
