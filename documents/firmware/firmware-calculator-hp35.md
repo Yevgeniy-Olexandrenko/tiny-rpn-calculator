@@ -2,8 +2,13 @@
 
 The HP-35 was HP's first pocket calculator. It was introduced at a time when most calculators (including expensive desktop models) had only the four basic functions. The HP-35 was the first pocket calculator with transcendental functions and the first with RPN.
 
-[![HP-35](https://www.hpmuseum.org/3qs/35v33q.jpg)](http://google.com.au/)
+[![HP-35](https://www.hpmuseum.org/3qs/35v33q.jpg)](https://www.hpmuseum.org/hp35.htm)
 
+The calculator had a four register stack (**X**, **Y**, **Z** and **T**), the `ENTER↑` key pushed the displayed value (**X**) down the stack. Any binary operation popped the top two registers, and pushed the result. When the stack was popped the **T** register duplicated into the **Z** register.
+
+Internally, the calculator was organized around a serial (one-bit) processor chipset made under contract by Mostek, processing 56-bit floating-point numbers, representing 14-digit BCD numbers.
+
+The calculator used a traditional floating decimal display for numbers that could be displayed in that format, but automatically switched to scientific notation for other numbers. The fifteen-digit LED display was capable of displaying a ten-digit mantissa plus its sign and a decimal point and a two-digit exponent plus its sign.
 
 # HP-35 Emulator
 
