@@ -45,9 +45,19 @@ At the time that the HP-35 was introduced, other pocket calculators typically us
 
 # HP-35 Emulator
 
-The emulator firmware works on top of Tiny RPN Calculator hardware. It fits in ATtiny85's 8Kb flash memory and executes original HP-35's microcode in real time with speed of original calculator. The emulator displays calculations in the same manner as HP-35 does with some additions for a better user experience.
+The emulator firmware works on top of Tiny RPN Calculator hardware. It fits in ATtiny85's 8Kb flash memory and executes original HP-35's microcode in real time with speed of original calculator. The emulator displays calculations in the same manner as HP-35 does with some additions for a better user experience. In addition, the firmware supports the display of the date and time fetched from the on-board RTC chip, as well as the battery charge level.
 
 ![Photo](/hardware/pcb-rev1.3/Tiny-RPN-Calculator-rev1.3_Photo.jpg)
+
+Before you start using **Tiny RPN Calculator** based on this firmware, it is highly recommended to read the original documentation to better understand how everything works:
+
+[**`HP-35 Operating Manual`**](/documents/manuals/hp35-om-en-remake.pdf)
+
+And the general instructions how to use the **Tiny RPN Calculator** device:
+
+[**`Tiny RPN Calculator - How to Use`**](/documents/howto-use/howto-use.md)
+
+The table below shows how the operations of the emulator correspond to those of the original calculator. Please note the firmware implements several operations that extend the capabilities of the HP-35 and improve the user experience.
 
 Tiny RPN Calculator | HP-35 Calculator | Operation
 ------------------- | ---------------- | ---------
