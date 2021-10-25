@@ -34,18 +34,18 @@ At the time that the HP-35 was introduced, other pocket calculators typically us
 
 ### Four level RPN introduced on the HP-35 has the following features: ###
 
-- Stack has four levels (X, Y, Z, T)
-- Only X displayed
-- Numbers in T copied down on pop
-- All operations left result in X register
-- Store and Recall commands provided for X register only
-- Store X leaves the X register untouched
-- All Unary functions worked on X register
-- Implied stack lift on new entry (e.g., 5 log 10 resulted in 5 log in Y and 10 in X)
+- Stack has four levels (**X**, **Y**, **Z**, **T**)
+- Only **X** displayed
+- Numbers in **T** copied down on pop
+- All operations left result in **X** register
+- Store and Recall commands provided for **X** register only
+- Store **X** leaves the **X** register untouched
+- All Unary functions worked on **X** register
+- Implied stack lift on new entry (e.g., 5 log 10 resulted in 5 log in **Y** and 10 in **X**)
 
 # HP-35 Emulator
 
-The emulator firmware works on top of Tiny RPN Calculator hardware. It fits in ATtiny85's 8Kb flash memory and executes original HP-35's microcode in real time with speed of original calculator. The emulator displays calculations in the same manner as HP-35 does with some additions for a better user experience. In addition, the firmware supports the display of the date and time fetched from the on-board RTC chip, as well as the battery charge level.
+The emulator firmware works on top of Tiny RPN Calculator hardware. It fits in ATtiny85's 8Kb flash memory and executes original HP-35's microcode in real time with speed of original calculator. The emulator displays calculations in the same manner as HP-35 does with some additions for a better user experience. Moreover, the firmware supports the display of the date and time fetched from the on-board RTC chip, as well as the battery charge level.
 
 ![Photo](/hardware/pcb-rev1.3/Tiny-RPN-Calculator-rev1.3_Photo.jpg)
 
