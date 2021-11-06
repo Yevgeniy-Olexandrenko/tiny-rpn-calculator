@@ -8,14 +8,14 @@
 #define HPVM_CYCLES_PER_FRAME (HPVM_CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
 
 #define FLAG_CHAR_W           (7)
-#define FLAG_POS              (LCD_WIDTH - FLAG_CHAR_W)
+#define FLAG_POS              (LCD::WIDTH - FLAG_CHAR_W)
 #define FLAG_FUNCTION         'i'
 #define FLAG_STORAGE          'j'
 
 #define MENU_CHAR_W           (5 + 1)
 #define MENU_ITEM_W           ((1 + 4 + 1) * MENU_CHAR_W)
 #define MENU_ITEMS_PER_LINE   (3)
-#define MENU_SPACING          ((LCD_WIDTH - (MENU_ITEM_W * MENU_ITEMS_PER_LINE)) / (MENU_ITEMS_PER_LINE - 1))
+#define MENU_SPACING          ((LCD::WIDTH - (MENU_ITEM_W * MENU_ITEMS_PER_LINE)) / (MENU_ITEMS_PER_LINE - 1))
 #define MENU_POS_ITEM         (MENU_ITEM_W + MENU_SPACING)
 
 #define RTC_TIME_CHAR_W       (7 + 1)

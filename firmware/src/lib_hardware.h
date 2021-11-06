@@ -1,7 +1,7 @@
 #pragma once
 
 // -----------------------------------------------------------------------------
-// PCB Rev 1.1 and newer
+// PCB Rev 1.x
 // Fuses: High - 0xD7, Low - 0xF1, Ext - 0xFF 
 // -----------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@
 // -----------------------------------------------------------------------------
 
 // check for MCU type, clock source and frequency
-#if !defined(__AVR_ATtiny45__) && !defined(__AVR_ATtiny85__)
+#if !defined(__AVR_ATtiny85__)
 #error "Microcontroller not supported!"
 #endif
 #if (F_CPU != 16000000UL) || (CLOCK_SOURCE != 6)
@@ -35,16 +35,16 @@
 #include <avr/interrupt.h> // mcu interrupts
 #include <avr/power.h>     // mcu power management
 #include <avr/sleep.h>     // mcu sleeping
-#include <util/delay.h>    // delays
 
 // data types definition
-typedef bool     b08;
-typedef uint8_t  u08;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef int8_t   s08;
-typedef int16_t  s16;
-typedef int32_t  s32;
+using b08 = bool;
+using u08 = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+using s08 = int8_t;
+using s16 = int16_t;
+using s32 = int32_t;
+using w16 = union { u16 val; struct { u08 lsb, msb; }; };
 
 // bits manipulations
 #define set_bit(sfr, bit) ((sfr) |= _BV(bit))
@@ -64,7 +64,7 @@ class __FlashStringHelper;
 #define F(string_literal) (FPSTR(PSTR(string_literal)))
 
 // figure out build date and time (Example __DATE__ : "Jul 27 2012" and __TIME__ : "21:06:19")
-#define COMPUTE_BUILD_YEAR ((__DATE__[ 9] - '0') *   10 + (__DATE__[10] - '0'))
+#define COMPUTE_BUILD_YEAR ((__DATE__[9] - '0') *   10 + (__DATE__[10] - '0'))
 #define COMPUTE_BUILD_DAY  (((__DATE__[4] >= '0') ? (__DATE__[4] - '0') * 10 : 0) + (__DATE__[5] - '0'))
 #define BUILD_MONTH_IS_JAN (__DATE__[0] == 'J' && __DATE__[1] == 'a' && __DATE__[2] == 'n')
 #define BUILD_MONTH_IS_FEB (__DATE__[0] == 'F')
@@ -138,21 +138,27 @@ namespace BCD
 
 namespace WDT
 {
-	#define WDT_MODE_DISABLED  0x00 // disabled
-	#define WDT_MODE_RES       0x08 // to reset the CPU if there is a timeout
-	#define WDT_MODE_INT       0x40 // timeout will cause an interrupt
-	#define WDT_MODE_INT_RES   0x48 // first time-out interrupt, the second time out - reset
+	enum
+	{
+		MODE_DISABLED = 0x00, // disabled
+		MODE_RES      = 0x08, // to reset the CPU if there is a timeout
+		MODE_INT      = 0x40, // timeout will cause an interrupt
+		MODE_INT_RES  = 0x48, // first time-out interrupt, the second time out - reset
+	};
 
-	#define WDT_TIMEOUT_16MS   0x00 // (16 ± 1.6) ms
-	#define WDT_TIMEOUT_32MS   0x01 // (32 ± 3.2) ms
-	#define WDT_TIMEOUT_64MS   0x02 // (64 ± 6.4) ms
-	#define WDT_TIMEOUT_125MS  0x03 // (128 ± 12.8) ms
-	#define WDT_TIMEOUT_250MS  0x04 // (256 ± 25.6) ms
-	#define WDT_TIMEOUT_500MS  0x05 // (512 ± 51.2) ms
-	#define WDT_TIMEOUT_1S     0x06 // (1024 ± 102.4) ms
-	#define WDT_TIMEOUT_2S     0x07 // (2048 ± 204.8) ms
-	#define WDT_TIMEOUT_4S     0x08 // (4096 ± 409.6) ms
-	#define WDT_TIMEOUT_8S     0x09 // (8192 ± 819.2) ms
+	enum
+	{
+		TIMEOUT_16MS  = 0x00, // (16 ± 1.6) ms
+		TIMEOUT_32MS  = 0x01, // (32 ± 3.2) ms
+		TIMEOUT_64MS  = 0x02, // (64 ± 6.4) ms
+		TIMEOUT_125MS = 0x03, // (128 ± 12.8) ms
+		TIMEOUT_250MS = 0x04, // (256 ± 25.6) ms
+		TIMEOUT_500MS = 0x05, // (512 ± 51.2) ms
+		TIMEOUT_1S    = 0x06, // (1024 ± 102.4) ms
+		TIMEOUT_2S    = 0x07, // (2048 ± 204.8) ms
+		TIMEOUT_4S    = 0x08, // (4096 ± 409.6) ms
+		TIMEOUT_8S    = 0x09, // (8192 ± 819.2) ms
+	};
 
 	void Init(u08 mode, u08 prescaler)
 	{
@@ -172,12 +178,15 @@ namespace WDT
 
 namespace ADC
 {
-	#define ADC_0_PB5 (0b0000)
-	#define ADC_1_PB2 (0b0001)
-	#define ADC_2_PB4 (0b0010)
-	#define ADC_3_PB3 (0b0011)
-	#define ADC_VCC   (0b1100)
-	#define ADC_TEMP  (0b1111 | _BV(REFS1))
+	enum
+	{
+		A0_PB5 = 0b0000,
+		A1_PB2 = 0b0001,
+		A2_PB4 = 0b0010,
+		A3_PB3 = 0b0011,
+		VCC    = 0b1100,
+		TEMP   = 0b1111 | _BV(REFS1),
+	};
 
 	void Init()
 	{
@@ -185,7 +194,7 @@ namespace ADC
 		ADCSRA = _BV(ADEN) | _BV(ADIE) | _BV(ADIF) | _BV(ADPS2) | _BV(ADPS0);
 	}
 
-	NOINLINE u16 Read(u08 channel)
+	NOINLINE w16 Read(u08 channel)
 	{
 		ADMUX = channel;
 		set_sleep_mode(SLEEP_MODE_ADC);
@@ -196,9 +205,11 @@ namespace ADC
 			sleep_disable ();
 		}
 		while (isb_set(ADCSRA, ADSC));
-		u08 adcl = ADCL;
-		u08 adch = ADCH;
-		return (adcl | adch << 8);
+
+		w16 adc;
+		adc.lsb = ADCL;
+		adc.msb = ADCH;
+		return adc;
 	}
 
 	EMPTY_INTERRUPT(ADC_vect);
@@ -223,7 +234,7 @@ namespace I2C
 	#define I2C_SCL_L() set_bit(I2C_DDR, I2C_SCL)
 	#define I2C_SCL_I() isb_set(I2C_PIN, I2C_SCL)
 
-	#define I2C_DELAY() _delay_us(1)
+	#define I2C_DELAY() __asm__ __volatile__ ("nop\n\t")
 
 	void scl_h_wait()
 	{
@@ -317,11 +328,10 @@ namespace I2C
 
 namespace LCD
 {
-	#define LCD_ADDR  0x3C
-	#define LCD_COMM  0x00
-	#define LCD_DATA  0x40
-	#define LCD_WIDTH 128 
-	#define LCD_PAGES 4
+	const u08 I2C_ADDR = 0x3C;
+
+	const u08 WIDTH = 128;
+	const u08 PAGES = 4;
 
 	u08 draw_buf = 0xB4;
 	u08 rend_buf = 0x40;
@@ -341,14 +351,14 @@ namespace LCD
 
 	void start_command()
 	{ 
-		I2C::StartWrite(LCD_ADDR);
-		I2C::Write(LCD_COMM);
+		I2C::StartWrite(I2C_ADDR);
+		I2C::Write(0x00);
 	}
 
 	void start_data()
 	{ 
-		I2C::StartWrite(LCD_ADDR);
-		I2C::Write(LCD_DATA);
+		I2C::StartWrite(I2C_ADDR);
+		I2C::Write(0x40);
 	}
 
 	NOINLINE void command(u08 cmd)
@@ -405,9 +415,9 @@ namespace LCD
 	void Clear()
 	{
 		Position(0, 0);
-		for (u08 i = LCD_PAGES; i > 0; --i)
+		for (u08 i = PAGES; i > 0; --i)
 		{
-			Write(0x00, LCD_WIDTH);
+			Write(0x00, WIDTH);
 		}
 	}
 
@@ -464,7 +474,7 @@ namespace TXT
 	u08  inverse;
 
 	u08 expand4bit(u08 b)
-	{	
+	{
 		// 0000abcd -> aabbccdd
 		b = (b | (b << 2)) & 0x33;
 		b = (b | (b << 1)) & 0x55;
@@ -472,7 +482,7 @@ namespace TXT
 	}
 
 	u08 expand2bit(u08 b)
-	{							   
+	{
 		// 000000ab -> aaaabbbb
 		b = (b | (b << 3)) & 0x11;
 		for (u08 i = 3; i > 0; --i) b |= (b << 1);
@@ -481,7 +491,7 @@ namespace TXT
 
 	void SetInverse(b08 enable)
 	{
-		inverse = enable ? 0xFF : 0x00;
+		inverse = (enable ? 0xFF : 0x00);
 	}
 
 	void SetScale(u08 sx, u08 sy)
@@ -507,7 +517,7 @@ namespace TXT
 		}
 
 		// iterate through screen pages and char data rows
-		for (u08 yi = 0; yi < font.rowsOfBytes; ++yi)
+		for (u08 yi = font.rowsOfBytes; yi > 0; --yi)
 		{
 			for (u08 si = 0; si < font_sy; ++si)
 			{
@@ -621,26 +631,30 @@ namespace TXT
 
 namespace RTC
 {
-	#define RTC_ADDR         0x68
-	#define RTC_SECONDS      0x00
-	#define RTC_MINUTES      0x01
-	#define RTC_HOURS        0x02
-	#define RTC_DAY          0x03
-	#define RTC_DATE         0x04
-	#define RTC_MONTH        0x05
-	#define RTC_YEAR         0x06
-	#define RTC_A1_SECONDS   0x07
-	#define RTC_A1_MINUTES   0x08
-	#define RTC_A1_HOUR      0x09
-	#define RTC_A1_DAY_DATE  0x0A
-	#define RTC_A2_MINUTES   0x0B
-	#define RTC_A2_HOUR      0x0C
-	#define RTC_A2_DAY_DATE  0x0D
-	#define RTC_CONTROL      0x0E
-	#define RTC_STATUS       0x0F
-	#define RTC_AGING_OFFSET 0x10
-	#define RTC_TEMP_MSB     0x11
-	#define RTC_TEMP_LSB     0x12
+	const u08 I2C_ADDR = 0x68;
+
+	enum
+	{
+		REG_SECONDS      = 0x00,
+		REG_MINUTES      = 0x01,
+		REG_HOURS        = 0x02,
+		REG_DAY          = 0x03,
+		REG_DATE         = 0x04,
+		REG_MONTH        = 0x05,
+		REG_YEAR         = 0x06,
+		REG_A1_SECONDS   = 0x07,
+		REG_A1_MINUTES   = 0x08,
+		REG_A1_HOUR      = 0x09,
+		REG_A1_DAY_DATE  = 0x0A,
+		REG_A2_MINUTES   = 0x0B,
+		REG_A2_HOUR      = 0x0C,
+		REG_A2_DAY_DATE  = 0x0D,
+		REG_CONTROL      = 0x0E,
+		REG_STATUS       = 0x0F,
+		REG_AGING_OFFSET = 0x10,
+		REG_TEMP_MSB     = 0x11,
+		REG_TEMP_LSB     = 0x12,
+	};
 
 	u08 Seconds = BCD::Encode(BUILD_SEC);   // 0 - 59
 	u08 Minutes = BCD::Encode(BUILD_MIN);   // 0 - 59
@@ -648,14 +662,13 @@ namespace RTC
 	u08 Date    = BCD::Encode(BUILD_DAY);   // 1 - 31
 	u08 Month   = BCD::Encode(BUILD_MONTH); // 1 - 12
 	u08 Year    = BCD::Encode(BUILD_YEAR);  // 0 - 99
-	s16 TempC;         // MSB degrees, LSB fractional
 
 	void ReadTimeDate()
 	{
-		if (I2C::StartWrite(RTC_ADDR))
+		if (I2C::StartWrite(I2C_ADDR))
 		{
-			I2C::Write(RTC_SECONDS);
-			I2C::StartRead(RTC_ADDR);
+			I2C::Write(REG_SECONDS);
+			I2C::StartRead(I2C_ADDR);
 			Seconds = I2C::ReadAck();
 			Minutes = I2C::ReadAck();
 			Hours   = I2C::ReadAck() & 0x3F;
@@ -669,9 +682,9 @@ namespace RTC
 
 	void WriteTimeDate()
 	{
-		if(I2C::StartWrite(RTC_ADDR))
+		if (I2C::StartWrite(I2C_ADDR))
 		{
-			I2C::Write(RTC_SECONDS);
+			I2C::Write(REG_SECONDS);
 			I2C::Write(Seconds);
 			I2C::Write(Minutes);
 			I2C::Write(Hours);
@@ -683,17 +696,19 @@ namespace RTC
 		}
 	}
 
-	void ReadTemperature()
+	// MSB degrees, LSB fractional
+	w16 ReadTemperature()
 	{
-		if (I2C::StartWrite(RTC_ADDR))
+		w16 temp;
+		if (I2C::StartWrite(I2C_ADDR))
 		{
-			I2C::Write(RTC_TEMP_MSB);
-			I2C::StartRead(RTC_ADDR);
-			u08 msb = I2C::ReadAck();
-			u08 lsb = I2C::ReadNack();
-			TempC = msb << 8 | lsb;
+			I2C::Write(REG_TEMP_MSB);
+			I2C::StartRead(I2C_ADDR);
+			temp.msb = I2C::ReadAck();
+			temp.lsb = I2C::ReadNack();
 			I2C::Stop();
 		}
+		return temp;
 	}
 }
 
@@ -705,10 +720,10 @@ namespace KBD
 {
 #if PCB_REV == 10
 	#define KBD_PIN PB3
-	#define KBD_ADC ADC_3_PB3
+	#define KBD_ADC ADC::A3_PB3
 #else
 	#define KBD_PIN PB4
-	#define KBD_ADC ADC_2_PB4
+	#define KBD_ADC ADC::A2_PB4
 #endif
 
 	enum
@@ -726,7 +741,7 @@ namespace KBD
 		CONS = NUM4, SETS = DOT
 	};
 
-	const u16 adc[] PROGMEM =
+	const u16 adc_lut[] PROGMEM =
 	{
 		147, 182, 221, 269, // A0 B0 C0 D0
 		324, 383, 442, 505, // A1 B1 C1 D1
@@ -734,7 +749,7 @@ namespace KBD
 		827, 863, 893, 913  // A3 B3 C3 D3
 	};
 
-	const u08 code[] PROGMEM = 
+	const u08 code_lut[] PROGMEM = 
 	{
 		FUNC, NUM7, NUM8, NUM9, // A0 B0 C0 D0
 		EEX,  NUM4, NUM5, NUM6, // A1 B1 C1 D1
@@ -746,13 +761,13 @@ namespace KBD
 
 	NOINLINE u08 read_raw_key()
 	{
-		u16 adcVal = ADC::Read(KBD_ADC);
-		if (adcVal > 110)
+		w16 adc = ADC::Read(KBD_ADC);
+		if (adc.val > 110)
 		{
 			for (u08 i = 0; i < 16; ++i)
 			{
-				u16 adcMax = pgm_read_word(&adc[i]);
-				if (adcVal < adcMax) return pgm_read_byte(&code[i]);
+				u16 adcMax = pgm_read_word(&adc_lut[i]);
+				if (adc.val < adcMax) return pgm_read_byte(&code_lut[i]);
 			}
 		}
 		return NONE;
@@ -770,9 +785,9 @@ namespace KBD
 
 	u08 Read()
 	{
-		u08 new_key = read_raw_key();
-		if (new_key == NONE && key != NONE) key = NONE;
-		if (new_key != NONE && key == NONE) key = new_key;
+		u08 raw = read_raw_key();
+		if (raw == NONE && key != NONE) key = NONE;
+		if (raw != NONE && key == NONE) key = raw;
 		return key;
 	}
 
@@ -786,8 +801,8 @@ namespace KBD
 
 namespace PWR
 {
-	#define BAT_FULL  4100 // mV
-	#define BAT_EMPTY 3500 // mV
+	const u16 BAT_FULL  = 4100; // mV
+	const u16 BAT_EMPTY = 3500; // mV
 
 	void saving(u08 mode)
 	{
@@ -803,14 +818,14 @@ namespace PWR
 
 	NOINLINE u16 Voltage()
 	{
-		return (1125300L / ADC::Read(ADC_VCC));
+		return (1125300L / ADC::Read(ADC::VCC).val);
 	}
 
 	u08 Level()
 	{
 		u16 voltage = Voltage();
-		if (voltage >= BAT_FULL ) return 100;
 		if (voltage <= BAT_EMPTY) return 0;
+		if (voltage >= BAT_FULL ) return 100;
 		return ((voltage - BAT_EMPTY) / ((BAT_FULL - BAT_EMPTY) / 100));
 	}
 
@@ -832,20 +847,27 @@ namespace PWR
 
 namespace FPS
 {
-	#define FRAME_TIMEOUT WDT_TIMEOUT_64MS  // 15 fps
+	enum
+	{
+		TIMEOUT_15_FPS = WDT::TIMEOUT_64MS,
+		TIMEOUT_30_FPS = WDT::TIMEOUT_32MS,
+		TIMEOUT_60_FPS = WDT::TIMEOUT_16MS,
+	};
 
+	u08 timeout;
 	volatile b08 waiting;
 	volatile u16 counter;
 
-	NOINLINE void SyncStart()
+	NOINLINE void SyncStart(u08 t)
 	{
-		WDT::Init(WDT_MODE_INT, FRAME_TIMEOUT);
+		WDT::Init(WDT::MODE_INT, t);
+		timeout = (16 << t);
 		counter = 0;
 	}
 
 	void SyncStop()
 	{
-		WDT::Init(WDT_MODE_DISABLED, 0);
+		WDT::Init(WDT::MODE_DISABLED, 0);
 	}
 
 	void SyncWait()
@@ -856,7 +878,7 @@ namespace FPS
 
 	u16 SyncMillis()
 	{
-		return (counter * (16 << FRAME_TIMEOUT));
+		return (counter * timeout);
 	}
 
 	ISR(WDT_vect)

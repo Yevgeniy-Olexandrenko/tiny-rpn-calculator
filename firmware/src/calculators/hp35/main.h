@@ -13,7 +13,7 @@ u08 oldkey;
 void switchToCalcMode(b08 yes = true)
 {
 	calcMode = yes;
-	FPS::SyncStart();
+	FPS::SyncStart(FPS::TIMEOUT_15_FPS);
 }
 
 void switchToRTCMode()
