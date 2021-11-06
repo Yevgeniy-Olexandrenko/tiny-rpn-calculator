@@ -870,13 +870,12 @@ namespace FPS
 // PCB Hardware Initialization
 // -----------------------------------------------------------------------------
 
-namespace PCB
+// initialize hardware before calling 'main' function
+void __hardware_init() __attribute__ ((naked, used, section(".init8")));
+void __hardware_init()
 {
-	void Init()
-	{
-		ADC::Init();
-		LCD::Init();
-		KBD::Init();
-		sei();
-	}
+	ADC::Init();
+	LCD::Init();
+	KBD::Init();
+	sei();
 }

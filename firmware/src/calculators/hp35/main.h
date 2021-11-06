@@ -334,8 +334,7 @@ void updateRTCMode()
 
 int main() 
 {
-	// init hardware and switch to rtc operation mode
-	PCB::Init();
+	// switch to rtc operation mode on reset
 	setupAndSwitchToRTCMode();
 
 	while (true)
