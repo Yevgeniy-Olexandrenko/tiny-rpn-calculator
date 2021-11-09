@@ -36,6 +36,9 @@
 #include <avr/power.h>     // mcu power management
 #include <avr/sleep.h>     // mcu sleeping
 
+// modules implemented in asm
+#define BCD_ASM_IMPL
+
 // data types definition
 using b08 = bool;
 using u08 = uint8_t;
@@ -119,18 +122,25 @@ class __FlashStringHelper;
 // Packed Binary-Coded Decimals
 // -----------------------------------------------------------------------------
 
-namespace BCD
-{
-	u08 Decode(u08 data)
+// compile time implementations
+#define BCD_DECODE(data) ((data / 16 * 10) + (data % 16))
+#define BCD_ENCODE(data) ((data / 10 * 16) + (data % 10))
+
+// execute time implementations
+#if ENABLE_OPT_ASSEMBLER && defined(BCD_ASM_IMPL)
+	extern "C" u08 BCD_Decode(u08 data);
+	extern "C" u08 BCD_Encode(u08 data);
+#else
+	u08 BCD_Decode(u08 data)
 	{
-		return (data / 16 * 10) + (data % 16);
+		return BCD_DECODE(data);
 	}
 
-	u08 Encode(u08 data)
+	u08 BCD_Encode(u08 data)
 	{
-		return (data / 10 * 16) + (data % 10);
+		return BCD_ENCODE(data);
 	}
-}
+#endif
 
 // -----------------------------------------------------------------------------
 // Watch Dog Timer
@@ -656,12 +666,12 @@ namespace RTC
 		REG_TEMP_LSB     = 0x12,
 	};
 
-	u08 Seconds = BCD::Encode(BUILD_SEC);   // 0 - 59
-	u08 Minutes = BCD::Encode(BUILD_MIN);   // 0 - 59
-	u08 Hours   = BCD::Encode(BUILD_HOUR);  // 0 - 23
-	u08 Date    = BCD::Encode(BUILD_DAY);   // 1 - 31
-	u08 Month   = BCD::Encode(BUILD_MONTH); // 1 - 12
-	u08 Year    = BCD::Encode(BUILD_YEAR);  // 0 - 99
+	u08 Seconds = BCD_ENCODE(BUILD_SEC);   // 0 - 59
+	u08 Minutes = BCD_ENCODE(BUILD_MIN);   // 0 - 59
+	u08 Hours   = BCD_ENCODE(BUILD_HOUR);  // 0 - 23
+	u08 Date    = BCD_ENCODE(BUILD_DAY);   // 1 - 31
+	u08 Month   = BCD_ENCODE(BUILD_MONTH); // 1 - 12
+	u08 Year    = BCD_ENCODE(BUILD_YEAR);  // 0 - 99
 
 	void ReadTimeDate()
 	{
