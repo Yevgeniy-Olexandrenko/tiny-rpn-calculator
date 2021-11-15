@@ -4,30 +4,43 @@
 // Switch between working modes
 // -----------------------------------------------------------------------------
 
-b08 calcMode;
+b08 rtcMode;
 u08 battery;
 
 u08 newKey;
 u08 oldkey;
 
-void switchToCalcMode(b08 yes = true)
+void enterCalcMode()
 {
-	calcMode = yes;
-	FPS::SyncStart(FPS::TIMEOUT_15_FPS);
+	if (newKey != KBD::NONE)
+	{
+		FPS::SyncStart(FPS::TIMEOUT_15_FPS);
+		if (rtcMode)
+		{
+			newKey  = KBD::NONE;
+			rtcMode = false;
+
+			void renderCalcMode();
+			renderCalcMode();
+		}
+	}
 }
 
-void switchToRTCMode()
+void enterRTCMode()
 {
-	LCD::TurnOn();
 	battery = (u08)((PWR::Level() * 5 + 50) / 100);
-	switchToCalcMode(false);
-	oldkey = KBD::Read();
+
+	LCD::TurnOn();
+	FPS::SyncStart(FPS::TIMEOUT_15_FPS);
+
+	oldkey  = KBD::Read();
+	rtcMode = true;
 }
 
-NOINLINE void setupAndSwitchToRTCMode()
+NOINLINE void setupAndEnterRTCMode()
 {
 	RTC::WriteTimeDate();
-	switchToRTCMode();
+	enterRTCMode();
 }
 
 // -----------------------------------------------------------------------------
@@ -158,7 +171,7 @@ void executeOperation(u08 operation)
 			    getBCDFromStack(RTC::Hours,   0x00, 0x23))
 			{
 				RTC::Seconds = 0x00;
-				setupAndSwitchToRTCMode();
+				setupAndEnterRTCMode();
 			}
 			break;
 
@@ -167,7 +180,7 @@ void executeOperation(u08 operation)
 			if (getBCDFromStack(RTC::Month, 0x01, 0x12) &&
 			    getBCDFromStack(RTC::Date,  0x01, 0x31))
 			{
-				setupAndSwitchToRTCMode();
+				setupAndEnterRTCMode();
 			}
 			break;
 
@@ -175,7 +188,7 @@ void executeOperation(u08 operation)
 			RTC::ReadTimeDate();
 			if (getBCDFromStack(RTC::Year, 0x00, 0x99))
 			{
-				setupAndSwitchToRTCMode();
+				setupAndEnterRTCMode();
 			}
 			break;
 	}
@@ -335,18 +348,18 @@ void updateRTCMode()
 int main() 
 {
 	// switch to rtc operation mode on reset
-	setupAndSwitchToRTCMode();
+	setupAndEnterRTCMode();
 
 	while (true)
 	{
 		// get time passed since last operation mode switch
-		uint16_t timePassedMs = FPS::SyncMillis();
+		u16 timeout = FPS::SyncMillis();
 
 		// handle display brightness change
-		LCD::Brightness(calcMode && timePassedMs < DIMOUT_MILLIS ? 0xFF : 0x00);
+		LCD::Brightness(rtcMode || timeout >= DIMOUT_MILLIS ? 0x00 : 0xFF);
 
 		// handle power down condition
-		if (timePassedMs >= POWEROFF_MILLIS)
+		if (timeout >= POWEROFF_MILLIS)
 		{
 			// power down and go to sleeping
 			FPS::SyncStop();
@@ -354,16 +367,16 @@ int main()
 			PWR::Down();
 
 			// power up an switch to rtc operation mode
-			switchToRTCMode();
+			enterRTCMode();
 		}
 
 		// read key press and switch to calculator operation mode
 		newKey = KBD::Read();
 		if (newKey != oldkey) oldkey = newKey; else newKey = KBD::NONE;
-		if (newKey != KBD::NONE) switchToCalcMode();
+		enterCalcMode();
 
 		// update current operation mode and idle until next frame
-		if (calcMode) updateCalcMode(); else updateRTCMode();
+		if (rtcMode) updateRTCMode(); else updateCalcMode();
 		FPS::SyncWait();
 	}
 	return 0;
