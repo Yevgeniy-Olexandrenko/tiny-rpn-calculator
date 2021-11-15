@@ -112,7 +112,7 @@ void executeOperation(u08 operation)
 
 		case KEY_FUNC:
 			executeOperationAndWait(HPVM::OpSWAP);
-			for (u08 i = 0; i < 15; ++i) hidden[i] = HPVM::Display[i];
+			memcpy(hidden, HPVM::Display, 15);
 			executeOperationAndWait(HPVM::OpSWAP);
 			isFunc = true;
 			break;
@@ -200,7 +200,7 @@ void executeOperation(u08 operation)
 
 void renderCalcNumber(const u08 * numStr, u08 y)
 {
-	for (u08 i = 0; i < 15; ++i)
+	for (u08 i = 0, x = 0; i < 15; ++i, x += TXT::char_dx)
 	{
 		if (i == 12) TXT::SetFont(digits7x16);
 
@@ -209,7 +209,7 @@ void renderCalcNumber(const u08 * numStr, u08 y)
 		else if (ch == HPVM_DOT) seg = TXT::SEG_DOT;
 		else if (ch != HPVM_SPACE) seg = TXT::NumToSeg(ch);
 
-		TXT::PrintSeg(seg, i * TXT::char_dx, y);
+		TXT::PrintSeg(seg, x, y);
 	}
 }
 
@@ -247,7 +247,6 @@ void renderCalcMode()
 		renderCalcNumber(HPVM::Display, 2);
 		TXT::PrintChar(FLAG_FUNCTION, FLAG_POS, 0);
 	}
-
 	else if (isMenu)
 	{
 		renderCalcNumber(HPVM::Display, 0);
@@ -316,21 +315,24 @@ void renderRTCMode()
 	TXT::SetFont(digits7x32);
 	TXT::PrintChar(RTC_TIME_COLON, RTC_POS_COLON_HM, 0);
 	TXT::PrintChar(RTC_TIME_COLON, RTC_POS_COLON_MS, 0);
-	TXT::PrintSegBCD(RTC::Hours, RTC_POS_HOURS, 0);
+	TXT::PrintSegBCD(RTC::Hours,   RTC_POS_HOURS, 0);
 	TXT::PrintSegBCD(RTC::Minutes, RTC_POS_MINUTES, 0);
 	TXT::PrintSegBCD(RTC::Seconds, RTC_POS_SECONDS, 0);
 
 	TXT::SetFont(menu5x8);
-	u08 monthIndex = BCD_Decode(RTC::Month) - 1;
-	TXT::PrintString(FPSTR(strMonth), monthIndex, RTC_POS_MONTH, 0);
+	u08 month = BCD_Decode(RTC::Month) - 1;
+	TXT::PrintString(FPSTR(strMonth), month, RTC_POS_MONTH, 0);
 	TXT::PrintBCD(RTC::Date, RTC_POS_DATE, 0);
 	TXT::PrintBCD(RTC::Year, RTC_POS_YEAR, 0);
 	TXT::PrintChar(RTC_DATE_SLASH, RTC_POS_SLASH, 0);
 
 	TXT::SetScale(TXT::x2, TXT::x1);
 	TXT::PrintString(F(RTC_INFO_HP_LABEL), RTC_POS_INFO, 2);
-	for (u08 i = 0; i < battery; ++i) 
-		TXT::PrintChar(RTC_BATTERY_LEVEL, RTC_POS_INFO + i * TXT::char_dx, 1);
+	for (u08 i = battery, x = RTC_POS_INFO; i > 0; --i)
+	{ 
+		TXT::PrintChar(RTC_BATTERY_LEVEL, x, 1);
+		x += TXT::char_dx;
+	}
 
 	LCD::Flip();
 }
