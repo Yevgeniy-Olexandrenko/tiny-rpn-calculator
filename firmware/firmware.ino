@@ -1,32 +1,25 @@
 #pragma once
 
-#include "firmware-config.h"
+#include "firmware.h"
 
 // -----------------------------------------------------------------------------
 // Hardware Tester
 // -----------------------------------------------------------------------------
 
-#if defined(FW_HARDWARE_TESTER)
+#if FW_HARDWARE_TESTER
     #include "src/lib_hardware.h"
-    #include "src/tester/data.h"
-    #include "src/tester/main.h"
-
-// -----------------------------------------------------------------------------
-// Native Calculator
-// -----------------------------------------------------------------------------
-
-#elif defined(FW_CALCULATOR_NATIVE)
-    #include "src/lib_hardware.h"
+    #include "src/fw_tester/data.h"
+    #include "src/fw_tester/code.h"
+#endif
 
 // -----------------------------------------------------------------------------
 // Emulator for HP-35 Calculator 
 // -----------------------------------------------------------------------------
 
-#elif defined(FW_CALCULATOR_HP35)
+#if FW_CALCULATOR_HP35
     #define HPVM_HP35
     #include "src/lib_hardware.h"
     #include "src/lib_hpvm_classic.h"
-    #include "src/calculators/hp35/data.h"
-    #include "src/calculators/hp35/main.h"
-
+    #include "src/fw_calc_hp35/data.h"
+    #include "src/fw_calc_hp35/code.h"
 #endif
