@@ -23,3 +23,13 @@
     #include "src/fw_calc_hp35/data.h"
     #include "src/fw_calc_hp35/code.h"
 #endif
+
+// -----------------------------------------------------------------------------
+// Time-based one-time password for Two-factor Authentication
+// -----------------------------------------------------------------------------
+
+#if FW_TOTP_AUTHENTICATE
+    #include "src/lib_hardware.h"
+    #include "src/fw_totp/data.h"
+    #include "src/fw_totp/code.h"
+#endif
