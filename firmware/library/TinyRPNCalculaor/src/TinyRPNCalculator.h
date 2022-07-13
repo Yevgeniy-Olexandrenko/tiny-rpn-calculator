@@ -50,10 +50,10 @@ using s32 = int32_t;
 using w16 = union { u16 val; struct { u08 lsb, msb; }; };
 
 // bits manipulations
-#define set_bit(sfr, bit) ((sfr) |= _BV(bit))
-#define clr_bit(sfr, bit) ((sfr) &= ~_BV(bit))
-#define isb_set(sfr, bit) ((sfr) & _BV(bit))
-#define isb_clr(sfr, bit) (!((sfr) & _BV(bit)))
+#define set_bit(sfr, bit) (  (sfr) |=  _BV(bit) )
+#define clr_bit(sfr, bit) (  (sfr) &= ~_BV(bit) )
+#define isb_set(sfr, bit) (  (sfr) &   _BV(bit) )
+#define isb_clr(sfr, bit) (!((sfr) &   _BV(bit)))
 
 // necessary undefs
 #undef NOINLINE

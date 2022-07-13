@@ -16,13 +16,10 @@ namespace LCD
 	{
 		0xC8,       // set scan direction (C0 scan from COM0 to COM[N-1] or C8 mirroring)
 		0xA1,       // set segment remap (A0 regular or A1 flip)
-		0xA8, 0x1F, // set mux ratio (N+1) where: 14<N<64 ... 3F or 1F
-		0xDA, 0x02, // COM config pin mapping:
-					//                  right/left left/right
-					//      sequential      02        22
-					//      alternate       12        32
-		0x20, 0x00, // horizontal addressing mode (line feed after EOL)
-		0x8D, 0x14  // charge pump (0x14 enable or 0x10 disable)
+		0xA8, 0x1F, // set multiplex (HEIGHT-1): 0x1F for 128x32, 0x3F for 128x64 
+		0xDA, 0x02, // set COM pins hardware configuration to sequential
+		0x20, 0x00, // set horizontal memory addressing mode
+		0x8D, 0x14, // enable charge pump
 	};
 
 	void start_command()
@@ -47,9 +44,9 @@ namespace LCD
 	void Init()
 	{
 		start_command();
-		for (u08 i = 0; i < sizeof(init_data); i++)
+		for (u08 i = 0; i < sizeof(init_data); ++i)
 		{
-			I2C::Write(pgm_read_byte(&init_data[i]));
+			I2C::Write(pgm_read_byte(init_data + i));
 		}
 		I2C::Stop();
 	}
@@ -91,10 +88,7 @@ namespace LCD
 	void Clear()
 	{
 		Position(0, 0);
-		for (u08 i = PAGES; i > 0; --i)
-		{
-			Write(0x00, WIDTH);
-		}
+		for (u08 i = PAGES; i > 0; --i) Write(0, WIDTH);
 	}
 
 	void Flip()
