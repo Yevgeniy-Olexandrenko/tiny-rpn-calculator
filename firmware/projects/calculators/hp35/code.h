@@ -320,7 +320,7 @@ void renderRTCMode()
 	TXT::PrintSegBCD(RTC::Seconds, RTC_POS_SECONDS, 0);
 
 	TXT::SetFont(menu5x8);
-	u08 month = BCD_Decode(RTC::Month) - 1;
+	u08 month = BCD::Decode(RTC::Month) - 1;
 	TXT::PrintString(FPSTR(strMonth), month, RTC_POS_MONTH, 0);
 	TXT::PrintBCD(RTC::Date, RTC_POS_DATE, 0);
 	TXT::PrintBCD(RTC::Year, RTC_POS_YEAR, 0);
