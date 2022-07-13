@@ -7,7 +7,6 @@
 
 // Supported hardware and software modules:
 // BCD - Binary-Coded Decimals conversion
-// WDT - Watch Dog Timer configuration
 // ADC - Analog to Digital Converter reading
 // I2C - I2C Bus devices reading/writing
 // LCD - SSD1306 128x32 Display control
@@ -35,6 +34,7 @@
 #include <avr/interrupt.h> // mcu interrupts
 #include <avr/power.h>     // mcu power management
 #include <avr/sleep.h>     // mcu sleeping
+#include <avr/wdt.h>       // mcu watch dog timer
 
 // modules implemented in asm
 #define BCD_ASM_IMPL
@@ -78,7 +78,6 @@ class __FlashStringHelper;
 // -----------------------------------------------------------------------------
 
 #include "TinyRPNCalculator/BCD.h"
-#include "TinyRPNCalculator/WDT.h"
 #include "TinyRPNCalculator/ADC.h"
 #include "TinyRPNCalculator/I2C.h"
 #include "TinyRPNCalculator/LCD.h"
