@@ -49,7 +49,8 @@ namespace I2C
 		scl_pulldown();
 	}
 
-	NOINLINE b08 Write(u08 data)
+	NOINLINE
+	b08 Write(u08 data)
 	{
 		read_write(data);
 		scl_release_wait();
@@ -59,7 +60,8 @@ namespace I2C
 		return ack;
 	}
 
-	NOINLINE u08 Read(b08 ack)
+	NOINLINE
+	u08 Read(b08 ack)
 	{
 		u08 data = read_write();
 		if (ack) sda_pulldown();
@@ -92,7 +94,8 @@ namespace I2C
 		return Write(addr << 1 | 1);
 	}
 
-	NOINLINE void Stop()
+	NOINLINE
+	void Stop()
 	{
 		sda_pulldown();
 		scl_release_wait();

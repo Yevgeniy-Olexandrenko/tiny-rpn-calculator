@@ -36,9 +36,6 @@
 #include <avr/sleep.h>     // mcu sleeping
 #include <avr/wdt.h>       // mcu watch dog timer
 
-// modules implemented in asm
-#define BCD_ASM_IMPL
-
 // data types definition
 using b08 = bool;
 using u08 = uint8_t;

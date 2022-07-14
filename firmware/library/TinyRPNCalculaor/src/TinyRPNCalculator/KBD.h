@@ -45,7 +45,8 @@ namespace KBD
 
 	u08 key;
 
-	NOINLINE u08 read_raw_key()
+	NOINLINE
+	u08 read_raw_key()
 	{
 		w16 adc = ADC::Read(KBD_ADC);
 		if (adc.val > 110)

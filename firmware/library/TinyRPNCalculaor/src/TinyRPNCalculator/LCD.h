@@ -34,7 +34,8 @@ namespace LCD
 		I2C::Write(0x40);
 	}
 
-	NOINLINE void command(u08 cmd)
+	NOINLINE
+	void command(u08 cmd)
 	{ 
 		start_command();
 		I2C::Write(cmd);
@@ -78,7 +79,8 @@ namespace LCD
 		I2C::Stop();
 	}
 
-	NOINLINE void Write(u08 b, u08 s)
+	NOINLINE
+	void Write(u08 b, u08 s)
 	{
 		start_data();
 		while (s--) I2C::Write(b);

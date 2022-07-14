@@ -19,7 +19,8 @@ namespace PWR
 		set_bit(ADCSRA, ADEN);
 	}
 
-	NOINLINE u16 Voltage()
+	NOINLINE
+	u16 Voltage()
 	{
 		return (1125300L / ADC::Read(ADC::VCC).val);
 	}

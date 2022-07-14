@@ -34,7 +34,8 @@ namespace FPS
 		SREG  = sreg;
 	}
 
-	NOINLINE void SyncStart(u08 t)
+	NOINLINE
+	void SyncStart(u08 t)
 	{
 		wdt_init(WDT_MODE_INT, t);
 		timeout = (16 << t);

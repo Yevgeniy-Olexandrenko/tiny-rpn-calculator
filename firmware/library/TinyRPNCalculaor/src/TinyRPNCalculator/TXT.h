@@ -154,7 +154,8 @@ namespace TXT
 		PrintChar('0' + (n & 15), x + char_dx, y);
 	}
 
-	NOINLINE u08 NumToSeg(u08 n)
+	NOINLINE
+	u08 NumToSeg(u08 n)
 	{
 		return pgm_read_byte(num_seg + n);
 	}
