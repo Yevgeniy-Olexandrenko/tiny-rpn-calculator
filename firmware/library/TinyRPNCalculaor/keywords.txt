@@ -74,6 +74,9 @@ Year	KEYWORD2
 ReadTimeDate	KEYWORD2
 WriteTimeDate	KEYWORD2
 ReadTemperature	KEYWORD2
+IsLeapYear	KEYWORD2
+GetDaysInMonth	KEYWORD2
+GetTimestamp	KEYWORD2
 
 SetInverse	KEYWORD2
 SetScale	KEYWORD2

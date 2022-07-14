@@ -79,6 +79,11 @@ namespace RTC
 		REG_TEMP_LSB     = 0x12,
 	};
 
+	const u08 days_per_month[] PROGMEM =
+	{
+		31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+	};
+
 	u08 Seconds = BCD_Encode(BUILD_SEC);   // 0 - 59
 	u08 Minutes = BCD_Encode(BUILD_MIN);   // 0 - 59
 	u08 Hours   = BCD_Encode(BUILD_HOUR);  // 0 - 23
@@ -132,5 +137,46 @@ namespace RTC
 			I2C::Stop();
 		}
 		return temp;
+	}
+
+	b08 IsLeapYear()
+	{
+		u16 year = 2000 + BCD::Decode(Year);
+		return ((year % 4 == 0) && (year % 100 != 0) || (year % 400 == 0));
+	}
+
+	u08 GetDaysInMonth()
+	{
+		u08 i = BCD::Decode(Month) - 1;
+		return pgm_read_byte(days_per_month + i);
+	}
+
+	u32 GetTimestamp()
+	{
+		// One revolution of the Earth is not 365 days but accurately
+		// 365.2422 days. It is leap year that adjusts this decimal
+		// fraction.
+		u32 ts = (2000 + BCD::Decode(Year) - 1970) * 3652422 / 10000;
+
+		// Compute from days to seconds.
+		u08 month = BCD::Decode(Month) - 1;
+		for (u08 i = 0; i < month; ++i) 
+			pgm_read_byte(days_per_month + i);
+		ts = 24 * (ts + BCD::Decode(Date));
+		ts = 60 * (ts + BCD::Decode(Hours));
+		ts = 60 * (ts + BCD::Decode(Minutes));
+		ts += BCD::Decode(Seconds);
+
+		// Year 2000 is a special leap year, so 1 day must
+		// be added if date is greater than 29/02/2000.
+		if (ts > 951847199) ts += 86400;
+
+		// Checks if, in case of a leap year, the date is before or past
+		// the 29th of februray. If no, the leap day hasn't been yet
+		// reached so we have to subtract a day.
+		if (IsLeapYear() && month < 2) ts -= 86400;
+
+		// Because years start at day 0.0, not day 1.
+		return (ts - 86400);
 	}
 }
