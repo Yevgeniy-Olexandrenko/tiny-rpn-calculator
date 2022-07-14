@@ -17,10 +17,10 @@ namespace ADC
 	void Init()
 	{
 		ADCSRA = _BV(ADEN)   // enable adc
-			   | _BV(ADIE)   // enable interrupt
-			   | _BV(ADIF)   // clear interrupt flag
-			   | _BV(ADPS2)  // prescaler is 32
-			   | _BV(ADPS0); //
+		       | _BV(ADIE)   // enable interrupt
+		       | _BV(ADIF)   // clear interrupt flag
+		       | _BV(ADPS2)  // prescaler is 32
+		       | _BV(ADPS0); //
 	}
 
 	NOINLINE
