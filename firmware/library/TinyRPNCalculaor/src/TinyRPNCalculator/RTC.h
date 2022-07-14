@@ -79,12 +79,12 @@ namespace RTC
 		REG_TEMP_LSB     = 0x12,
 	};
 
-	u08 Seconds = BCD_ENCODE(BUILD_SEC);   // 0 - 59
-	u08 Minutes = BCD_ENCODE(BUILD_MIN);   // 0 - 59
-	u08 Hours   = BCD_ENCODE(BUILD_HOUR);  // 0 - 23
-	u08 Date    = BCD_ENCODE(BUILD_DAY);   // 1 - 31
-	u08 Month   = BCD_ENCODE(BUILD_MONTH); // 1 - 12
-	u08 Year    = BCD_ENCODE(BUILD_YEAR);  // 0 - 99
+	u08 Seconds = BCD_Encode(BUILD_SEC);   // 0 - 59
+	u08 Minutes = BCD_Encode(BUILD_MIN);   // 0 - 59
+	u08 Hours   = BCD_Encode(BUILD_HOUR);  // 0 - 23
+	u08 Date    = BCD_Encode(BUILD_DAY);   // 1 - 31
+	u08 Month   = BCD_Encode(BUILD_MONTH); // 1 - 12
+	u08 Year    = BCD_Encode(BUILD_YEAR);  // 0 - 99
 
 	void ReadTimeDate()
 	{
