@@ -150,31 +150,69 @@ namespace RTC
 		return pgm_read_byte(&days_per_month[m]);
 	}
 
+	#define SECS_PER_MIN  (60UL)
+	#define SECS_PER_HOUR (3600UL)
+	#define SECS_PER_DAY  (SECS_PER_HOUR * 24UL)
+	#define LEAP_YEAR(Y)  ( ((1970+(Y))>0) && !((1970+(Y))%4) && ( ((1970+(Y))%100) || !((1970+(Y))%400) ) )
+
 	u32 GetTimestamp()
 	{
-		// One revolution of the Earth is not 365 days but accurately
-		// 365.2422 days. It is leap year that adjusts this decimal
-		// fraction.
-		u32 t = (2000 + BCD::Decode(Year) - 1970) * 3652422 / 10000;
+		// // One revolution of the Earth is not 365 days but accurately
+		// // 365.2422 days. It is leap year that adjusts this decimal
+		// // fraction.
+		// u32 t = (2000 + BCD::Decode(Year) - 1970) * 3652422 / 10000;
 
-		// Compute from days to seconds.
-		u08 m = BCD::Decode(Month) - 1;
-		for (u08 i = 0; i < m; pgm_read_byte(&days_per_month[i++]));
-		t = 24 * (t + BCD::Decode(Date));
-		t = 60 * (t + BCD::Decode(Hours));
-		t = 60 * (t + BCD::Decode(Minutes));
-		t += BCD::Decode(Seconds);
+		// // Compute from days to seconds.
+		// u08 m = BCD::Decode(Month) - 1;
+		// for (u08 i = 0; i < m; pgm_read_byte(&days_per_month[i++]));
+		// t = 24 * (t + BCD::Decode(Date));
+		// t = 60 * (t + BCD::Decode(Hours));
+		// t = 60 * (t + BCD::Decode(Minutes));
+		// t += BCD::Decode(Seconds);
 
-		// Year 2000 is a special leap year, so 1 day must
-		// be added if date is greater than 29/02/2000.
-		if (t > 951847199) t += 86400;
+		// // Year 2000 is a special leap year, so 1 day must
+		// // be added if date is greater than 29/02/2000.
+		// if (t > 951847199) t += 86400;
 
-		// Checks if, in case of a leap year, the date is before or
-		// past the 29th of februray. If no, the leap day hasn't been
-		// yet reached so we have to subtract a day.
-		if (IsLeapYear() && m < 2) t -= 86400;
+		// // Checks if, in case of a leap year, the date is before or
+		// // past the 29th of februray. If no, the leap day hasn't been
+		// // yet reached so we have to subtract a day.
+		// if (IsLeapYear() && m < 2) t -= 86400;
 
-		// Because years start at day 0, not day 1.
-		return (t - 86400);
+		// // Because years start at day 0, not day 1.
+		// return (t - 86400);
+
+		int i;
+		uint32_t seconds;
+		u16 year = ((2000 + BCD::Decode(Year)) - 1970);
+		u08 month = BCD::Decode(Month);
+
+		// seconds from 1970 till 1 jan 00:00:00 of the given year
+		seconds= year*(SECS_PER_DAY * 365);
+		for (i = 0; i < year; i++) 
+		{
+			if (LEAP_YEAR(i)) 
+			{
+				seconds += SECS_PER_DAY;   // add extra days for leap years
+			}
+		}
+
+		// add days for this year, months start from 1
+		for (i = 1; i < month; i++) 
+		{
+			if ( (i == 2) && LEAP_YEAR(year)) 
+			{
+				seconds += SECS_PER_DAY * 29;
+			}
+			else
+			{
+				seconds += SECS_PER_DAY * pgm_read_byte(&days_per_month[i-1]);  //monthDay array starts from 0
+			}
+		}
+		seconds+= (BCD::Decode(Date)-1) * SECS_PER_DAY;
+		seconds+= BCD::Decode(Hours) * SECS_PER_HOUR;
+		seconds+= BCD::Decode(Minutes) * SECS_PER_MIN;
+		seconds+= BCD::Decode(Seconds);
+		return seconds; 
 	}
 }
