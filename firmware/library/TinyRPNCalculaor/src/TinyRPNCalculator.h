@@ -15,6 +15,7 @@
 // KBD - One Pin Analog 16-Key Keyboard reading
 // PWR - MPU Power management (Idle + Power down)
 // FPS - Frames per Second sync for main loop update
+// FNT - A Set of Predefined Fonts
 
 // -----------------------------------------------------------------------------
 // Includes and Helping Defines
@@ -83,6 +84,7 @@ class __FlashStringHelper;
 #include "TinyRPNCalculator/KBD.h"
 #include "TinyRPNCalculator/PWR.h"
 #include "TinyRPNCalculator/FPS.h"
+#include "TinyRPNCalculator/FNT.h"
 
 // -----------------------------------------------------------------------------
 // PCB Hardware Initialization
