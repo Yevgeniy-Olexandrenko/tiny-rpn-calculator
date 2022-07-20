@@ -7,7 +7,8 @@
 u08  hmacKey[] = { 0xD5, 0xCA, 0xB3, 0x0A, 0x4D, 0xC2, 0x1F, 0x0C, 0x05, 0xFB };
 TOTP totp(hmacKey, 10);
 
-s32 timezone = +3 * 3600;
+#define GMT_TIMEZONE +3
+#define COMPILE_TIME +6
 
 int main() 
 {
@@ -18,7 +19,7 @@ int main()
     while(true)
     {
         RTC::ReadTimeDate();
-        u32 timestamp = RTC::GetTimestamp() - timezone;
+        u32 timestamp = RTC::GetTimestamp(GMT_TIMEZONE) + COMPILE_TIME;
         char* newCode = totp.GetCodeAsString(timestamp);
 
         LCD::Clear();
