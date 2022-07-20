@@ -48,6 +48,11 @@ namespace RTC
 	u08 Month   = BCD_Encode(BUILD_MONTH); // 1 - 12
 	u08 Year    = BCD_Encode(BUILD_YEAR);  // 0 - 99
 
+	b08 is_leap_year(u16 year)
+	{
+		return (!(year % 4) && ((year % 100) || !(year % 400)));
+	}
+
 	void ReadTimeDate()
 	{
 		if (I2C::StartWrite(I2C_ADDR))
@@ -95,16 +100,6 @@ namespace RTC
 		return temp;
 	}
 
-	b08 IsLeapYear(u16 year)
-	{
-		return (!(year % 4) && ((year % 100) || !(year % 400)));
-	}
-
-	b08 IsLeapYear()
-	{
-		return IsLeapYear(2000 + BCD::Decode(Year));
-	}
-
 	u32 GetTimestamp(s08 GMTTimeZone)
 	{
 		u08 y = BCD::Decode(Year) + 2000 - 1970;
@@ -114,14 +109,14 @@ namespace RTC
 		u32 t = y * 365;
 		for (u08 i = 0; i < y; ++i)
 		{
-			if (IsLeapYear(1970 + i)) t++;
+			if (is_leap_year(1970 + i)) t++;
 		}
 
 		// count days before given month
 		for (u08 i = 1; i < m; ++i)
 		{
 			t += pgm_read_byte(&days_per_month[i - 1]);
-			if (i == 2 && IsLeapYear(1970 + y)) t++;
+			if (i == 2 && is_leap_year(1970 + y)) t++;
 		}
 
 		// compute from days to seconds
@@ -131,5 +126,16 @@ namespace RTC
 		t += BCD::Decode(Seconds);
 		t -= 3600 * GMTTimeZone;
 		return t;
+	}
+
+	b08 IsLeapYear()
+	{
+		return is_leap_year(2000 + BCD::Decode(Year));
+	}
+
+	u08 GetDaysInMonth()
+	{
+		u08 i = BCD::Decode(Month) - 1;
+		return (i == 1 && IsLeapYear() ? 29 : pgm_read_byte(days_per_month + i));
 	}
 }
