@@ -5,6 +5,9 @@
 #include <filesystem>
 #include "pugixml.hpp"
 
+const std::string k_iFileExt = ".lcd";
+const std::string k_oFileExt = ".h";
+
 using Pixels = std::vector<bool>;
 using Font = std::vector<Pixels>;
 
@@ -159,31 +162,38 @@ bool Convert(const std::filesystem::path& inputPath, const std::filesystem::path
     output << "    .bytes = " << outputFontBytesName.str() << " // " << bytesTotal << " bytes" << std::endl;
     output << "};" << std::endl;
     output.close();
-
-    std::cout << "DONE\n";
     return true;
 }
 
 int main(int argc, char* argv[])
 {
-    if (argc > 1)
+    if (argc < 2)
     {
-        std::filesystem::path inputPath = argv[1];
-        std::filesystem::path outputPath = inputPath;
-        outputPath.replace_extension(".h");
+        std::filesystem::path app{ argv[0] };
+        std::cerr << "Usage:" << std::endl;
+        std::cerr << app.filename().string() << " <input_file>" << std::endl;
+        return -1;
+    }
 
-        if (!Convert(inputPath, outputPath))
-        {
-            std::cerr << "Conversion FAILED:\n";
-            std::cerr << inputPath.string() << " -> " << outputPath.string() << '\n';
-            return -1;
-        }
-    }
-    else
+    std::filesystem::path iFilePath{ argv[1] };
+    std::filesystem::path oFilePath{ iFilePath };
+    oFilePath.replace_extension(k_oFileExt);
+
+    if (iFilePath.extension() != k_iFileExt)
     {
-        std::cerr << "Usage:\n";
-        std::cerr << argv[0] << " <input_file>" << '\n';
-        return -2;
+        std::cerr << "Unsupported file type:" << std::endl;
+        std::cerr << "Must be " << k_iFileExt << " instead of " << iFilePath.extension().string() << std::endl;
+        return -1;
     }
+
+    if (!Convert(iFilePath, oFilePath))
+    {
+        std::cerr << "Conversion FAILED:" << std::endl;
+        std::cerr << iFilePath.filename().string() << " -> " << oFilePath.filename().string() << std::endl;
+        return -1;
+    }
+
+    std::cout << "Conversion DONE:" << std::endl;
+    std::cout << iFilePath.filename().string() << " -> " << oFilePath.filename().string() << std::endl;
     return 0;
 }
