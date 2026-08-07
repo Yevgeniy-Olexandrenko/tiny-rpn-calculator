@@ -95,6 +95,7 @@ namespace SYS
 	void Init()
 	{
 		ADC::Init();
+		I2C::Init();
 		LCD::Init();
 		KBD::Init();
 		sei();

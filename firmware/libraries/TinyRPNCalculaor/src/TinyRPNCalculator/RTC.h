@@ -55,48 +55,45 @@ namespace RTC
 
 	void ReadTimeDate()
 	{
-		if (I2C::StartWrite(I2C_ADDR))
-		{
-			I2C::Write(REG_SECONDS);
-			I2C::StartRead(I2C_ADDR);
-			Seconds = I2C::ReadAck();
-			Minutes = I2C::ReadAck();
-			Hours   = I2C::ReadAck() & 0x3F;
-			I2C::ReadAck();
-			Date    = I2C::ReadAck();
-			Month   = I2C::ReadAck() & 0x1F;
-			Year    = I2C::ReadNack();
-			I2C::Stop();
-		}
+		u08 skip;
+		I2C::StartWrite(I2C_ADDR);
+		I2C::Write(REG_SECONDS);
+		I2C::StartRead(I2C_ADDR);
+		I2C::ReadAck(Seconds);
+		I2C::ReadAck(Minutes);
+		I2C::ReadAck(Hours);
+		I2C::ReadAck(skip);
+		I2C::ReadAck(Date);
+		I2C::ReadAck(Month);
+		I2C::ReadNack(Year);
+		I2C::Stop();
+		Hours &= 0x3F;
+		Month &= 0x1F;
 	}
 
 	void WriteTimeDate()
 	{
-		if (I2C::StartWrite(I2C_ADDR))
-		{
-			I2C::Write(REG_SECONDS);
-			I2C::Write(Seconds);
-			I2C::Write(Minutes);
-			I2C::Write(Hours);
-			I2C::Write(1);
-			I2C::Write(Date);
-			I2C::Write(Month);
-			I2C::Write(Year);
-			I2C::Stop();
-		}
+		I2C::StartWrite(I2C_ADDR);
+		I2C::Write(REG_SECONDS);
+		I2C::Write(Seconds);
+		I2C::Write(Minutes);
+		I2C::Write(Hours);
+		I2C::Write(1);
+		I2C::Write(Date);
+		I2C::Write(Month);
+		I2C::Write(Year);
+		I2C::Stop();
 	}
 
 	w16 ReadTemperature()
 	{
 		w16 temp;
-		if (I2C::StartWrite(I2C_ADDR))
-		{
-			I2C::Write(REG_TEMP_MSB);
-			I2C::StartRead(I2C_ADDR);
-			temp.msb = I2C::ReadAck();  // degrees
-			temp.lsb = I2C::ReadNack(); // fractional
-			I2C::Stop();
-		}
+		I2C::StartWrite(I2C_ADDR);
+		I2C::Write(REG_TEMP_MSB);
+		I2C::StartRead(I2C_ADDR);
+		I2C::ReadAck (temp.msb); // degrees
+		I2C::ReadNack(temp.lsb); // fractional
+		I2C::Stop();
 		return temp;
 	}
 
