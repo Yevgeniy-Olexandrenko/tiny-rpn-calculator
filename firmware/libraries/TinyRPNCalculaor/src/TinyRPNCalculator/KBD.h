@@ -53,7 +53,7 @@ namespace KBD
 		{
 			for (u08 i = 0; i < 16; ++i)
 			{
-				u08 adcMax = pgm_read_word(adc_lut + i);
+				u08 adcMax = pgm_read_byte(adc_lut + i);
 				if (adc < adcMax) return pgm_read_byte(code_lut + i);
 			}
 		}
