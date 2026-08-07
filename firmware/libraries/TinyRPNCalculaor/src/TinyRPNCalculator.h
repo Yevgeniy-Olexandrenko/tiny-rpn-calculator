@@ -87,15 +87,16 @@ class __FlashStringHelper;
 #include "TinyRPNCalculator/FNT.h"
 
 // -----------------------------------------------------------------------------
-// PCB Hardware Initialization
+// System Initialization
 // -----------------------------------------------------------------------------
 
-// initialize hardware before calling 'main' function
-void __hardware_init() __attribute__ ((naked, used, section(".init8")));
-void __hardware_init()
+namespace SYS
 {
-	ADC::Init();
-	LCD::Init();
-	KBD::Init();
-	sei();
+	void Init()
+	{
+		ADC::Init();
+		LCD::Init();
+		KBD::Init();
+		sei();
+	}
 }

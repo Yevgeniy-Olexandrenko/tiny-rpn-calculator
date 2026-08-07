@@ -349,6 +349,9 @@ void updateRTCMode()
 
 int main() 
 {
+	// init system hardware
+	SYS::Init();
+
 	// switch to rtc operation mode on reset
 	setupAndEnterRTCMode();
 
