@@ -6,6 +6,7 @@
 // -----------------------------------------------------------------------------
 
 // Supported hardware and software modules:
+// MEM - Static data storage access
 // BCD - Binary-Coded Decimals conversion
 // ADC - Analog to Digital Converter reading
 // I2C - I2C Bus devices reading/writing
@@ -75,6 +76,7 @@ class __FlashStringHelper;
 // Implementations for Modules
 // -----------------------------------------------------------------------------
 
+#include "TinyRPNCalculator/MEM.h"
 #include "TinyRPNCalculator/BCD.h"
 #include "TinyRPNCalculator/ADC.h"
 #include "TinyRPNCalculator/I2C.h"
