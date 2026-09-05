@@ -1,0 +1,4 @@
+**/build/*
+!**/build/*.ino.hex
+!**/build/*.ino.eep
+**/.vscode/*
