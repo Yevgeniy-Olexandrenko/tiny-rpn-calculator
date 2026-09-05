@@ -9,14 +9,11 @@ namespace PWR
 
 	void saving(u08 mode)
 	{
-		clr_bit(ADCSRA, ADEN);
 		power_all_disable();
 		set_sleep_mode(mode);
 		sleep_enable();
 		sleep_cpu();
 		sleep_disable();
-		power_adc_enable();
-		set_bit(ADCSRA, ADEN);
 	}
 
 	NOINLINE
