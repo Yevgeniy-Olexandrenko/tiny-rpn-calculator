@@ -22,12 +22,13 @@ namespace KBD
 		CONS = NUM4, SETS = DOT
 	};
 
-	const u08 adc_lut[] PROGMEM =
+	const u08 ADC_NONE_MAX = 16;
+	const u08 adc_max_lut[] PROGMEM =
 	{
-		37,  46,  55,  67,  // A0 B0 C0 D0
-		81,  96,  111, 126, // A1 B1 C1 D1
-		143, 159, 173, 191, // A2 B2 C2 D2
-		207, 216, 223, 228  // A3 B3 C3 D3
+		36,  45,  55,  66,  // A0 B0 C0 D0
+		80,  95,  110, 126, // A1 B1 C1 D1
+		143, 158, 172, 190, // A2 B2 C2 D2
+		206, 215, 223, 255  // A3 B3 C3 D3
 	};
 
 	const u08 code_lut[] PROGMEM = 
@@ -54,7 +55,7 @@ namespace KBD
 	u08 Read()
 	{
 		u08 adc = ADC::Read(KBD_ADC).msb;
-		if (adc <= 28 || adc >= 228)
+		if (adc <= ADC_NONE_MAX)
 		{
 			key = NONE;
 			return key;
@@ -62,7 +63,7 @@ namespace KBD
 		if (key != NONE) return key;
 
 		u08 i = 0;
-		while (adc >= pgm_read_byte(adc_lut + i)) ++i;
+		while (adc > pgm_read_byte(adc_max_lut + i)) ++i;
 		key = pgm_read_byte(code_lut + i);
 		return key;
 	}
