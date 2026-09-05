@@ -2,13 +2,8 @@
 // One Pin Analog 16-Key Keyboard
 // -----------------------------------------------------------------------------
 
-#if PCB_REV == 10
-	#define KBD_PIN PB3
-	#define KBD_ADC ADC::A3_PB3
-#else
-	#define KBD_PIN PB4
-	#define KBD_ADC ADC::A2_PB4
-#endif
+#define KBD_PIN PB4
+#define KBD_ADC (ADC::A2_PB4 | _BV(ADLAR))
 
 namespace KBD
 {
@@ -45,36 +40,30 @@ namespace KBD
 
 	u08 key;
 
-	NOINLINE
-	u08 read_raw_key()
-	{
-		u08 adc = ADC::Read(KBD_ADC).val >> 2;
-		if (adc > 28)
-		{
-			for (u08 i = 0; i < 16; ++i)
-			{
-				u08 adcMax = pgm_read_byte(adc_lut + i);
-				if (adc < adcMax) return pgm_read_byte(code_lut + i);
-			}
-		}
-		return NONE;
-	}
-
 	void Init()
 	{
-		clr_bit(DDRB,  KBD_PIN); // chose pin as input
+		clr_bit(DDRB,  KBD_PIN); // select pin as input
 		clr_bit(PORTB, KBD_PIN); // disable pull-up resistor
-		set_bit(PCMSK, KBD_PIN); // chose pin as interrupt source
-		set_bit(GIMSK, PCIE);    // enable pin change interruptions
-		set_bit(GIFR,  PCIF);    // clear the interruption flag
+		set_bit(PCMSK, KBD_PIN); // select pin as interrupt source
+		GIFR = _BV(PCIF);        // clear pending pin-change interrupt
+		set_bit(GIMSK, PCIE);    // enable pin-change interrupt
 		key = NONE;
 	}
 
+	NOINLINE
 	u08 Read()
 	{
-		u08 raw = read_raw_key();
-		if (raw == NONE && key != NONE) key = NONE;
-		if (raw != NONE && key == NONE) key = raw;
+		u08 adc = ADC::Read(KBD_ADC).msb;
+		if (adc <= 28 || adc >= 228)
+		{
+			key = NONE;
+			return key;
+		}
+		if (key != NONE) return key;
+
+		u08 i = 0;
+		while (adc >= pgm_read_byte(adc_lut + i)) ++i;
+		key = pgm_read_byte(code_lut + i);
 		return key;
 	}
 
