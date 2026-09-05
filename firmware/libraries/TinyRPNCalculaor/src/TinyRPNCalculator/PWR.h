@@ -4,8 +4,16 @@
 
 namespace PWR
 {
-	const u16 BAT_FULL  = 4100; // mV
-	const u16 BAT_EMPTY = 3500; // mV
+	const u16 BAT_FULL     = 4100; // mV
+	const u16 BAT_EMPTY    = 3500; // mV
+	const u08 UNIT_VOLTAGE = 20;   // mV
+
+	static_assert(BAT_FULL  % UNIT_VOLTAGE == 0, "BAT_FULL  must match voltage resolution");
+	static_assert(BAT_EMPTY % UNIT_VOLTAGE == 0, "BAT_EMPTY must match voltage resolution");
+	static_assert(BAT_FULL  > BAT_EMPTY,         "Invalid battery voltage range");
+
+	const u16 BAT_FULL_UNITS  = BAT_FULL  / UNIT_VOLTAGE;
+	const u16 BAT_EMPTY_UNITS = BAT_EMPTY / UNIT_VOLTAGE;
 
 	void saving(u08 mode)
 	{
@@ -29,20 +37,24 @@ namespace PWR
 	}
 
 	NOINLINE
+	u16 voltageUnits()
+	{
+		// Measure VCC directly in UNIT_VOLTAGE steps,
+		// avoiding expensive 32-bit runtime division.
+		return ((1125300UL / UNIT_VOLTAGE) / ADC::Read(ADC::VCC).val);
+	}
+
 	u16 Voltage()
 	{
-		// 20 mV resolution avoids expensive 32-bit division.
-		return (56265U / ADC::Read(ADC::VCC).val) * 20U;
+		return (voltageUnits() * UNIT_VOLTAGE);
 	}
 
 	u08 Level()
 	{
-		u16 voltage = Voltage();
-		if (voltage <= BAT_EMPTY) return 0;
-		if (voltage >= BAT_FULL ) return 100;
-
-		// Scale in 20 mV steps to keep the calculation 16-bit.
-		return ((voltage - BAT_EMPTY) * 5U) / ((BAT_FULL - BAT_EMPTY) / 20U);
+		u16 voltage = voltageUnits();
+		if (voltage <= BAT_EMPTY_UNITS) return 0;
+		if (voltage >= BAT_FULL_UNITS ) return 100;
+		return ((voltage - BAT_EMPTY_UNITS) * 100U / (BAT_FULL_UNITS - BAT_EMPTY_UNITS));
 	}
 
 	void Idle()
@@ -53,6 +65,6 @@ namespace PWR
 	void Down()
 	{
 		do saving(SLEEP_MODE_PWR_DOWN);
-		while (Voltage() <= BAT_EMPTY);
+		while (voltageUnits() <= BAT_EMPTY_UNITS);
 	}
 }
