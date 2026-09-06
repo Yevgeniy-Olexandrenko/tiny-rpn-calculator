@@ -17,10 +17,10 @@ namespace ADC
 	void Init()
 	{
 		ADCSRA = _BV(ADIE)   // enable interrupt
-			   | _BV(ADIF)   // clear interrupt flag
-			   | _BV(ADPS2)  // prescaler 128 gives
-			   | _BV(ADPS1)  // 125 kHz ADC clock
-			   | _BV(ADPS0);
+		       | _BV(ADIF)   // clear interrupt flag
+		       | _BV(ADPS2)  // prescaler 128 gives
+		       | _BV(ADPS1)  // 125 kHz ADC clock
+		       | _BV(ADPS0);
 		power_adc_disable();
 	}
 
