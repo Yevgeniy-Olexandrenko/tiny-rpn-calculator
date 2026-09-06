@@ -86,13 +86,18 @@ namespace LCD
 		I2C::Stop();
 	}
 
+	void EndWrite(u08 b, u08 s)
+	{
+		Write(b, s);
+		EndWrite();
+	}
+
 	void Clear()
 	{
 		for (u08 y = 0; y < PAGES; ++y)
 		{
 			BeginWrite(0, y);
-			Write(0, WIDTH);
-			EndWrite();
+			EndWrite(0, WIDTH);
 		}
 	}
 

@@ -79,7 +79,7 @@ namespace TXT
 	void PrintChar(u08 ch, u08 x, u08 y)
 	{
 		// compute pointer to char data
-		u16 dp = 0;
+		const u08* dp = 0;
 		if (ch >= font.asciiFirst && ch <= font.asciiLast)
 		{
 			dp = &font.bytes[(ch - font.asciiFirst) * font.bytesInRow * font.rowsOfBytes];
@@ -108,8 +108,7 @@ namespace TXT
 				}
 
 				// draw spacing
-				LCD::Write(inverse, 1);
-				LCD::EndWrite();
+				LCD::EndWrite(inverse, 1);
 			}
 
 			// next row of bytes in char data
@@ -169,8 +168,8 @@ namespace TXT
 			LCD::BeginWrite(x, y + yi);
 			for (u08 xi = 0; xi < font.bytesInRow; ++xi)
 			{
-				u16 dp = &font.bytes[yi * font.bytesInRow + xi];
 				u08 db = 0;
+				const u08* dp = &font.bytes[yi * font.bytesInRow + xi];
 				for (u08 ss = seg; ss; ss >>= 1)
 				{
 					if (ss & 0x01) db |= pgm_read_byte(dp);
@@ -178,7 +177,7 @@ namespace TXT
 				}
 				LCD::Write(db, 1);
 			}
-			LCD::EndWrite();
+			LCD::EndWrite(0, 1);
 		}
 	}
 
