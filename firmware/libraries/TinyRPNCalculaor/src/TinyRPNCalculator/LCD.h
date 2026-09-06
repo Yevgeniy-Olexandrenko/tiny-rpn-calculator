@@ -44,9 +44,7 @@ namespace LCD
 	{
 		start_command();
 		for (u08 i = 0; i < sizeof(init_data); ++i)
-		{
 			I2C::Write(MEM::DataRead(init_data + i));
-		}
 		I2C::Stop();
 	}
 
@@ -68,20 +66,23 @@ namespace LCD
 		I2C::Stop();
 	}
 
-	void Position(u08 x, u08 y)
+	NOINLINE
+	void BeginWrite(u08 x, u08 y)
 	{
 		start_command();
 		I2C::Write(draw_buf | y);
 		I2C::Write(0x10 | (x >> 4));
 		I2C::Write(x & 0x0F);
-		I2C::Stop();
+		start_data();
 	}
 
-	NOINLINE
 	void Write(u08 b, u08 s)
 	{
-		start_data();
 		while (s--) I2C::Write(b);
+	}
+
+	void EndWrite()
+	{
 		I2C::Stop();
 	}
 
@@ -89,8 +90,9 @@ namespace LCD
 	{
 		for (u08 y = 0; y < PAGES; ++y)
 		{
-			Position(0, y);
+			BeginWrite(0, y);
 			Write(0, WIDTH);
+			EndWrite();
 		}
 	}
 

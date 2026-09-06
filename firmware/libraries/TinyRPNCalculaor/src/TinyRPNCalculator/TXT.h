@@ -75,7 +75,7 @@ namespace TXT
 		memcpy_P(&font, &f, sizeof(Font));
 		SetScale(x1, x1);
 	}
-	
+
 	void PrintChar(u08 ch, u08 x, u08 y)
 	{
 		// compute pointer to char data
@@ -90,25 +90,26 @@ namespace TXT
 		{
 			for (u08 si = 0; si < font_sy; ++si)
 			{
-				LCD::Position(x, y + si);
+				LCD::BeginWrite(x, y + si);
 
 				// iterate through screen columns and char data bytes
-				for (u08 xi = 0, ch = inverse; xi < font.bytesInRow; ++xi)
+				for (u08 xi = 0, db = inverse; xi < font.bytesInRow; ++xi)
 				{
 					// get char data if available
 					if (dp)
 					{
-						ch = pgm_read_byte(dp + xi) ^ inverse;
+						db = pgm_read_byte(dp + xi) ^ inverse;
 						if (font_sy == x2)
-							ch = expand4bit((ch >> (si << 2)) & 0x0F);
+							db = expand4bit((db >> (si << 2)) & 0x0F);
 						else if (font_sy == x4)
-							ch = expand2bit((ch >> (si << 1)) & 0x03);
+							db = expand2bit((db >> (si << 1)) & 0x03);
 					}
-					LCD::Write(ch, font_sx);
+					LCD::Write(db, font_sx);
 				}
 
 				// draw spacing
 				LCD::Write(inverse, 1);
+				LCD::EndWrite();
 			}
 
 			// next row of bytes in char data
@@ -162,24 +163,22 @@ namespace TXT
 
 	void PrintSeg(u08 seg, u08 x, u08 y)
 	{
-		u08 ds = (font.bytesInRow * font.rowsOfBytes);
+		u08 ds = font.bytesInRow * font.rowsOfBytes;
 		for (u08 yi = 0; yi < font.rowsOfBytes; ++yi)
 		{
-			LCD::Position(x, y + yi);
-
+			LCD::BeginWrite(x, y + yi);
 			for (u08 xi = 0; xi < font.bytesInRow; ++xi)
 			{
 				u16 dp = &font.bytes[yi * font.bytesInRow + xi];
-				u08 db = 0x00;
-
-				for (u08 ss = seg; ss != 0; ss >>= 1)
+				u08 db = 0;
+				for (u08 ss = seg; ss; ss >>= 1)
 				{
 					if (ss & 0x01) db |= pgm_read_byte(dp);
 					dp += ds;
 				}
-
 				LCD::Write(db, 1);
 			}
+			LCD::EndWrite();
 		}
 	}
 
