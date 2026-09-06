@@ -6,16 +6,16 @@
 #define KBD_ADC (ADC::A2_PB4 | _BV(ADLAR))
 
 // GND group
-#define KBD_R5    680U
-#define KBD_R6   1200U
-#define KBD_R7   3300U
-#define KBD_R8  12000U
+#define KBD_RG1 680U
+#define KBD_RG2 1200U
+#define KBD_RG3 3300U
+#define KBD_RG4 12000U
 
 // VCC group
-#define KBD_R9   1000U
-#define KBD_R11   820U
-#define KBD_R12   560U
-#define KBD_R13  2200U
+#define KBD_RV1 1000U
+#define KBD_RV2 820U
+#define KBD_RV3 560U
+#define KBD_RV4 2200U
 
 namespace KBD
 {
@@ -34,15 +34,17 @@ namespace KBD
 		CONS = NUM4, SETS = DOT
 	};
 
-	constexpr u16 KBD_RG0 = KBD_R5;
-	constexpr u16 KBD_RG1 = KBD_R5 + KBD_R6;
-	constexpr u16 KBD_RG2 = KBD_R5 + KBD_R6 + KBD_R7;
-	constexpr u16 KBD_RG3 = KBD_R5 + KBD_R6 + KBD_R7 + KBD_R8;
-
-	constexpr u16 KBD_RVA = KBD_R13 + KBD_R12 + KBD_R11 + KBD_R9;
-	constexpr u16 KBD_RVB = KBD_R13 + KBD_R12 + KBD_R11;
-	constexpr u16 KBD_RVC = KBD_R13 + KBD_R12;
-	constexpr u16 KBD_RVD = KBD_R13;
+	enum
+	{
+		KBD_RGA = u16(KBD_RG1),
+		KBD_RGB = u16(KBD_RG1 + KBD_RG2),
+		KBD_RGC = u16(KBD_RG1 + KBD_RG2 + KBD_RG3),
+		KBD_RGD = u16(KBD_RG1 + KBD_RG2 + KBD_RG3 + KBD_RG4),
+		KBD_RVA = u16(KBD_RV4 + KBD_RV3 + KBD_RV2 + KBD_RV1),
+		KBD_RVB = u16(KBD_RV4 + KBD_RV3 + KBD_RV2),
+		KBD_RVC = u16(KBD_RV4 + KBD_RV3),
+		KBD_RVD = u16(KBD_RV4)
+	};
 
 	constexpr u08 adcMax(u16 g1, u16 v1, u16 g2, u16 v2)
 	{
@@ -61,27 +63,27 @@ namespace KBD
 		) - 1;
 	}
 
-	const u08 ADC_NONE_MAX = adcMax(0, 1, KBD_RG0, KBD_RVA);
+	const u08 ADC_NONE_MAX = adcMax(0, 1, KBD_RGA, KBD_RVA);
 	const u08 adc_max_lut[] DATAMEM =
 	{
-		adcMax(KBD_RG0, KBD_RVA, KBD_RG0, KBD_RVB), // A0
-		adcMax(KBD_RG0, KBD_RVB, KBD_RG0, KBD_RVC), // B0
-		adcMax(KBD_RG0, KBD_RVC, KBD_RG0, KBD_RVD), // C0
-		adcMax(KBD_RG0, KBD_RVD, KBD_RG1, KBD_RVA), // D0
+		adcMax(KBD_RGA, KBD_RVA, KBD_RGA, KBD_RVB), // A0
+		adcMax(KBD_RGA, KBD_RVB, KBD_RGA, KBD_RVC), // B0
+		adcMax(KBD_RGA, KBD_RVC, KBD_RGA, KBD_RVD), // C0
+		adcMax(KBD_RGA, KBD_RVD, KBD_RGB, KBD_RVA), // D0
 
-		adcMax(KBD_RG1, KBD_RVA, KBD_RG1, KBD_RVB), // A1
-		adcMax(KBD_RG1, KBD_RVB, KBD_RG1, KBD_RVC), // B1
-		adcMax(KBD_RG1, KBD_RVC, KBD_RG1, KBD_RVD), // C1
-		adcMax(KBD_RG1, KBD_RVD, KBD_RG2, KBD_RVA), // D1
+		adcMax(KBD_RGB, KBD_RVA, KBD_RGB, KBD_RVB), // A1
+		adcMax(KBD_RGB, KBD_RVB, KBD_RGB, KBD_RVC), // B1
+		adcMax(KBD_RGB, KBD_RVC, KBD_RGB, KBD_RVD), // C1
+		adcMax(KBD_RGB, KBD_RVD, KBD_RGC, KBD_RVA), // D1
 
-		adcMax(KBD_RG2, KBD_RVA, KBD_RG2, KBD_RVB), // A2
-		adcMax(KBD_RG2, KBD_RVB, KBD_RG2, KBD_RVC), // B2
-		adcMax(KBD_RG2, KBD_RVC, KBD_RG2, KBD_RVD), // C2
-		adcMax(KBD_RG2, KBD_RVD, KBD_RG3, KBD_RVA), // D2
+		adcMax(KBD_RGC, KBD_RVA, KBD_RGC, KBD_RVB), // A2
+		adcMax(KBD_RGC, KBD_RVB, KBD_RGC, KBD_RVC), // B2
+		adcMax(KBD_RGC, KBD_RVC, KBD_RGC, KBD_RVD), // C2
+		adcMax(KBD_RGC, KBD_RVD, KBD_RGD, KBD_RVA), // D2
 
-		adcMax(KBD_RG3, KBD_RVA, KBD_RG3, KBD_RVB), // A3
-		adcMax(KBD_RG3, KBD_RVB, KBD_RG3, KBD_RVC), // B3
-		adcMax(KBD_RG3, KBD_RVC, KBD_RG3, KBD_RVD), // C3
+		adcMax(KBD_RGD, KBD_RVA, KBD_RGD, KBD_RVB), // A3
+		adcMax(KBD_RGD, KBD_RVB, KBD_RGD, KBD_RVC), // B3
+		adcMax(KBD_RGD, KBD_RVC, KBD_RGD, KBD_RVD), // C3
 		255                                         // D3
 	};
 
