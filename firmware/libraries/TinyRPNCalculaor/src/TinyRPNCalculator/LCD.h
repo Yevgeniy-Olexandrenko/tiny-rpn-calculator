@@ -10,16 +10,14 @@ namespace LCD
 	const u08 PAGES = 4;
 
 	u08 draw_buf = 0xB4;
-	u08 rend_buf = 0x40;
 
 	const u08 init_data[] DATAMEM =
 	{
-		0xC8,       // set scan direction (C0 scan from COM0 to COM[N-1] or C8 mirroring)
-		0xA1,       // set segment remap (A0 regular or A1 flip)
-		0xA8, 0x1F, // set multiplex (HEIGHT-1): 0x1F for 128x32, 0x3F for 128x64 
-		0xDA, 0x02, // set COM pins hardware configuration to sequential
-		0x20, 0x00, // set horizontal memory addressing mode
-		0x8D, 0x14, // enable charge pump
+		0xC8,       // COM scan remap
+		0xA1,       // SEG remap
+		0xA8, 0x1F, // 32 MUX
+		0xDA, 0x02, // sequential COM pins
+		0x8D, 0x14, // charge pump ON
 	};
 
 	void start_command()
@@ -71,9 +69,9 @@ namespace LCD
 	}
 
 	void Position(u08 x, u08 y)
-	{ 
+	{
 		start_command();
-		I2C::Write(draw_buf | (y & 0x07));
+		I2C::Write(draw_buf | y);
 		I2C::Write(0x10 | (x >> 4));
 		I2C::Write(x & 0x0F);
 		I2C::Stop();
@@ -89,14 +87,17 @@ namespace LCD
 
 	void Clear()
 	{
-		Position(0, 0);
-		for (u08 i = PAGES; i > 0; --i) Write(0, WIDTH);
+		for (u08 y = 0; y < PAGES; ++y)
+		{
+			Position(0, y);
+			Write(0, WIDTH);
+		}
 	}
 
 	void Flip()
 	{
-		rend_buf ^= 0x20;
+		u08 line = (draw_buf & 0x04) ? 0x60 : 0x40;
 		draw_buf ^= 0x04;
-		command(rend_buf);
+		command(line);
 	}
 }

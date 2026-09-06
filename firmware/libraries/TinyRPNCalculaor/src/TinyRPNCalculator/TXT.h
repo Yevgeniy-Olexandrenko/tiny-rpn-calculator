@@ -54,13 +54,13 @@ namespace TXT
 	{
 		// 000000ab -> aaaabbbb
 		b = (b | (b << 3)) & 0x11;
-		for (u08 i = 3; i > 0; --i) b |= (b << 1);
-		return b;
+		b |= b << 1;
+		return b | (b << 2);
 	}
 
 	void SetInverse(b08 enable)
 	{
-		inverse = (enable ? 0xFF : 0x00);
+		inverse = -enable;
 	}
 
 	void SetScale(u08 sx, u08 sy)
