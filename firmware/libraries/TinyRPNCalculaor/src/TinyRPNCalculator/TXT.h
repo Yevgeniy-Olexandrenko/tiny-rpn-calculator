@@ -19,7 +19,7 @@ namespace TXT
 		SEG_d = 0x5E, SEG_E = 0x79, SEG_F = 0x71,
 	};
 
-	const u08 num_seg[] PROGMEM =
+	const u08 num_seg[] DATAMEM =
 	{
 		SEG_0, SEG_1, SEG_2, SEG_3, SEG_4,
 		SEG_5, SEG_6, SEG_7, SEG_8, SEG_9,
@@ -157,7 +157,7 @@ namespace TXT
 	NOINLINE
 	u08 NumToSeg(u08 n)
 	{
-		return pgm_read_byte(num_seg + n);
+		return MEM::DataRead(num_seg + n);
 	}
 
 	void PrintSeg(u08 seg, u08 x, u08 y)

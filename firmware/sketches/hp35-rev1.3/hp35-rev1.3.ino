@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------------
 
 #define  PCB_REV 13
+#define  ENABLE_OPT_DATAMEM  1
 #define  ENABLE_OPT_NOINLINE 1
 #include <TinyRPNCalculator.h>
 

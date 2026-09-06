@@ -62,7 +62,7 @@ namespace KBD
 	}
 
 	const u08 ADC_NONE_MAX = adcMax(0, 1, KBD_RG0, KBD_RVA);
-	const u08 adc_max_lut[] PROGMEM =
+	const u08 adc_max_lut[] DATAMEM =
 	{
 		adcMax(KBD_RG0, KBD_RVA, KBD_RG0, KBD_RVB), // A0
 		adcMax(KBD_RG0, KBD_RVB, KBD_RG0, KBD_RVC), // B0
@@ -85,7 +85,7 @@ namespace KBD
 		255                                         // D3
 	};
 
-	const u08 code_lut[] PROGMEM = 
+	const u08 code_lut[] DATAMEM = 
 	{
 		FUNC, NUM7, NUM8, NUM9, // A0 B0 C0 D0
 		EEX,  NUM4, NUM5, NUM6, // A1 B1 C1 D1
@@ -117,8 +117,8 @@ namespace KBD
 		if (key != NONE) return key;
 
 		u08 i = 0;
-		while (adc > pgm_read_byte(adc_max_lut + i)) ++i;
-		key = pgm_read_byte(code_lut + i);
+		while (adc > MEM::DataRead(adc_max_lut + i)) ++i;
+		key = MEM::DataRead(code_lut + i);
 		return key;
 	}
 

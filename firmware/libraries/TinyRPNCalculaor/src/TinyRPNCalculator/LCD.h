@@ -12,7 +12,7 @@ namespace LCD
 	u08 draw_buf = 0xB4;
 	u08 rend_buf = 0x40;
 
-	const u08 init_data[] PROGMEM =
+	const u08 init_data[] DATAMEM =
 	{
 		0xC8,       // set scan direction (C0 scan from COM0 to COM[N-1] or C8 mirroring)
 		0xA1,       // set segment remap (A0 regular or A1 flip)
@@ -47,7 +47,7 @@ namespace LCD
 		start_command();
 		for (u08 i = 0; i < sizeof(init_data); ++i)
 		{
-			I2C::Write(pgm_read_byte(init_data + i));
+			I2C::Write(MEM::DataRead(init_data + i));
 		}
 		I2C::Stop();
 	}
