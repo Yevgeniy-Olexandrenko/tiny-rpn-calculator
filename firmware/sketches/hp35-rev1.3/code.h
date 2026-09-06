@@ -221,7 +221,7 @@ void renderCalcMenu()
 	for (u08 i = 0; i < MENU_ITEMS_PER_LINE; ++i)
 	{
 		TXT::PrintString(
-			FPSTR(menu.string), select * MENU_ITEMS_PER_LINE + i,
+			DPSTR(menu.string), select * MENU_ITEMS_PER_LINE + i,
 			MENU_POS_ITEM * i, 2);
 	}
 	TXT::SetInverse(false);
@@ -321,13 +321,13 @@ void renderRTCMode()
 
 	TXT::SetFont(menu5x8);
 	u08 month = BCD::Decode(RTC::Month) - 1;
-	TXT::PrintString(FPSTR(strMonth), month, RTC_POS_MONTH, 0);
+	TXT::PrintString(DPSTR(strMonth), month, RTC_POS_MONTH, 0);
 	TXT::PrintBCD(RTC::Date, RTC_POS_DATE, 0);
 	TXT::PrintBCD(RTC::Year, RTC_POS_YEAR, 0);
 	TXT::PrintChar(RTC_DATE_SLASH, RTC_POS_SLASH, 0);
 
 	TXT::SetScale(TXT::x2, TXT::x1);
-	TXT::PrintString(F(RTC_INFO_HP_LABEL), RTC_POS_INFO, 2);
+	TXT::PrintString(D(RTC_INFO_HP_LABEL), RTC_POS_INFO, 2);
 	for (u08 i = battery, x = RTC_POS_INFO; i > 0; --i)
 	{ 
 		TXT::PrintChar(RTC_BATTERY_LEVEL, x, 1);

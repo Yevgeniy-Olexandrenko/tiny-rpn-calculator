@@ -354,22 +354,22 @@ const u08 progOps[] PROGMEM =
 // String arrays
 // -----------------------------------------------------------------------------
 
-const u08 strMonth[] PROGMEM = 
+const u08 strMonth[] DATAMEM = 
 	"\03"
 	"JAN" "FEB" "MAR" "APR" "MAY" "JUN"
 	"JUL" "AUG" "SEP" "OCT" "NOV" "DEC";
 
-const u08 strMenuMath[] PROGMEM = 
+const u08 strMenuMath[] DATAMEM = 
 	"\06"
 	" :>   " " ?:   " " 1/:  "  // X^Y, SQRT(X), 1/X
 	" LOG  " " LN   " " @<   "; // LOG(X), LN(X), e^X
 
-const u08 strMenuTrig[] PROGMEM = 
+const u08 strMenuTrig[] DATAMEM = 
 	"\06"
 	" SIN  " " COS  " " TAN  "  // Sine, Cosine, Tangent
 	" ASIN " " ACOS " " ATAN "; // Inverse sine, Inverse cosine, Inverse tangent
 
-const u08 strMenuProg[] PROGMEM =
+const u08 strMenuProg[] DATAMEM =
 	"\06"
 	" TIME " " DATE " " YEAR ";
 

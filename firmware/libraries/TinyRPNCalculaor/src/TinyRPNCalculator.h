@@ -62,8 +62,18 @@ using w16 = union { u16 val; struct { u08 lsb, msb; }; };
 
 // support for strings in PROGMEM
 class __FlashStringHelper;
-#define FPSTR(pstr_pointer) (reinterpret_cast<const __FlashStringHelper *>(pstr_pointer))
+#define FPSTR(pstr_pointer) (reinterpret_cast<const __FlashStringHelper*>(pstr_pointer))
 #define F(string_literal) (FPSTR(PSTR(string_literal)))
+
+// support for strings in DATAMEM
+class __DataStringHelper;
+#define DPSTR(pstr_pointer ) (reinterpret_cast<const __DataStringHelper*>(pstr_pointer))
+#define DSTR(string_literal) \
+	(__extension__({ \
+		static const char __c[] DATAMEM = (string_literal); \
+		&__c[0]; \
+	}))
+#define D(string_literal) (DPSTR(DSTR(string_literal)))
 
 // additional defines
 #if ENABLE_OPT_NOINLINE

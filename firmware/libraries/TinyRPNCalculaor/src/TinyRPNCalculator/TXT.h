@@ -129,7 +129,17 @@ namespace TXT
 	void PrintString(const __FlashStringHelper* s, u08 x, u08 y)
 	{
 		const u08 * p = (const u08 *)s;
-		while (u08 c = pgm_read_byte(p++))
+		while (u08 c = MEM::ProgRead(p++))
+		{
+			PrintChar(c, x, y);
+			x += char_dx;
+		}
+	}
+
+	void PrintString(const __DataStringHelper* s, u08 x, u08 y)
+	{
+		const u08 * p = (const u08 *)s;
+		while (u08 c = MEM::DataRead(p++))
 		{
 			PrintChar(c, x, y);
 			x += char_dx;
@@ -139,11 +149,23 @@ namespace TXT
 	void PrintString(const __FlashStringHelper* s, u08 i, u08 x, u08 y)
 	{
 		const u08 * p = (const u08 *)s;
-		u08 w = pgm_read_byte(p++);
+		u08 w = MEM::ProgRead(p++);
 
 		for (p += (i * w); w > 0; --w)
 		{
-			PrintChar(pgm_read_byte(p++), x, y);
+			PrintChar(MEM::ProgRead(p++), x, y);
+			x += char_dx;
+		}
+	}
+
+	void PrintString(const __DataStringHelper* s, u08 i, u08 x, u08 y)
+	{
+		const u08 * p = (const u08 *)s;
+		u08 w = MEM::DataRead(p++);
+
+		for (p += (i * w); w > 0; --w)
+		{
+			PrintChar(MEM::DataRead(p++), x, y);
 			x += char_dx;
 		}
 	}
