@@ -14,7 +14,7 @@ void enterCalcMode()
 {
 	if (newKey != KBD::NONE)
 	{
-		TMR::Start(TMR::TIMEOUT_60MS);
+		TMR::Start(TMR::TIMEOUT_64MS);
 		if (rtcMode)
 		{
 			newKey  = KBD::NONE;
@@ -31,7 +31,7 @@ void enterRTCMode()
 	battery = (u08)((PWR::Level() * 5 + 50) / 100);
 
 	LCD::TurnOn();
-	TMR::Start(TMR::TIMEOUT_60MS);
+	TMR::Start(TMR::TIMEOUT_64MS);
 
 	oldkey  = KBD::Read();
 	rtcMode = true;
