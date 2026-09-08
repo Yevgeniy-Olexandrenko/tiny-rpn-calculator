@@ -41,12 +41,12 @@ namespace RTC
 		31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 	};
 
-	u08 Seconds = BCD_Encode(BUILD_SEC);   // 0 - 59
-	u08 Minutes = BCD_Encode(BUILD_MIN);   // 0 - 59
-	u08 Hours   = BCD_Encode(BUILD_HOUR);  // 0 - 23
-	u08 Date    = BCD_Encode(BUILD_DAY);   // 1 - 31
-	u08 Month   = BCD_Encode(BUILD_MONTH); // 1 - 12
-	u08 Year    = BCD_Encode(BUILD_YEAR);  // 0 - 99
+	u08 Seconds = BCD::Encode(BUILD_SEC);   // 0 - 59
+	u08 Minutes = BCD::Encode(BUILD_MIN);   // 0 - 59
+	u08 Hours   = BCD::Encode(BUILD_HOUR);  // 0 - 23
+	u08 Date    = BCD::Encode(BUILD_DAY);   // 1 - 31
+	u08 Month   = BCD::Encode(BUILD_MONTH); // 1 - 12
+	u08 Year    = BCD::Encode(BUILD_YEAR);  // 0 - 99
 
 	b08 is_leap_year(u16 year)
 	{
