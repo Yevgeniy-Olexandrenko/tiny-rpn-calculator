@@ -15,7 +15,7 @@
 // RTC - DS3231M Real Time Clock control
 // KBD - One Pin Analog 16-Key Keyboard reading
 // PWR - MPU Power management (Idle + Power down)
-// FPS - Frames per Second sync for main loop update
+// TMR - WDT-based Timer for main loop sync in time
 // FNT - A Set of Predefined Fonts
 
 // -----------------------------------------------------------------------------
@@ -95,11 +95,11 @@ class __DataStringHelper;
 #include "TinyRPNCalculator/RTC.h"
 #include "TinyRPNCalculator/KBD.h"
 #include "TinyRPNCalculator/PWR.h"
-#include "TinyRPNCalculator/FPS.h"
+#include "TinyRPNCalculator/TMR.h"
 #include "TinyRPNCalculator/FNT.h"
 
 // -----------------------------------------------------------------------------
-// System Initialization
+// System Manipulation
 // -----------------------------------------------------------------------------
 
 namespace SYS
@@ -111,5 +111,12 @@ namespace SYS
 		LCD::Init();
 		KBD::Init();
 		sei();
+	}
+
+	void Down()
+	{
+		TMR::Stop();
+		LCD::TurnOff();
+		PWR::Down();
 	}
 }

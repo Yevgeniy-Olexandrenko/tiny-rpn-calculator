@@ -14,7 +14,7 @@ void enterCalcMode()
 {
 	if (newKey != KBD::NONE)
 	{
-		FPS::SyncStart(FPS::TIMEOUT_15_FPS);
+		TMR::Start(TMR::TIMEOUT_60MS);
 		if (rtcMode)
 		{
 			newKey  = KBD::NONE;
@@ -31,7 +31,7 @@ void enterRTCMode()
 	battery = (u08)((PWR::Level() * 5 + 50) / 100);
 
 	LCD::TurnOn();
-	FPS::SyncStart(FPS::TIMEOUT_15_FPS);
+	TMR::Start(TMR::TIMEOUT_60MS);
 
 	oldkey  = KBD::Read();
 	rtcMode = true;
@@ -358,7 +358,7 @@ int main()
 	while (true)
 	{
 		// get time passed since last operation mode switch
-		u16 timeout = FPS::SyncMillis();
+		u16 timeout = TMR::Millis;
 
 		// handle display brightness change
 		LCD::Brightness(rtcMode || timeout >= DIMOUT_MILLIS ? 0x00 : 0xFF);
@@ -367,9 +367,7 @@ int main()
 		if (timeout >= POWEROFF_MILLIS)
 		{
 			// power down and go to sleeping
-			FPS::SyncStop();
-			LCD::TurnOff();
-			PWR::Down();
+			SYS::Down();
 
 			// power up an switch to rtc operation mode
 			enterRTCMode();
@@ -382,7 +380,7 @@ int main()
 
 		// update current operation mode and idle until next frame
 		if (rtcMode) updateRTCMode(); else updateCalcMode();
-		FPS::SyncWait();
+		TMR::Sync();
 	}
 	return 0;
 }

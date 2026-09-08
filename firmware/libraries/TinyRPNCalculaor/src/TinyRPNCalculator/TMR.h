@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
-// Frames per Second Synchronization
+// Watch-Dog based Software Timer
 // -----------------------------------------------------------------------------
 
-namespace FPS
+namespace TMR
 {
 	enum
 	{
@@ -14,16 +14,17 @@ namespace FPS
 
 	enum
 	{
-		TIMEOUT_15_FPS = WDTO_60MS,
-		TIMEOUT_30_FPS = WDTO_30MS,
-		TIMEOUT_60_FPS = WDTO_15MS,
+		TIMEOUT_15MS  = WDTO_15MS,
+		TIMEOUT_30MS  = WDTO_30MS,
+		TIMEOUT_60MS  = WDTO_60MS,
+		TIMEOUT_120MS = WDTO_120MS,
+		TIMEOUT_250MS = WDTO_250MS
 	};
 
-	u08 timeout;
-	volatile b08 waiting;
-	volatile u16 counter;
+	volatile u08 Timeout;
+	volatile u16 Millis;
 
-	void wdt_init(u08 mode, u08 prescaler)
+	void wdt_setup(u08 mode, u08 prescaler)
 	{
 		// does not change global interrupts enable flag
 		u08 wdtr = mode | ((prescaler > 7) ? 0x20 | (prescaler - 8) : prescaler);
@@ -35,32 +36,26 @@ namespace FPS
 	}
 
 	NOINLINE
-	void SyncStart(u08 t)
+	void Start(u08 t)
 	{
-		wdt_init(WDT_MODE_INT, t);
-		timeout = (16 << t);
-		counter = 0;
+		wdt_setup(WDT_MODE_INT, t);
+		Timeout = (15U << t);
+		Millis = 0;
 	}
 
-	void SyncStop()
+	void Stop()
 	{
-		wdt_init(WDT_MODE_DISABLED, 0);
+		wdt_setup(WDT_MODE_DISABLED, 0);
 	}
 
-	void SyncWait()
+	void Sync()
 	{
-		waiting = true;
-		while (waiting) PWR::Idle();
-	}
-
-	u16 SyncMillis()
-	{
-		return (counter * timeout);
+		const u16 ms = Millis;
+		while (Millis == ms) PWR::Idle();
 	}
 
 	ISR(WDT_vect)
 	{
-		waiting = false;
-		counter++;
+		Millis += Timeout;
 	}
 }
