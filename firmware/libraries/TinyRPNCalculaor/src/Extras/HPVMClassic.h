@@ -3,7 +3,7 @@
 namespace HPVM
 {
 	// -----------------------------------------------------------------------------
-	// HP Calculators Virtual Machine
+	// HP-35 Classic Virtual Machine
 	// -----------------------------------------------------------------------------
 
 	// clock parameters
@@ -19,12 +19,6 @@ namespace HPVM
 	bool Error();     // true if error occured
 	bool Cycle();     // true if display updated
 	char Display[15]; // display state
-
-#if defined(HPVM_HP45)
-
-	// TODO
-
-#else
 
 	// HP35 key operation
 	enum
@@ -105,7 +99,6 @@ namespace HPVM
 		0x18, 0xEE, 0xA5, 0xF7, 0xFE, 0xB8, 0x0E, 0xEA, 0x79, 0x47, 0xC9, 0x3E, 0x02, 0xE7, 0x98, 0x50,
 		0x7C, 0xB7, 0x7C, 0x8E, 0x97, 0xD3, 0x7E, 0x9C, 0x00, 0x29, 0xC5, 0x97, 0x65, 0xC7, 0x00, 0x59
 	};
-#endif
 
 	// cpu defines
 	typedef uint8_t digit;
@@ -130,11 +123,6 @@ namespace HPVM
 	reg M;
 
 	// state
-#if defined(HPVM_HP45)
-	uint8_t del_group;
-	uint8_t del_rom;
-	uint8_t group;
-#endif
 	uint8_t rom, pc, ret_pc, key_pc;
 	uint8_t p, ff, fl, s[12];
 	uint8_t carry, prev_carry;
@@ -234,11 +222,7 @@ namespace HPVM
 		}
 
 		// fetch ROM
-#if defined(HPVM_HP45)
-		uint16_t addr_l  = (group << 11 | rom << 8 | pc);
-#else
-		uint16_t addr_l  = (rom << 8 | pc);
-#endif
+		uint16_t addr_l  = (uint16_t(rom) << 8 | pc);
 		uint8_t  addr_h  = (addr_l >> 2);
 		uint8_t  shift   = (addr_l & 0x03) << 1;
 		uint8_t  fetch_l = pgm_read_byte(rom_l + addr_l);
@@ -295,12 +279,6 @@ namespace HPVM
 				case 0b00001101: // CLEAR STATUS
 					for (uint8_t i = 0; i < 12; i++) s[i] = 0;
 					break;
-#if defined(HPVM_HP45)
-				case 0b10001101: // DELAYED GROUP SELECT 0 or 1
-				case 0b10101101:
-					del_group = ((op_code >> 5) & 0x01);
-					break;
-#endif
 				case 0b00001111: // P + 1 -> P
 					p += 0x01; p &= 0x0F;
 					break;
@@ -316,10 +294,6 @@ namespace HPVM
 							break;
 						case 0b0100: // ROM SELECT n
 							rom = (nnnn >> 1);
-#if defined(HPVM_HP45)
-							group = del_group;
-							del_rom = rom;
-#endif
 							break;
 						case 0b0101: // IF Sn = 0
 							carry = s[nnnn];
@@ -333,11 +307,6 @@ namespace HPVM
 						case 0b1011: // IF p # n
 							carry = (p == nnnn);
 							break;
-#if defined(HPVM_HP45)
-						case 0b1101: // DELAYED ROM SELECT n
-							del_rom = (nnnn >> 1);
-							break;
-#endif
 					}
 			}
 		}
@@ -348,10 +317,6 @@ namespace HPVM
 			// JSB addr
 			ret_pc = pc;
 			pc = op_code;
-#if defined(HPVM_HP45)
-			rom = del_rom;
-			group = del_group;
-#endif
 		}
 
 		// Type 10: Arithmetic Instructions
@@ -480,10 +445,6 @@ namespace HPVM
 			if (!prev_carry)
 			{
 				pc = op_code;
-#if defined(HPVM_HP45)
-				rom = del_rom;
-				group = del_group;
-#endif
 			}
 		}
 
