@@ -106,8 +106,17 @@ namespace HPVM
 	#define hpvm_iterate_word(a)  for (uint8_t i =  0; i <  14; ++i) { a; }
 	#define hpvm_iterate_field(a) for (uint8_t i = ff; i <= fl; ++i) { a; }
 	namespace fld { enum { P = 0, M, X, W, WP, MS, XS, S }; }
-	const uint8_t arith_desc[] PROGMEM = { 0x01, 0x11, 0x22, 0x06, 0x39, 0x40, 0x12, 0x41, 0x50, 0x34, 0x60, 0x72, 0x32, 0x02, 0x80, 0x92, 0x21, 0xA0, 0xB2, 0x04, 0xB1, 0x81, 0xB0, 0x10, 0x61, 0xA1, 0x62, 0x70, 0x82, 0xA2, 0x83, 0x90 };
-	const uint8_t field_bounds[] PROGMEM = { 0x00, 0x3C, 0x02, 0x0D, 0x00, 0x3D, 0x22, 0xDD };
+	const uint8_t arith_desc[] PROGMEM =
+	{
+		0x01, 0x11, 0x22, 0x06, 0x39, 0x40, 0x12, 0x41,
+		0x50, 0x34, 0x60, 0x72, 0x32, 0x02, 0x80, 0x92,
+		0x21, 0xA0, 0xB2, 0x04, 0xB1, 0x81, 0xB0, 0x10,
+		0x61, 0xA1, 0x62, 0x70, 0x82, 0xA2, 0x83, 0x90
+	};
+	const uint8_t field_bounds[] PROGMEM = 
+	{
+		0x00, 0x3C, 0x02, 0x0D, 0x00, 0x3D, 0x22, 0xDD
+	};
 
 	// display defines
 	#define HPVM_DIGIT 0x00
@@ -132,7 +141,8 @@ namespace HPVM
 	uint8_t idling, error;
 
 	// basic math
-	__attribute__((noinline)) digit alu(digit x, digit y, uint8_t sub)
+	__attribute__((noinline))
+	digit alu(digit x, digit y, uint8_t sub)
 	{
 		int8_t res;
 		if (sub)
@@ -148,18 +158,21 @@ namespace HPVM
 		return digit(res);
 	}
 
-	__attribute__((noinline)) void reg_clr(reg r, uint8_t first, uint8_t last)
+	__attribute__((noinline))
+	void reg_clr(reg r, uint8_t first, uint8_t last)
 	{
 		for (uint8_t i = first; i <= last; ++i) r[i] = 0;
 	}
 
-	__attribute__((noinline)) void reg_math(reg r, reg x, digit *y, uint8_t sub)
+	__attribute__((noinline)) 
+	void reg_math(reg r, reg x, digit *y, uint8_t sub)
 	{
 		for (uint8_t i = ff; i <= fl; ++i)
 			r[i] = alu(x[i], y ? y[i] : 0, sub);
 	}
 
-	__attribute__((noinline)) void reg_shr(reg r)
+	__attribute__((noinline))
+	void reg_shr(reg r)
 	{
 		for (uint8_t i = ff; i < fl; i++) r[i] = r[i + 1];
 		r[fl] = 0;
@@ -171,7 +184,8 @@ namespace HPVM
 		r[ff] = 0;
 	}
 
-	__attribute__((noinline)) void reg_move(reg x, reg y, uint8_t swap, uint8_t first, uint8_t last)
+	__attribute__((noinline))
+	void reg_move(reg x, reg y, uint8_t swap, uint8_t first, uint8_t last)
 	{
 		for (uint8_t i = first; i <= last; ++i)
 		{
