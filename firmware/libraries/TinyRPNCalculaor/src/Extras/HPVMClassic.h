@@ -104,9 +104,19 @@ namespace HPVM
 	using digit = u08;
 	using reg = digit[16];
 	
-	#define hpvm_iterate_word(a)  for (u08 i =  0; i <  14; ++i) { a; }
+	#define hpvm_iterate_word(a)  for (u08 i =  0; i <= 13; ++i) { a; }
 	#define hpvm_iterate_field(a) for (u08 i = ff; i <= fl; ++i) { a; }
-	namespace fld { enum { P = 0, M, X, W, WP, MS, XS, S }; }
+	const u08 field_bounds[] PROGMEM = 
+	{
+		0xFF, // P  : p..p
+		0xC3, // M  : 3..12
+		0x20, // X  : 0..2
+		0xD0, // W  : 0..13
+		0xF0, // WP : 0..p
+		0xD3, // MS : 3..13
+		0x22, // XS : 2..2
+		0xDD  // S  : 13..13
+	};
 
 	// display defines
 	#define HPVM_DIGIT 0x00
@@ -277,7 +287,7 @@ namespace HPVM
 					reg_swap(C, M, 0, 13);
 					break;
 				case 0b01001010: // C -> STACK
-					for (u08 i =  0; i <  14; ++i)
+					for (u08 i =  0; i <= 13; ++i)
 					{
 						F[i] = E[i];
 						E[i] = D[i];
@@ -285,7 +295,7 @@ namespace HPVM
 					}
 					break;
 				case 0b01101010: // STACK -> A
-					for (u08 i =  0; i <  14; ++i)
+					for (u08 i =  0; i <= 13; ++i)
 					{
 						A[i] = D[i];
 						D[i] = E[i];
@@ -300,10 +310,10 @@ namespace HPVM
 					}
 					break;
 				case 0b10101010: // M -> C
-					for (u08 i =  0; i <  14; ++i) C[i] = M[i];
+					for (u08 i =  0; i <= 13; ++i) C[i] = M[i];
 					break;
 				case 0b11001010: // DOWN ROTATE
-					for (u08 i =  0; i <  14; ++i)
+					for (u08 i =  0; i <= 13; ++i)
 					{
 						digit t = C[i];
 						C[i] = D[i];
@@ -313,7 +323,7 @@ namespace HPVM
 					}
 					break;
 				case 0b11101010: // CLEAR REGISTERS
-					for (u08 i =  0; i <  14; ++i)
+					for (u08 i =  0; i <= 13; ++i)
 					{
 						A[i] = B[i] = C[i] = D[i] = E[i] = F[i] = M[i] = 0;
 					}
@@ -372,17 +382,10 @@ namespace HPVM
 		else if (op_type == 0x02)
 		{
 			// get register boundaries
-			switch (op_code & 0x07)
-			{
-				case fld::P : ff = fl = p; break;
-				case fld::M : ff = 3; fl = 12; break;
-				case fld::X : ff = 0; fl = 2;  break;
-				case fld::W : ff = 0; fl = 13; break;
-				case fld::WP: ff = 0; fl = p;  break;
-				case fld::MS: ff = 3; fl = 13; break;
-				case fld::XS: ff = fl = 2;  break;
-				case fld::S : ff = fl = 13; break;
-			}
+			fl = pgm_read_byte(field_bounds + (op_code & 0x07));
+			ff = fl & 0x0F; fl >>= 4;
+			if (ff == 0x0F) ff = p;
+			if (fl == 0x0F) fl = p;
 
 			// process opcode
 			carry = 0;
