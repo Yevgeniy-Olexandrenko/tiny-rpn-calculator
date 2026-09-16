@@ -353,7 +353,7 @@ namespace HPVM
 		else if (op_type == 0x02)
 		{
 			// get register boundaries
-			fl = MEM::DataRead(field_bounds[op_code & 0x07]);
+			fl = pgm_read_byte(field_bounds + (op_code & 0x07));
 			ff = fl & 0x0F; fl >>= 4;
 			if (ff == 0x0F) ff = p;
 			if (fl == 0x0F) fl = (p < 14 ? p : 13);
@@ -476,7 +476,7 @@ namespace HPVM
 		// display update
 		if (disp_update)
 		{
-			disp_update = 0;
+			Display[14] = HPVM_SPACE;
 			for (s08 d = 0, i = 13; i >= 0; --i)
 			{
 				if (disp_enable)
