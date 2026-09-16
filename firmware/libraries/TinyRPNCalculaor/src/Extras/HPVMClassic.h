@@ -101,11 +101,8 @@ namespace HPVM
 	};
 
 	// cpu defines
-	using digit = u08;
-	using reg = digit[16];
-	
-	#define hpvm_iterate_word(a)  for (u08 i = 0; i <= 13; ++i) { a; }
-	#define hpvm_iterate_field(a) for (u08 i = ff; i <= fl; ++i) { a; }
+	using bcd = u08;
+	using reg = bcd[14];
 	const u08 field_bounds[] PROGMEM = 
 	{
 		0xFF, // P  : p..p
@@ -143,7 +140,7 @@ namespace HPVM
 	u08 idling, error;
 
 	// basic math
-	digit alu(digit x, digit y, u08 sub)
+	bcd alu(bcd x, bcd y, u08 sub)
 	{
 		s08 res;
 		if (sub)
@@ -156,7 +153,7 @@ namespace HPVM
 			res = x + y + carry;
 			if (res > 9) { res -= 10; carry = 1; } else carry = 0;
 		}
-		return digit(res);
+		return bcd(res);
 	}
 
 	void reg_clr(reg r)
@@ -180,13 +177,13 @@ namespace HPVM
 
 	void reg_shr(reg r)
 	{
-		for (u08 i = ff; i < fl; i++) r[i] = r[i + 1];
+		for (u08 i = ff; i < fl; ++i) r[i] = r[i + 1];
 		r[fl] = 0;
 	}
 
 	void reg_shl(reg r)
 	{
-		for (s08 i = fl; i > ff; i--) r[i] = r[i - 1];
+		for (s08 i = fl; i > ff; --i) r[i] = r[i - 1];
 		r[ff] = 0;
 	}
 
@@ -194,7 +191,7 @@ namespace HPVM
 	{
 		for (u08 i = f; i <= l; ++i)
 		{
-			digit t = x[i]; x[i] = y[i];
+			bcd t = x[i]; x[i] = y[i];
 			if (swap) y[i] = t;
 		}
 	}
@@ -290,11 +287,11 @@ namespace HPVM
 				case 0b11001010: // DOWN ROTATE
 					for (u08 i = 0; i <= 13; ++i)
 					{
-						digit t = C[i];
-						C[i] = D[i];
-						D[i] = E[i];
-						E[i] = F[i];
-						F[i] = t;
+						bcd t =  C[i];
+						C[i]  =  D[i];
+						D[i]  =  E[i];
+						E[i]  =  F[i];
+						F[i]  =  t;
 					}
 					break;
 				case 0b11101010: // CLEAR REGISTERS
@@ -310,7 +307,7 @@ namespace HPVM
 					pc = ret_pc;
 					break;
 				case 0b00001101: // CLEAR STATUS
-					for (u08 i = 0; i < 12; i++) s[i] = 0;
+					for (u08 i = 0; i < sizeof(s); ++i) s[i] = 0;
 					break;
 				case 0b00001111: // P + 1 -> P
 					p += 0x01; 
