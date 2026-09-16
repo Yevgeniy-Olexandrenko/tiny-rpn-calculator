@@ -14,7 +14,7 @@ namespace HPVM
 	#define HPVM_CYCLES_PER_SEC   (1000000 / HPVM_CYCLE_TIME_WIDTH)
 
 	// public interface
-	void Operation(uint8_t op);
+	void Operation(u08 op);
 	bool Idling();    // true if idling
 	bool Error();     // true if error occured
 	bool Cycle();     // true if display updated
@@ -32,7 +32,7 @@ namespace HPVM
 	};
 
 	// HP35 firmware ROM (768 words)
-	const uint8_t rom_l[] PROGMEM =
+	const u08 rom_l[] PROGMEM =
 	{
 		0xDD, 0xFF, 0x24, 0x17, 0x44, 0x44, 0x84, 0x10, 0xD1, 0xFB, 0x5F, 0xC3, 0xA8, 0x67, 0xEE, 0xE2,
 		0x2E, 0x90, 0xEA, 0xEA, 0xEA, 0x6B, 0x69, 0xA8, 0xA8, 0xFF, 0xEA, 0xEA, 0xEA, 0x30, 0xCC, 0xAA,
@@ -84,7 +84,7 @@ namespace HPVM
 		0x7B, 0xFA, 0xCE, 0xEA, 0xCB, 0x9F, 0xCE, 0x0C, 0x98, 0xD8, 0x18, 0x98, 0x58, 0x07, 0x4C, 0xFB
 	};
 
-	const uint8_t rom_h[] PROGMEM =
+	const u08 rom_h[] PROGMEM =
 	{
 		0x28, 0x49, 0x0E, 0xED, 0xF0, 0x23, 0xF2, 0x03, 0x11, 0x40, 0x20, 0x0E, 0xFF, 0xE3, 0xBD, 0x14,
 		0x9E, 0x7D, 0xFF, 0x44, 0x7A, 0x36, 0x71, 0xD0, 0x55, 0x54, 0xD7, 0x9C, 0x7B, 0xD2, 0x53, 0xC1,
@@ -101,10 +101,11 @@ namespace HPVM
 	};
 
 	// cpu defines
-	typedef uint8_t digit;
-	typedef digit reg[16];
-	#define hpvm_iterate_word(a)  for (uint8_t i =  0; i <  14; ++i) { a; }
-	#define hpvm_iterate_field(a) for (uint8_t i = ff; i <= fl; ++i) { a; }
+	using digit = u08;
+	using reg = digit[16];
+	
+	#define hpvm_iterate_word(a)  for (u08 i =  0; i <  14; ++i) { a; }
+	#define hpvm_iterate_field(a) for (u08 i = ff; i <= fl; ++i) { a; }
 	namespace fld { enum { P = 0, M, X, W, WP, MS, XS, S }; }
 
 	// display defines
@@ -123,79 +124,97 @@ namespace HPVM
 	reg M;
 
 	// state
-	uint8_t rom, pc, ret_pc, key_pc;
-	uint8_t p, ff, fl, s[12];
-	uint8_t carry, prev_carry;
-	uint8_t disp_enable, disp_update;
-	uint8_t idling, error;
+	u08 rom, pc, ret_pc, key_pc;
+	u08 p, ff, fl, s[12];
+	u08 carry, prev_carry;
+	u08 disp_enable, disp_update;
+	u08 idling, error;
 
 	// basic math
+	//NOINLINE
 	digit alu_add(digit x, digit y)
 	{
-		int8_t res = x + y + carry;
+		s08 res = x + y + carry;
 		if (res > 9) { res -= 10; carry = 1; } else carry = 0;
 		return digit(res);
 	}
 
+	//NOINLINE
 	digit alu_sub(digit x, digit y)
 	{
-		int8_t res = x - y - carry;
+		s08 res = x - y - carry;
 		if (res < 0) { res += 10; carry = 1; } else carry = 0;
 		return digit(res);
 	}
 
+	//NOINLINE
 	void reg_clr(reg r)
 	{
-		hpvm_iterate_field(r[i] = 0);
+		for (u08 i = ff; i <= fl; ++i) r[i] = 0;
 	}
 
+	//NOINLINE
 	void reg_add(reg r, reg x, reg y)
 	{
-		hpvm_iterate_field(r[i] = alu_add(x[i], y[i]));
+		for (u08 i = ff; i <= fl; ++i) r[i] = alu_add(x[i], y[i]);
 	}
 
+	//NOINLINE
 	void reg_sub(reg r, reg x, reg y)
 	{
-		hpvm_iterate_field(r[i] = alu_sub(x[i], y[i]));
+		for (u08 i = ff; i <= fl; ++i) r[i] = alu_sub(x[i], y[i]);
 	}
 
+	//NOINLINE
 	void reg_inc(reg r)
 	{
 		carry = 1;
-		hpvm_iterate_field(r[i] = alu_add(r[i], 0));
+		for (u08 i = ff; i <= fl; ++i) r[i] = alu_add(r[i], 0);
 	}
 
+	//NOINLINE
 	void reg_dec(reg r)
 	{
 		carry = 1;
-		hpvm_iterate_field(r[i] = alu_sub(r[i], 0));
+		for (u08 i = ff; i <= fl; ++i) r[i] = alu_sub(r[i], 0);
 	}
 
+	//NOINLINE
 	void reg_shr(reg r)
 	{
-		for (uint8_t i = ff; i < fl; i++) r[i] = r[i + 1];
+		for (u08 i = ff; i < fl; i++) r[i] = r[i + 1];
 		r[fl] = 0;
 	}
 
+	//NOINLINE
 	void reg_shl(reg r)
 	{
-		for (int8_t i = fl; i > ff; i--) r[i] = r[i - 1];
+		for (s08 i = fl; i > ff; i--) r[i] = r[i - 1];
 		r[ff] = 0;
 	}
 
+	//NOINLINE
 	void reg_copy(reg x, reg y)
 	{
-		hpvm_iterate_field(x[i] = y[i]);
+		for (u08 i = ff; i <= fl; ++i) x[i] = y[i];
+	}
+
+	NOINLINE
+	void reg_swap(reg x, reg y, u08 f, u08 l)
+	{
+		for (u08 i = f; i <= l; ++i) 
+		{
+			digit t = x[i]; x[i] = y[i]; y[i] = t;
+		}
 	}
 
 	void reg_swap(reg x, reg y)
 	{
-		digit t;
-		hpvm_iterate_field(t = x[i]; x[i] = y[i]; y[i] = t);
+		reg_swap(x, y, ff, fl);
 	}
 
 	// implementation
-	void Operation(uint8_t op)
+	void Operation(u08 op)
 	{
 		idling = error = 0;
 		key_pc = op;
@@ -222,19 +241,19 @@ namespace HPVM
 		}
 
 		// fetch ROM
-		uint16_t addr_l  = (uint16_t(rom) << 8 | pc);
-		uint8_t  addr_h  = (addr_l >> 2);
-		uint8_t  shift   = (addr_l & 0x03) << 1;
-		uint8_t  fetch_l = pgm_read_byte(rom_l + addr_l);
-		uint8_t  fetch_h = pgm_read_byte(rom_h + addr_h) >> shift & 0x03;
+		u16 addr_l  = (u16(rom) << 8 | pc);
+		u08 addr_h  = (addr_l >> 2);
+		u08 shift   = (addr_l & 0x03) << 1;
+		u08 fetch_l = pgm_read_byte(rom_l + addr_l);
+		u08 fetch_h = pgm_read_byte(rom_h + addr_h) >> shift & 0x03;
 
 		prev_carry = carry;
 		carry = 0;
 		pc++;
 
 		// operation decode
-		uint8_t op_type = (fetch_l & 0x03);
-		uint8_t op_code = (fetch_l >> 2 | fetch_h << 6);
+		u08 op_type = (fetch_l & 0x03);
+		u08 op_code = (fetch_l >> 2 | fetch_h << 6);
 
 		// Type 00: Misc Instructions
 		if (op_type == 0x00)
@@ -247,43 +266,71 @@ namespace HPVM
 					pc = key_pc;
 					break;
 				case 0b00000111: // P – 1 -> P
-					p -= 0x01; p &= 0x0F;
+					p -= 0x01;
+					p &= 0x0F;
 					break;
 				case 0b00001010: // DISPLAY TOGGLE
-					disp_enable = !disp_enable; disp_update = 1;
+					disp_enable = !disp_enable;
+					disp_update = 1;
 					break;
 				case 0b00101010: // C EXCHANGE M
-					hpvm_iterate_word(digit t = C[i]; C[i] = M[i]; M[i] = t);
+					reg_swap(C, M, 0, 13);
 					break;
 				case 0b01001010: // C -> STACK
-					hpvm_iterate_word(F[i] = E[i]; E[i] = D[i]; D[i] = C[i]);
+					for (u08 i =  0; i <  14; ++i)
+					{
+						F[i] = E[i];
+						E[i] = D[i];
+						D[i] = C[i];
+					}
 					break;
 				case 0b01101010: // STACK -> A
-					hpvm_iterate_word(A[i] = D[i]; D[i] = E[i]; E[i] = F[i]);
+					for (u08 i =  0; i <  14; ++i)
+					{
+						A[i] = D[i];
+						D[i] = E[i];
+						E[i] = F[i];
+					}
 					break;
 				case 0b10001010: // DISPLAY OFF
-					if (disp_enable) { disp_enable = 0; disp_update = 1; }
+					if (disp_enable)
+					{ 
+						disp_enable = 0;
+						disp_update = 1;
+					}
 					break;
 				case 0b10101010: // M -> C
-					hpvm_iterate_word(C[i] = M[i]);
+					for (u08 i =  0; i <  14; ++i) C[i] = M[i];
 					break;
 				case 0b11001010: // DOWN ROTATE
-					hpvm_iterate_word(digit t = C[i]; C[i] = D[i]; D[i] = E[i]; E[i] = F[i]; F[i] = t);
+					for (u08 i =  0; i <  14; ++i)
+					{
+						digit t = C[i];
+						C[i] = D[i];
+						D[i] = E[i];
+						E[i] = F[i];
+						F[i] = t;
+					}
 					break;
 				case 0b11101010: // CLEAR REGISTERS
-					hpvm_iterate_word(A[i] = B[i] = C[i] = D[i] = E[i] = F[i] = M[i] = 0);
+					for (u08 i =  0; i <  14; ++i)
+					{
+						A[i] = B[i] = C[i] = D[i] = E[i] = F[i] = M[i] = 0;
+					}
 					break;
 				case 0b00001100: // RETURN
 					pc = ret_pc;
 					break;
 				case 0b00001101: // CLEAR STATUS
-					for (uint8_t i = 0; i < 12; i++) s[i] = 0;
+					for (u08 i = 0; i < 12; i++) s[i] = 0;
 					break;
 				case 0b00001111: // P + 1 -> P
-					p += 0x01; p &= 0x0F;
+					p += 0x01; 
+					p &= 0x0F;
 					break;
+
 				default:
-					uint8_t nnnn = op_code >> 4;
+					u08 nnnn = op_code >> 4;
 					switch(op_code & 0x0F)
 					{
 						case 0b0001: // 1 -> Sn
@@ -299,7 +346,9 @@ namespace HPVM
 							carry = s[nnnn];
 							break;
 						case 0b0110: // n -> C
-							C[p] = nnnn; p -= 0x01; p &= 0x0F;
+							C[p] = nnnn;
+							p -= 0x01;
+							p &= 0x0F;
 							break;
 						case 0b1001: // 0 -> Sn
 							s[nnnn] = 0;
@@ -340,28 +389,30 @@ namespace HPVM
 			switch(op_code >> 3)
 			{
 				case 0b00000: // IF B[f] = 0
-					hpvm_iterate_field(carry |= (B[i] != 0));
+					for (u08 i = ff; i <= fl; ++i) carry |= (B[i] != 0);
 					break;
 				case 0b00001: // 0 -> B[f]
 					reg_clr(B);
 					break;
 				case 0b00010: // IF A >= C[f]
-					hpvm_iterate_field(alu_sub(A[i], C[i]));
+					for (u08 i = ff; i <= fl; ++i) alu_sub(A[i], C[i]);
 					break;
 				case 0b00011: // IF C[f] >= 1
-					carry = 1; hpvm_iterate_field(carry &= (C[i] == 0));
+					carry = 1; 
+					for (u08 i = ff; i <= fl; ++i) carry &= (C[i] == 0);
 					break;
 				case 0b00100: // B -> C[f]
 					reg_copy(C, B);
 					break;
 				case 0b00101: // 0 – C -> C[f]
-					hpvm_iterate_field(C[i] = alu_sub(0, C[i]));
+					for (u08 i = ff; i <= fl; ++i) C[i] = alu_sub(0, C[i]);
 					break;
 				case 0b00110: // 0 -> C[f]
 					reg_clr(C);
 					break;
 				case 0b00111: // 0 – C – 1 -> C[f]
-					carry = 1; hpvm_iterate_field(C[i] = alu_sub(0, C[i]));
+					carry = 1; 
+					for (u08 i = ff; i <= fl; ++i) C[i] = alu_sub(0, C[i]);
 					break;
 				case 0b01000: // SHIFT LEFT A[f]
 					reg_shl(A);
@@ -379,7 +430,7 @@ namespace HPVM
 					reg_copy(A, C);
 					break;
 				case 0b01101: // IF C[f] = 0
-					hpvm_iterate_field(carry |= (C[i] != 0));
+					for (u08 i = ff; i <= fl; ++i) carry |= (C[i] != 0);
 					break;
 				case 0b01110: // A + C -> C[f]
 					reg_add(C, A, C);
@@ -388,7 +439,7 @@ namespace HPVM
 					reg_inc(C);
 					break;
 				case 0b10000: // IF A >= B[f]
-					hpvm_iterate_field(alu_sub(A[i], B[i]));
+					for (u08 i = ff; i <= fl; ++i) alu_sub(A[i], B[i]);
 					break;
 				case 0b10001: // B EXCHANGE C[f]
 					reg_swap(B, C);
@@ -397,7 +448,8 @@ namespace HPVM
 					reg_shr(C);
 					break;
 				case 0b10011: // IF A[f] >= 1
-					carry = 1; hpvm_iterate_field(carry &= (A[i] == 0));
+					carry = 1;
+					for (u08 i = ff; i <= fl; ++i) carry &= (A[i] == 0);
 					break;
 				case 0b10100: // SHIFT RIGHT B[f]
 					reg_shr(B);
@@ -452,7 +504,7 @@ namespace HPVM
 		if (disp_update)
 		{
 			disp_update = 0;
-			for (int8_t d = 0, i = 13; i >= 0; --i)
+			for (s08 d = 0, i = 13; i >= 0; --i)
 			{
 				if (disp_enable)
 				{
