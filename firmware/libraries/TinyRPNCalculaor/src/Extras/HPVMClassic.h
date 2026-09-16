@@ -138,7 +138,7 @@ namespace HPVM
 	u08 disp_enable, idling, error;
 
 	// basic math
-	bcd alu(bcd x, bcd y, u08 sub)
+	bcd alu(const bcd x, const bcd y, const u08 sub)
 	{
 		s08 res;
 		if (sub)
@@ -160,13 +160,13 @@ namespace HPVM
 			r[i] = 0;
 	}
 
-	void reg_math(reg r, reg x, reg y, u08 sub)
+	void reg_math(reg r, const reg x, const reg y, const u08 sub)
 	{
 		for (u08 i = ff; i <= fl; ++i)
 			r[i] = alu(x[i], y[i], sub);
 	}
 
-	void reg_math(reg r, u08 sub)
+	void reg_math(reg r, const u08 sub)
 	{
 		carry = 1;
 		for (u08 i = ff; i <= fl; ++i)
@@ -184,12 +184,12 @@ namespace HPVM
 	void reg_shl(reg r)
 	{
 		if (ff > fl) return;
-		for (s08 i = fl; i > ff; --i)
+		for (u08 i = fl; i > ff; --i)
 			r[i] = r[i - 1];
 		r[ff] = 0;
 	}
 
-	void reg_move(reg x, reg y, u08 f, u08 l, u08 swap)
+	void reg_move(reg x, reg y, const u08 f, const u08 l, const u08 swap)
 	{
 		for (u08 i = f; i <= l; ++i)
 		{
@@ -198,12 +198,21 @@ namespace HPVM
 		}
 	}
 
-	void reg_move(reg x, reg y, u08 swap)
+	void reg_move(reg x, reg y, const u08 swap)
 	{
 		reg_move(x, y, ff, fl, swap);
 	}
 
-	// implementation
+	bool reg_nonzero(const reg r)
+	{
+		u08 bits = 0;
+		for (u08 i = ff; i <= fl; ++i)
+			bits |= r[i];
+		return bits != 0;
+	}
+
+	// one-shot key event abstraction, unlike the original
+	// C&T, S0 is not reasserted while a key is held
 	void Operation(u08 op)
 	{
 		idling = error = 0;
@@ -353,7 +362,7 @@ namespace HPVM
 		else if (op_type == 0x02)
 		{
 			// get register boundaries
-			fl = pgm_read_byte(field_bounds + (op_code & 0x07));
+			fl = MEM::DataRead(field_bounds + (op_code & 0x07));
 			ff = fl & 0x0F; fl >>= 4;
 			if (ff == 0x0F) ff = p;
 			if (fl == 0x0F) fl = (p < 14 ? p : 13);
@@ -362,7 +371,7 @@ namespace HPVM
 			switch(op_code >> 3)
 			{
 				case 0b00000: // IF B[f] = 0
-					for (u08 i = ff; i <= fl; ++i) carry |= (B[i] != 0);
+					carry = reg_nonzero(B);
 					break;
 				case 0b00001: // 0 -> B[f]
 					reg_clr(B);
@@ -371,8 +380,7 @@ namespace HPVM
 					for (u08 i = ff; i <= fl; ++i) alu(A[i], C[i], SUB);
 					break;
 				case 0b00011: // IF C[f] >= 1
-					carry = 1; 
-					for (u08 i = ff; i <= fl; ++i) carry &= (C[i] == 0);
+					carry = !reg_nonzero(C);
 					break;
 				case 0b00100: // B -> C[f]
 					reg_move(C, B, COPY);
@@ -403,7 +411,7 @@ namespace HPVM
 					reg_move(A, C, COPY);
 					break;
 				case 0b01101: // IF C[f] = 0
-					for (u08 i = ff; i <= fl; ++i) carry |= (C[i] != 0);
+					carry = reg_nonzero(C);
 					break;
 				case 0b01110: // A + C -> C[f]
 					reg_math(C, A, C, ADD);
@@ -421,8 +429,7 @@ namespace HPVM
 					reg_shr(C);
 					break;
 				case 0b10011: // IF A[f] >= 1
-					carry = 1;
-					for (u08 i = ff; i <= fl; ++i) carry &= (A[i] == 0);
+					carry = !reg_nonzero(A);
 					break;
 				case 0b10100: // SHIFT RIGHT B[f]
 					reg_shr(B);
