@@ -103,7 +103,7 @@ namespace HPVM
 	// cpu defines
 	using bcd = u08;
 	using reg = bcd[14];
-	const u08 field_bounds[] PROGMEM = 
+	const u08 field_bounds[] DATAMEM = 
 	{
 		0xFF, // P  : p..p
 		0xC3, // M  : 3..12
@@ -134,10 +134,8 @@ namespace HPVM
 
 	// state
 	u08 rom, pc, ret_pc, key_pc;
-	u08 p, ff, fl, s[12];
-	u08 carry, prev_carry;
-	u08 disp_enable, disp_update;
-	u08 idling, error;
+	u08 carry, p, ff, fl, s[12];
+	u08 disp_enable, idling, error;
 
 	// basic math
 	bcd alu(bcd x, bcd y, u08 sub)
@@ -158,32 +156,36 @@ namespace HPVM
 
 	void reg_clr(reg r)
 	{
-		for (u08 i = ff; i <= fl; ++i) r[i] = 0;
+		for (u08 i = ff; i <= fl; ++i)
+			r[i] = 0;
 	}
 
 	void reg_math(reg r, reg x, reg y, u08 sub)
 	{
 		for (u08 i = ff; i <= fl; ++i)
-		{
 			r[i] = alu(x[i], y[i], sub);
-		}
 	}
 
 	void reg_math(reg r, u08 sub)
 	{
 		carry = 1;
-		for (u08 i = ff; i <= fl; ++i) r[i] = alu(r[i], 0, sub);
+		for (u08 i = ff; i <= fl; ++i)
+			r[i] = alu(r[i], 0, sub);
 	}
 
 	void reg_shr(reg r)
 	{
-		for (u08 i = ff; i < fl; ++i) r[i] = r[i + 1];
+		if (ff > fl) return;
+		for (u08 i = ff; i < fl; ++i)
+			r[i] = r[i + 1];
 		r[fl] = 0;
 	}
 
 	void reg_shl(reg r)
 	{
-		for (s08 i = fl; i > ff; --i) r[i] = r[i - 1];
+		if (ff > fl) return;
+		for (s08 i = fl; i > ff; --i)
+			r[i] = r[i - 1];
 		r[ff] = 0;
 	}
 
@@ -232,10 +234,11 @@ namespace HPVM
 		u16 addr_l  = (u16(rom) << 8 | pc);
 		u08 addr_h  = (addr_l >> 2);
 		u08 shift   = (addr_l & 0x03) << 1;
-		u08 fetch_l = pgm_read_byte(rom_l + addr_l);
-		u08 fetch_h = pgm_read_byte(rom_h + addr_h) >> shift & 0x03;
+		u08 fetch_l = MEM::ProgRead(rom_l + addr_l);
+		u08 fetch_h = MEM::ProgRead(rom_h + addr_h) >> shift & 0x03;
 
-		prev_carry = carry;
+		u08 disp_update = 0;
+		u08 prev_carry = carry;
 		carry = 0;
 		pc++;
 
@@ -285,23 +288,16 @@ namespace HPVM
 					reg_move(C, M, 0, 13, COPY);
 					break;
 				case 0b11001010: // DOWN ROTATE
-					for (u08 i = 0; i <= 13; ++i)
-					{
-						bcd t =  C[i];
-						C[i]  =  D[i];
-						D[i]  =  E[i];
-						E[i]  =  F[i];
-						F[i]  =  t;
-					}
+					reg_move(C, D, 0, 13, SWAP);
+					reg_move(D, E, 0, 13, SWAP);
+					reg_move(E, F, 0, 13, SWAP);
 					break;
 				case 0b11101010: // CLEAR REGISTERS
-					reg_clr(A);
-					reg_clr(B);
-					reg_clr(C);
-					reg_clr(D);
-					reg_clr(E);
-					reg_clr(F);
-					reg_clr(M);
+					for (u08 i = 0; i <= 13; ++i)
+						A[i] = B[i] =
+						C[i] = D[i] =
+						E[i] = F[i] =
+						M[i] = 0;
 					break;
 				case 0b00001100: // RETURN
 					pc = ret_pc;
@@ -331,7 +327,7 @@ namespace HPVM
 							carry = s[nnnn];
 							break;
 						case 0b0110: // n -> C
-							C[p] = nnnn;
+							if (p < 14) C[p] = nnnn;
 							p -= 0x01;
 							p &= 0x0F;
 							break;
@@ -357,13 +353,12 @@ namespace HPVM
 		else if (op_type == 0x02)
 		{
 			// get register boundaries
-			fl = pgm_read_byte(field_bounds + (op_code & 0x07));
+			fl = MEM::DataRead(field_bounds[op_code & 0x07]);
 			ff = fl & 0x0F; fl >>= 4;
 			if (ff == 0x0F) ff = p;
-			if (fl == 0x0F) fl = p;
+			if (fl == 0x0F) fl = (p < 14 ? p : 13);
 
 			// process opcode
-			carry = 0;
 			switch(op_code >> 3)
 			{
 				case 0b00000: // IF B[f] = 0
