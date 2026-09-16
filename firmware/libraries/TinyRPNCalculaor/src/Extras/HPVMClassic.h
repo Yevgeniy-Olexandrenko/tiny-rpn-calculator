@@ -104,7 +104,7 @@ namespace HPVM
 	using digit = u08;
 	using reg = digit[16];
 	
-	#define hpvm_iterate_word(a)  for (u08 i =  0; i <= 13; ++i) { a; }
+	#define hpvm_iterate_word(a)  for (u08 i = 0; i <= 13; ++i) { a; }
 	#define hpvm_iterate_field(a) for (u08 i = ff; i <= fl; ++i) { a; }
 	const u08 field_bounds[] PROGMEM = 
 	{
@@ -117,7 +117,8 @@ namespace HPVM
 		0x22, // XS : 2..2
 		0xDD  // S  : 13..13
 	};
-	enum { ADD = 0, SUB = 1 };
+	enum { ADD  = 0, SUB  = 1 };
+	enum { COPY = 0, SWAP = 1 };
 
 	// display defines
 	#define HPVM_DIGIT 0x00
@@ -142,7 +143,6 @@ namespace HPVM
 	u08 idling, error;
 
 	// basic math
-	// NOINLINE
 	digit alu(digit x, digit y, u08 sub)
 	{
 		s08 res;
@@ -159,13 +159,11 @@ namespace HPVM
 		return digit(res);
 	}
 
-	//NOINLINE
 	void reg_clr(reg r)
 	{
 		for (u08 i = ff; i <= fl; ++i) r[i] = 0;
 	}
 
-	// NOINLINE
 	void reg_math(reg r, reg x, reg y, u08 sub)
 	{
 		for (u08 i = ff; i <= fl; ++i)
@@ -174,45 +172,36 @@ namespace HPVM
 		}
 	}
 
-	// NOINLINE
 	void reg_math(reg r, u08 sub)
 	{
 		carry = 1;
 		for (u08 i = ff; i <= fl; ++i) r[i] = alu(r[i], 0, sub);
 	}
 
-	//NOINLINE
 	void reg_shr(reg r)
 	{
 		for (u08 i = ff; i < fl; i++) r[i] = r[i + 1];
 		r[fl] = 0;
 	}
 
-	//NOINLINE
 	void reg_shl(reg r)
 	{
 		for (s08 i = fl; i > ff; i--) r[i] = r[i - 1];
 		r[ff] = 0;
 	}
 
-	//NOINLINE
-	void reg_copy(reg x, reg y)
+	void reg_move(reg x, reg y, u08 f, u08 l, u08 swap)
 	{
-		for (u08 i = ff; i <= fl; ++i) x[i] = y[i];
-	}
-
-	NOINLINE
-	void reg_swap(reg x, reg y, u08 f, u08 l)
-	{
-		for (u08 i = f; i <= l; ++i) 
+		for (u08 i = f; i <= l; ++i)
 		{
-			digit t = x[i]; x[i] = y[i]; y[i] = t;
+			digit t = x[i]; x[i] = y[i];
+			if (swap) y[i] = t;
 		}
 	}
 
-	void reg_swap(reg x, reg y)
+	void reg_move(reg x, reg y, u08 swap)
 	{
-		reg_swap(x, y, ff, fl);
+		reg_move(x, y, ff, fl, swap);
 	}
 
 	// implementation
@@ -276,23 +265,17 @@ namespace HPVM
 					disp_update = 1;
 					break;
 				case 0b00101010: // C EXCHANGE M
-					reg_swap(C, M, 0, 13);
+					reg_move(C, M, 0, 13, SWAP);
 					break;
 				case 0b01001010: // C -> STACK
-					for (u08 i =  0; i <= 13; ++i)
-					{
-						F[i] = E[i];
-						E[i] = D[i];
-						D[i] = C[i];
-					}
+					reg_move(F, E, 0, 13, COPY);
+					reg_move(E, D, 0, 13, COPY);
+					reg_move(D, C, 0, 13, COPY);
 					break;
 				case 0b01101010: // STACK -> A
-					for (u08 i =  0; i <= 13; ++i)
-					{
-						A[i] = D[i];
-						D[i] = E[i];
-						E[i] = F[i];
-					}
+					reg_move(A, D, 0, 13, COPY);
+					reg_move(D, E, 0, 13, COPY);
+					reg_move(E, F, 0, 13, COPY);
 					break;
 				case 0b10001010: // DISPLAY OFF
 					if (disp_enable)
@@ -302,10 +285,10 @@ namespace HPVM
 					}
 					break;
 				case 0b10101010: // M -> C
-					for (u08 i =  0; i <= 13; ++i) C[i] = M[i];
+					reg_move(C, M, 0, 13, COPY);
 					break;
 				case 0b11001010: // DOWN ROTATE
-					for (u08 i =  0; i <= 13; ++i)
+					for (u08 i = 0; i <= 13; ++i)
 					{
 						digit t = C[i];
 						C[i] = D[i];
@@ -315,10 +298,13 @@ namespace HPVM
 					}
 					break;
 				case 0b11101010: // CLEAR REGISTERS
-					for (u08 i =  0; i <= 13; ++i)
-					{
-						A[i] = B[i] = C[i] = D[i] = E[i] = F[i] = M[i] = 0;
-					}
+					reg_clr(A);
+					reg_clr(B);
+					reg_clr(C);
+					reg_clr(D);
+					reg_clr(E);
+					reg_clr(F);
+					reg_clr(M);
 					break;
 				case 0b00001100: // RETURN
 					pc = ret_pc;
@@ -397,7 +383,7 @@ namespace HPVM
 					for (u08 i = ff; i <= fl; ++i) carry &= (C[i] == 0);
 					break;
 				case 0b00100: // B -> C[f]
-					reg_copy(C, B);
+					reg_move(C, B, COPY);
 					break;
 				case 0b00101: // 0 – C -> C[f]
 					for (u08 i = ff; i <= fl; ++i) C[i] = alu(0, C[i], SUB);
@@ -413,7 +399,7 @@ namespace HPVM
 					reg_shl(A);
 					break;
 				case 0b01001: // A -> B[f]
-					reg_copy(B, A);
+					reg_move(B, A, COPY);
 					break;
 				case 0b01010: // A – C -> C[f]
 					reg_math(C, A, C, SUB);
@@ -422,7 +408,7 @@ namespace HPVM
 					reg_math(C, SUB);
 					break;
 				case 0b01100: // C -> A[f]
-					reg_copy(A, C);
+					reg_move(A, C, COPY);
 					break;
 				case 0b01101: // IF C[f] = 0
 					for (u08 i = ff; i <= fl; ++i) carry |= (C[i] != 0);
@@ -437,7 +423,7 @@ namespace HPVM
 					for (u08 i = ff; i <= fl; ++i) alu(A[i], B[i], SUB);
 					break;
 				case 0b10001: // B EXCHANGE C[f]
-					reg_swap(B, C);
+					reg_move(B, C, SWAP);
 					break;
 				case 0b10010: // SHIFT RIGHT C[f]
 					reg_shr(C);
@@ -462,7 +448,7 @@ namespace HPVM
 					reg_math(A, A, B, SUB);
 					break;
 				case 0b11001: // A EXCHANGE B[f]
-					reg_swap(A, B);
+					reg_move(A, B, SWAP);
 					break;
 				case 0b11010: // A – C -> A[f]
 					reg_math(A, A, C, SUB);
@@ -474,7 +460,7 @@ namespace HPVM
 					reg_math(A, A, B, ADD);
 					break;
 				case 0b11101: // A EXCHANGE C[f]
-					reg_swap(A, C);
+					reg_move(A, C, SWAP);
 					break;
 				case 0b11110: // A + C -> A[f]
 					reg_math(A, A, C, ADD);
