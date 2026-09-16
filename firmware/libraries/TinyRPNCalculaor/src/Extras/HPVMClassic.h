@@ -117,6 +117,7 @@ namespace HPVM
 		0x22, // XS : 2..2
 		0xDD  // S  : 13..13
 	};
+	enum { ADD = 0, SUB = 1 };
 
 	// display defines
 	#define HPVM_DIGIT 0x00
@@ -141,19 +142,20 @@ namespace HPVM
 	u08 idling, error;
 
 	// basic math
-	//NOINLINE
-	digit alu_add(digit x, digit y)
+	// NOINLINE
+	digit alu(digit x, digit y, u08 sub)
 	{
-		s08 res = x + y + carry;
-		if (res > 9) { res -= 10; carry = 1; } else carry = 0;
-		return digit(res);
-	}
-
-	//NOINLINE
-	digit alu_sub(digit x, digit y)
-	{
-		s08 res = x - y - carry;
-		if (res < 0) { res += 10; carry = 1; } else carry = 0;
+		s08 res;
+		if (sub)
+		{
+			res = x - y - carry;
+			if (res < 0) { res += 10; carry = 1; } else carry = 0;
+		}
+		else
+		{
+			res = x + y + carry;
+			if (res > 9) { res -= 10; carry = 1; } else carry = 0;
+		}
 		return digit(res);
 	}
 
@@ -163,30 +165,20 @@ namespace HPVM
 		for (u08 i = ff; i <= fl; ++i) r[i] = 0;
 	}
 
-	//NOINLINE
-	void reg_add(reg r, reg x, reg y)
+	// NOINLINE
+	void reg_math(reg r, reg x, reg y, u08 sub)
 	{
-		for (u08 i = ff; i <= fl; ++i) r[i] = alu_add(x[i], y[i]);
+		for (u08 i = ff; i <= fl; ++i)
+		{
+			r[i] = alu(x[i], y[i], sub);
+		}
 	}
 
-	//NOINLINE
-	void reg_sub(reg r, reg x, reg y)
-	{
-		for (u08 i = ff; i <= fl; ++i) r[i] = alu_sub(x[i], y[i]);
-	}
-
-	//NOINLINE
-	void reg_inc(reg r)
+	// NOINLINE
+	void reg_math(reg r, u08 sub)
 	{
 		carry = 1;
-		for (u08 i = ff; i <= fl; ++i) r[i] = alu_add(r[i], 0);
-	}
-
-	//NOINLINE
-	void reg_dec(reg r)
-	{
-		carry = 1;
-		for (u08 i = ff; i <= fl; ++i) r[i] = alu_sub(r[i], 0);
+		for (u08 i = ff; i <= fl; ++i) r[i] = alu(r[i], 0, sub);
 	}
 
 	//NOINLINE
@@ -398,7 +390,7 @@ namespace HPVM
 					reg_clr(B);
 					break;
 				case 0b00010: // IF A >= C[f]
-					for (u08 i = ff; i <= fl; ++i) alu_sub(A[i], C[i]);
+					for (u08 i = ff; i <= fl; ++i) alu(A[i], C[i], SUB);
 					break;
 				case 0b00011: // IF C[f] >= 1
 					carry = 1; 
@@ -408,14 +400,14 @@ namespace HPVM
 					reg_copy(C, B);
 					break;
 				case 0b00101: // 0 – C -> C[f]
-					for (u08 i = ff; i <= fl; ++i) C[i] = alu_sub(0, C[i]);
+					for (u08 i = ff; i <= fl; ++i) C[i] = alu(0, C[i], SUB);
 					break;
 				case 0b00110: // 0 -> C[f]
 					reg_clr(C);
 					break;
 				case 0b00111: // 0 – C – 1 -> C[f]
 					carry = 1; 
-					for (u08 i = ff; i <= fl; ++i) C[i] = alu_sub(0, C[i]);
+					for (u08 i = ff; i <= fl; ++i) C[i] = alu(0, C[i], SUB);
 					break;
 				case 0b01000: // SHIFT LEFT A[f]
 					reg_shl(A);
@@ -424,10 +416,10 @@ namespace HPVM
 					reg_copy(B, A);
 					break;
 				case 0b01010: // A – C -> C[f]
-					reg_sub(C, A, C);
+					reg_math(C, A, C, SUB);
 					break;
 				case 0b01011: // C – 1 -> C[f]
-					reg_dec(C);
+					reg_math(C, SUB);
 					break;
 				case 0b01100: // C -> A[f]
 					reg_copy(A, C);
@@ -436,13 +428,13 @@ namespace HPVM
 					for (u08 i = ff; i <= fl; ++i) carry |= (C[i] != 0);
 					break;
 				case 0b01110: // A + C -> C[f]
-					reg_add(C, A, C);
+					reg_math(C, A, C, ADD);
 					break;
 				case 0b01111: // C + 1 -> C[f]
-					reg_inc(C);
+					reg_math(C, ADD);
 					break;
 				case 0b10000: // IF A >= B[f]
-					for (u08 i = ff; i <= fl; ++i) alu_sub(A[i], B[i]);
+					for (u08 i = ff; i <= fl; ++i) alu(A[i], B[i], SUB);
 					break;
 				case 0b10001: // B EXCHANGE C[f]
 					reg_swap(B, C);
@@ -458,7 +450,7 @@ namespace HPVM
 					reg_shr(B);
 					break;
 				case 0b10101: // C + C -> C[f]
-					reg_add(C, C, C);
+					reg_math(C, C, C, ADD);
 					break;
 				case 0b10110: // SHIFT RIGHT A[f]
 					reg_shr(A);
@@ -467,28 +459,28 @@ namespace HPVM
 					reg_clr(A);
 					break;
 				case 0b11000: // A – B -> A[f]
-					reg_sub(A, A, B);
+					reg_math(A, A, B, SUB);
 					break;
 				case 0b11001: // A EXCHANGE B[f]
 					reg_swap(A, B);
 					break;
 				case 0b11010: // A – C -> A[f]
-					reg_sub(A, A, C);
+					reg_math(A, A, C, SUB);
 					break;
 				case 0b11011: // A – 1 -> A[f]
-					reg_dec(A);
+					reg_math(A, SUB);
 					break;
 				case 0b11100: // A + B -> A[f]
-					reg_add(A, A, B);
+					reg_math(A, A, B, ADD);
 					break;
 				case 0b11101: // A EXCHANGE C[f]
 					reg_swap(A, C);
 					break;
 				case 0b11110: // A + C -> A[f]
-					reg_add(A, A, C);
+					reg_math(A, A, C, ADD);
 					break;
 				case 0b11111: // A + 1 -> A[f]
-					reg_inc(A);
+					reg_math(A, ADD);
 					break;
 			}
 		}
