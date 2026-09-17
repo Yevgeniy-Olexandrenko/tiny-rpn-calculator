@@ -5,7 +5,7 @@
 // -----------------------------------------------------------------------------
 
 #define CALC_FRAMES_PER_SEC   (15)
-#define HPVM_CYCLES_PER_FRAME (HPVM_CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
+#define HPVM_CYCLES_PER_FRAME (HPVM::CYCLES_PER_SEC / CALC_FRAMES_PER_SEC)
 
 #define FLAG_CHAR_W           (7)
 #define FLAG_POS              (LCD::WIDTH - FLAG_CHAR_W)

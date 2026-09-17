@@ -7,6 +7,7 @@
 #define  ENABLE_OPT_NOINLINE 1
 
 #include <TinyRPNCalculator.h>
+#include <Extras/HP35VMModel.h>
 #include <Extras/HPVMClassic.h>
 
 #include "data.h"
@@ -17,5 +18,5 @@
 // Global variables use 204 bytes (39%) of dynamic memory, leaving 308 bytes for local variables. Maximum is 512 bytes.
 
 // New reference compilation output:
-// Sketch uses 6872 bytes (83%) of program storage space. Maximum is 8192 bytes.
+// Sketch uses 6854 bytes (83%) of program storage space. Maximum is 8192 bytes.
 // Global variables use 187 bytes (36%) of dynamic memory, leaving 325 bytes for local variables. Maximum is 512 bytes.
