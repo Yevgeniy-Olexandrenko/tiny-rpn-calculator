@@ -4,10 +4,9 @@
 
 namespace LCD
 {
-	const u08 I2C_ADDR = 0x3C;
-
-	const u08 WIDTH = 128;
-	const u08 PAGES = 4;
+	constexpr u08 I2C_ADDR = 0x3C;
+	constexpr u08 WIDTH    = 128;
+	constexpr u08 PAGES    = 4;
 
 	u08 draw_buf = 0xB4;
 

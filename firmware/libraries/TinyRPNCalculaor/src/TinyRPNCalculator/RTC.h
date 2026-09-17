@@ -11,7 +11,7 @@
 
 namespace RTC
 {
-	const u08 I2C_ADDR = 0x68;
+	constexpr u08 I2C_ADDR = 0x68;
 
 	enum
 	{
@@ -36,7 +36,7 @@ namespace RTC
 		REG_TEMP_LSB     = 0x12,
 	};
 
-	const u08 days_per_month[] PROGMEM =
+	const u08 days_per_month[] DATAMEM =
 	{
 		31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 	};
@@ -48,9 +48,18 @@ namespace RTC
 	u08 Month   = BCD::Encode(BUILD_MONTH); // 1 - 12
 	u08 Year    = BCD::Encode(BUILD_YEAR);  // 0 - 99
 
-	b08 is_leap_year(u16 year)
+	// supported years are 2000-2099,
+	// so every fourth year is leap
+	b08 is_leap_year(u08 year)
 	{
-		return (!(year % 4) && ((year % 100) || !(year % 400)));
+		return !(year & 3);
+	}
+
+	u08 get_days_in_month(u08 month, b08 leap)
+	{
+		u08 i = month - 1;
+		if (i >= sizeof(days_per_month)) return 0;
+		return (i == 1 && leap ? 29 : MEM::DataRead(days_per_month + i));
 	}
 
 	void ReadTimeDate()
@@ -97,42 +106,40 @@ namespace RTC
 		return temp;
 	}
 
-	u32 GetTimestamp(s08 GMTTimeZone)
-	{
-		u08 y = BCD::Decode(Year) + 2000 - 1970;
-		u08 m = BCD::Decode(Month);
-
-		// count days before given year
-		u32 t = y * 365;
-		for (u08 i = 0; i < y; ++i)
-		{
-			if (is_leap_year(1970 + i)) t++;
-		}
-
-		// count days before given month
-		for (u08 i = 1; i < m; ++i)
-		{
-			t += pgm_read_byte(&days_per_month[i - 1]);
-			if (i == 2 && is_leap_year(1970 + y)) t++;
-		}
-
-		// compute from days to seconds
-		t = 24 * (t + BCD::Decode(Date) - 1);
-		t = 60 * (t + BCD::Decode(Hours)   );
-		t = 60 * (t + BCD::Decode(Minutes) );
-		t += BCD::Decode(Seconds);
-		t -= 3600 * GMTTimeZone;
-		return t;
-	}
-
 	b08 IsLeapYear()
 	{
-		return is_leap_year(2000 + BCD::Decode(Year));
+		return is_leap_year(BCD::Decode(Year));
 	}
 
 	u08 GetDaysInMonth()
 	{
-		u08 i = BCD::Decode(Month) - 1;
-		return (i == 1 && IsLeapYear() ? 29 : pgm_read_byte(days_per_month + i));
+		return get_days_in_month(BCD::Decode(Month), IsLeapYear());
+	}
+
+	u32 GetTimestamp(s08 GMTTimeZone)
+	{
+		u08 y = BCD::Decode(Year);
+		u08 m = BCD::Decode(Month);
+		u08 d = BCD::Decode(Date);
+
+		// helper returns zero for an invalid month
+		b08 leap = is_leap_year(y);
+		if (!d || d > get_days_in_month(m, leap)) return 0;
+
+		// y + 30 is years since 1970
+		// the quotient counts prior leap days
+		u32 t = u32(y + 30) * 365 + (y + 30 + 1) / 4;
+
+		// count days before given month
+		for (u08 i = 1; i < m; ++i)
+			t += get_days_in_month(i, leap);
+
+		// compute from days to seconds
+		t = 24 * (t + d - 1);
+		t = 60 * (t + BCD::Decode(Hours));
+		t = 60 * (t + BCD::Decode(Minutes));
+		t += BCD::Decode(Seconds);
+		t -= s32(GMTTimeZone) * 3600L;
+		return t;
 	}
 }
