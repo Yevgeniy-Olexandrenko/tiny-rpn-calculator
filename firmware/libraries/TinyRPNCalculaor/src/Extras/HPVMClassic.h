@@ -258,61 +258,61 @@ namespace HPVM
 		{
 			switch(op_code)
 			{
-				case 0b00000000: // NO OPERATION
+				case 0x00: // NO OPERATION
 					break;
-				case 0b00110100: // KEY -> ROM ADDRESS
+				case 0x34: // KEY -> ROM ADDRESS
 					pc = key_pc;
 					break;
-				case 0b00000111: // P – 1 -> P
+				case 0x07: // P – 1 -> P
 					p -= 0x01;
 					p &= 0x0F;
 					break;
-				case 0b00001010: // DISPLAY TOGGLE
+				case 0x0A: // DISPLAY TOGGLE
 					disp_enable = !disp_enable;
 					disp_update = 1;
 					break;
-				case 0b00101010: // C EXCHANGE M
+				case 0x2A: // C EXCHANGE M
 					reg_move(C, M, 0, 13, SWAP);
 					break;
-				case 0b01001010: // C -> STACK
+				case 0x4A: // C -> STACK
 					reg_move(F, E, 0, 13, COPY);
 					reg_move(E, D, 0, 13, COPY);
 					reg_move(D, C, 0, 13, COPY);
 					break;
-				case 0b01101010: // STACK -> A
+				case 0x6A: // STACK -> A
 					reg_move(A, D, 0, 13, COPY);
 					reg_move(D, E, 0, 13, COPY);
 					reg_move(E, F, 0, 13, COPY);
 					break;
-				case 0b10001010: // DISPLAY OFF
+				case 0x8A: // DISPLAY OFF
 					if (disp_enable)
 					{ 
 						disp_enable = 0;
 						disp_update = 1;
 					}
 					break;
-				case 0b10101010: // M -> C
+				case 0xAA: // M -> C
 					reg_move(C, M, 0, 13, COPY);
 					break;
-				case 0b11001010: // DOWN ROTATE
+				case 0xCA: // DOWN ROTATE
 					reg_move(C, D, 0, 13, SWAP);
 					reg_move(D, E, 0, 13, SWAP);
 					reg_move(E, F, 0, 13, SWAP);
 					break;
-				case 0b11101010: // CLEAR REGISTERS
+				case 0xEA: // CLEAR REGISTERS
 					for (u08 i = 0; i <= 13; ++i)
 						A[i] = B[i] =
 						C[i] = D[i] =
 						E[i] = F[i] =
 						M[i] = 0;
 					break;
-				case 0b00001100: // RETURN
+				case 0x0C: // RETURN
 					pc = ret_pc;
 					break;
-				case 0b00001101: // CLEAR STATUS
+				case 0x0D: // CLEAR STATUS
 					for (u08 i = 0; i < sizeof(s); ++i) s[i] = 0;
 					break;
-				case 0b00001111: // P + 1 -> P
+				case 0x0F: // P + 1 -> P
 					p += 0x01; 
 					p &= 0x0F;
 					break;
@@ -321,27 +321,27 @@ namespace HPVM
 					u08 nnnn = op_code >> 4;
 					switch(op_code & 0x0F)
 					{
-						case 0b0001: // 1 -> Sn
+						case 0x01: // 1 -> Sn
 							s[nnnn] = 1;
 							break;
-						case 0b0011: // n -> P
+						case 0x03: // n -> P
 							p = nnnn;
 							break;
-						case 0b0100: // ROM SELECT n
+						case 0x04: // ROM SELECT n
 							rom = (nnnn >> 1);
 							break;
-						case 0b0101: // IF Sn = 0
+						case 0x05: // IF Sn = 0
 							carry = s[nnnn];
 							break;
-						case 0b0110: // n -> C
+						case 0x06: // n -> C
 							if (p < 14) C[p] = nnnn;
 							p -= 0x01;
 							p &= 0x0F;
 							break;
-						case 0b1001: // 0 -> Sn
+						case 0x09: // 0 -> Sn
 							s[nnnn] = 0;
 							break;
-						case 0b1011: // IF p # n
+						case 0x0B: // IF p # n
 							carry = (p == nnnn);
 							break;
 					}
@@ -368,101 +368,101 @@ namespace HPVM
 			// process opcode
 			switch(op_code >> 3)
 			{
-				case 0b00000: // IF B[f] = 0
+				case 0x00: // IF B[f] = 0
 					carry = reg_nonzero(B);
 					break;
-				case 0b00001: // 0 -> B[f]
+				case 0x01: // 0 -> B[f]
 					reg_clr(B);
 					break;
-				case 0b00010: // IF A >= C[f]
+				case 0x02: // IF A >= C[f]
 					for (u08 i = ff; i <= fl; ++i) alu(A[i], C[i], SUB);
 					break;
-				case 0b00011: // IF C[f] >= 1
+				case 0x03: // IF C[f] >= 1
 					carry = !reg_nonzero(C);
 					break;
-				case 0b00100: // B -> C[f]
+				case 0x04: // B -> C[f]
 					reg_move(C, B, COPY);
 					break;
-				case 0b00101: // 0 – C -> C[f]
+				case 0x05: // 0 – C -> C[f]
 					for (u08 i = ff; i <= fl; ++i) C[i] = alu(0, C[i], SUB);
 					break;
-				case 0b00110: // 0 -> C[f]
+				case 0x06: // 0 -> C[f]
 					reg_clr(C);
 					break;
-				case 0b00111: // 0 – C – 1 -> C[f]
+				case 0x07: // 0 – C – 1 -> C[f]
 					carry = 1; 
 					for (u08 i = ff; i <= fl; ++i) C[i] = alu(0, C[i], SUB);
 					break;
-				case 0b01000: // SHIFT LEFT A[f]
+				case 0x08: // SHIFT LEFT A[f]
 					reg_shl(A);
 					break;
-				case 0b01001: // A -> B[f]
+				case 0x09: // A -> B[f]
 					reg_move(B, A, COPY);
 					break;
-				case 0b01010: // A – C -> C[f]
+				case 0x0A: // A – C -> C[f]
 					reg_math(C, A, C, SUB);
 					break;
-				case 0b01011: // C – 1 -> C[f]
+				case 0x0B: // C – 1 -> C[f]
 					reg_math(C, SUB);
 					break;
-				case 0b01100: // C -> A[f]
+				case 0x0C: // C -> A[f]
 					reg_move(A, C, COPY);
 					break;
-				case 0b01101: // IF C[f] = 0
+				case 0x0D: // IF C[f] = 0
 					carry = reg_nonzero(C);
 					break;
-				case 0b01110: // A + C -> C[f]
+				case 0x0E: // A + C -> C[f]
 					reg_math(C, A, C, ADD);
 					break;
-				case 0b01111: // C + 1 -> C[f]
+				case 0x0F: // C + 1 -> C[f]
 					reg_math(C, ADD);
 					break;
-				case 0b10000: // IF A >= B[f]
+				case 0x10: // IF A >= B[f]
 					for (u08 i = ff; i <= fl; ++i) alu(A[i], B[i], SUB);
 					break;
-				case 0b10001: // B EXCHANGE C[f]
+				case 0x11: // B EXCHANGE C[f]
 					reg_move(B, C, SWAP);
 					break;
-				case 0b10010: // SHIFT RIGHT C[f]
+				case 0x12: // SHIFT RIGHT C[f]
 					reg_shr(C);
 					break;
-				case 0b10011: // IF A[f] >= 1
+				case 0x13: // IF A[f] >= 1
 					carry = !reg_nonzero(A);
 					break;
-				case 0b10100: // SHIFT RIGHT B[f]
+				case 0x14: // SHIFT RIGHT B[f]
 					reg_shr(B);
 					break;
-				case 0b10101: // C + C -> C[f]
+				case 0x15: // C + C -> C[f]
 					reg_math(C, C, C, ADD);
 					break;
-				case 0b10110: // SHIFT RIGHT A[f]
+				case 0x16: // SHIFT RIGHT A[f]
 					reg_shr(A);
 					break;
-				case 0b10111: // 0 -> A[f]
+				case 0x17: // 0 -> A[f]
 					reg_clr(A);
 					break;
-				case 0b11000: // A – B -> A[f]
+				case 0x18: // A – B -> A[f]
 					reg_math(A, A, B, SUB);
 					break;
-				case 0b11001: // A EXCHANGE B[f]
+				case 0x19: // A EXCHANGE B[f]
 					reg_move(A, B, SWAP);
 					break;
-				case 0b11010: // A – C -> A[f]
+				case 0x1A: // A – C -> A[f]
 					reg_math(A, A, C, SUB);
 					break;
-				case 0b11011: // A – 1 -> A[f]
+				case 0x1B: // A – 1 -> A[f]
 					reg_math(A, SUB);
 					break;
-				case 0b11100: // A + B -> A[f]
+				case 0x1C: // A + B -> A[f]
 					reg_math(A, A, B, ADD);
 					break;
-				case 0b11101: // A EXCHANGE C[f]
+				case 0x1D: // A EXCHANGE C[f]
 					reg_move(A, C, SWAP);
 					break;
-				case 0b11110: // A + C -> A[f]
+				case 0x1E: // A + C -> A[f]
 					reg_math(A, A, C, ADD);
 					break;
-				case 0b11111: // A + 1 -> A[f]
+				case 0x1F: // A + 1 -> A[f]
 					reg_math(A, ADD);
 					break;
 			}
