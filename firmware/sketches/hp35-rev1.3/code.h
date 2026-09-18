@@ -206,7 +206,7 @@ void renderCalcNumber(const u08 * numStr, u08 y)
 		u08 ch = numStr[i], seg = TXT::SEG_SPACE;
 		if (ch == HPVM::DASH) seg = TXT::SEG_DASH;
 		else if (ch == HPVM::DOT) seg = TXT::SEG_DOT;
-		else if (ch != HPVM::SPACE) seg = TXT::NumToSeg(ch);
+		else if (ch != HPVM::BLANK) seg = TXT::NumToSeg(ch);
 
 		TXT::PrintSeg(seg, x, y);
 	}

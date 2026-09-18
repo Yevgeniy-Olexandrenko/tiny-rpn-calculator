@@ -10,13 +10,12 @@ namespace HPVM
 	constexpr u08 IDLE_STATUS_BIT = 8;
 	constexpr u08 KEY_STATUS_BIT  = 0;
 
-	// HP-35 state change breakpoints
-	enum { IDLE_ROM  = 0, IDLE_PC  = 0xC5 };
-	enum { ERROR_ROM = 0, ERROR_PC = 0xBF };
+	// HP-35 idle state breakpoint
+	constexpr w16 BP_IDLE{ 0x00C5 };
 
 	// HP-35 display render data
 	constexpr u08 DISPLAY_SIZE = 15;
-	enum { DIGIT = 0x00, SPACE = 0x10, DASH = 0x11, DOT = 0x12 };
+	enum { DIGIT = 0x00, BLANK = 0x10, DASH = 0x11, DOT = 0x12 };
 
 	// HP-35 key operation
 	enum
@@ -105,22 +104,22 @@ namespace HPVM
 	// Convert HP-35 display registers to the glyphs used by the sketch.
 	void render_display(char display[DISPLAY_SIZE], const u08 a[14], const u08 b[14], u08 enabled)
 	{
-		display[14] = SPACE;
+		display[14] = BLANK;
 		for (s08 d = 0, i = 13; i >= 0; --i)
 		{
 			if (enabled)
 			{
 				if (b[i] == 9)
-					display[d++] = SPACE;
+					display[d++] = BLANK;
 				else if (i == 2 || i == 13)
-					display[d++] = (a[i] == 9 ? DASH : SPACE);
+					display[d++] = (a[i] == 9 ? DASH : BLANK);
 				else
 					display[d++] = DIGIT + a[i];
 				if (b[i] == 2)
 					display[d++] = DOT;
 			}
 			else
-				display[d++] = SPACE;
+				display[d++] = BLANK;
 		}
 	}
 }

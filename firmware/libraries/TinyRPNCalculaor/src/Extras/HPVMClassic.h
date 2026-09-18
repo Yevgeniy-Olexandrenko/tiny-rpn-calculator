@@ -15,7 +15,6 @@ namespace HPVM
 	// public interface
 	void Operation(u08 op);
 	bool Idling(); // true if idling
-	bool Error();  // true if error occured
 	bool Cycle();  // true if display updated
 	char Display[DISPLAY_SIZE];
 
@@ -48,7 +47,7 @@ namespace HPVM
 	// state
 	u08 rom, pc, ret_pc, key_pc;
 	u08 carry, p, ff, fl, s[12];
-	u08 disp_enable, idling, error;
+	u08 disp_enable, bp_idle;
 
 	// basic math
 	bcd alu(const bcd x, const bcd y, const u08 sub)
@@ -130,24 +129,18 @@ namespace HPVM
 	{
 		key_pc = op;
 		s[KEY_STATUS_BIT] = 1;
-		idling = error = 0;
+		bp_idle = 0;
 	}
 
 	bool Idling()
 	{
-		return (idling && s[IDLE_STATUS_BIT]);
-	}
-
-	bool Error()
-	{
-		return (error && Idling());
+		return (bp_idle && s[IDLE_STATUS_BIT]);
 	}
 
 	bool Cycle()
 	{
-		// handling state change breakpoints
-		if (rom == IDLE_ROM  && pc == IDLE_PC ) idling = 1;
-		if (rom == ERROR_ROM && pc == ERROR_PC) error  = 1;
+		// handle idle state breakpoint
+		if (rom == BP_IDLE.msb && pc == BP_IDLE.lsb) bp_idle = 1;
 
 		// fetch and decode ROM
 		u16 addr_h  = (u16(rom) << 8 | pc);
