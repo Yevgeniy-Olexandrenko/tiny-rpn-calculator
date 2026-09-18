@@ -73,7 +73,7 @@ namespace TXT
 
 	void SetFont(const Font& f)
 	{
-		memcpy_P(&font, &f, sizeof(Font));
+		MEM::ProgCopy(&font, &f, sizeof(Font));
 		SetScale(x1, x1);
 	}
 
@@ -99,7 +99,7 @@ namespace TXT
 					// get char data if available
 					if (dp)
 					{
-						db = pgm_read_byte(dp + xi) ^ inverse;
+						db = MEM::ProgRead(dp + xi) ^ inverse;
 						if (font_sy == x2)
 							db = expand4bit((db >> (si << 2)) & 0x0F);
 						else if (font_sy == x4)
@@ -195,7 +195,7 @@ namespace TXT
 				const u08* dp = &font.bytes[yi * font.bytesInRow + xi];
 				for (u08 ss = seg; ss; ss >>= 1)
 				{
-					if (ss & 0x01) db |= pgm_read_byte(dp);
+					if (ss & 0x01) db |= MEM::ProgRead(dp);
 					dp += ds;
 				}
 				LCD::Write(db, 1);

@@ -60,7 +60,7 @@ u08 lastOp = HPVM::OpNONE;
 void enterMenu(u08 type)
 {
 	isMenu = true;
-	memcpy_P(&menu, &menus[type], sizeof(Menu));
+	MEM::ProgCopy(&menu, &menus[type], sizeof(Menu));
 	select = 0;
 }
 
@@ -271,7 +271,7 @@ void updateCalcMode()
 				case KBD::PROG: enterMenu(MENU_PROG_OPS); break;
 				case KBD::SEL1: case KBD::SEL2: case KBD::SEL3:
 					u08 index = select * MENU_ITEMS_PER_LINE + (newKey - KBD::SEL1);
-					u08 op = pgm_read_byte(menu.opsBase + index);
+					u08 op = MEM::DataRead(menu.opsBase + index);
 					executeOperation(lastOp = op);
 					break;
 			}
@@ -282,7 +282,7 @@ void updateCalcMode()
 	{
 		if (newKey != KBD::NONE)
 		{
-			u08 op = pgm_read_byte(mainOps + (isFunc ? 16 : 0) + newKey);
+			u08 op = MEM::DataRead(mainOps + (isFunc ? 16 : 0) + newKey);
 			executeOperation(op);
 			renderCalcMode();
 		}

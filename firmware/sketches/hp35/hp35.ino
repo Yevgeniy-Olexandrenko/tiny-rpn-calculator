@@ -13,5 +13,5 @@
 #include "code.h"
 
 // Reference compilation output:
-// Sketch uses 6662 bytes (81%) of program storage space. Maximum is 8192 bytes.
+// Sketch uses 6606 bytes (80%) of program storage space. Maximum is 8192 bytes.
 // Global variables use 187 bytes (36%) of dynamic memory, leaving 325 bytes for local variables. Maximum is 512 bytes.

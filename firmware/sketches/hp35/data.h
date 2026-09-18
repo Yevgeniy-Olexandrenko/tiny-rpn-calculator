@@ -324,7 +324,7 @@ const TXT::Font digits7x16 PROGMEM =
 #define PROG_DATE (HPVM::OpNONE - 12)
 #define PROG_YEAR (HPVM::OpNONE - 13)
 
-const u08 mainOps[] PROGMEM =
+const u08 mainOps[] DATAMEM =
 {
 	HPVM::OpNUM0, HPVM::OpNUM1, HPVM::OpNUM2, HPVM::OpNUM3, HPVM::OpNUM4, HPVM::OpNUM5, HPVM::OpNUM6, HPVM::OpNUM7,
 	HPVM::OpNUM8, HPVM::OpNUM9, HPVM::OpDOT,  HPVM::OpPUSH, HPVM::OpCLX,  HPVM::OpCHS,  HPVM::OpEEX,  KEY_FUNC,
@@ -333,19 +333,19 @@ const u08 mainOps[] PROGMEM =
 	MENU_PROG,    HPVM::OpDIV,  HPVM::OpSWAP, HPVM::OpADD,  HPVM::OpCLR,  HPVM::OpROT,  KEY_ROTU,     MENU_MATH
 };
 
-const u08 mathOps[] PROGMEM =
+const u08 mathOps[] DATAMEM =
 {
 	HPVM::OpPOW, HPVM::OpSQRT, HPVM::OpINV,
 	HPVM::OpLOG, HPVM::OpLN,   HPVM::OpEXP
 };
 
-const u08 trigOps[] PROGMEM =
+const u08 trigOps[] DATAMEM =
 {
 	HPVM::OpSIN, HPVM::OpCOS,  HPVM::OpTAN,
 	TRIG_ASIN,   TRIG_ACOS,    TRIG_ATAN
 };
 
-const u08 progOps[] PROGMEM =
+const u08 progOps[] DATAMEM =
 {
 	PROG_TIME, PROG_DATE, PROG_YEAR
 };
