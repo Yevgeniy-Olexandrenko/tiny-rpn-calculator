@@ -7,7 +7,7 @@
 #define  ENABLE_OPT_NOINLINE 1
 
 #include <TinyRPNCalculator.h>
-#include <Extras/HP35VMModel.h>
+#include <Extras/HP35Model.h>
 #include <Extras/HPVMClassic.h>
 
 #include "data.h"

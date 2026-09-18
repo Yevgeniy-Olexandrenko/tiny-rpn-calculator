@@ -202,12 +202,7 @@ void renderCalcNumber(const u08 * numStr, u08 y)
 	for (u08 i = 0, x = 0; i < 15; ++i, x += TXT::char_dx)
 	{
 		if (i == 12) TXT::SetFont(digits7x16);
-
-		u08 ch = numStr[i], seg = TXT::SEG_SPACE;
-		if (ch == HPVM::DASH) seg = TXT::SEG_DASH;
-		else if (ch == HPVM::DOT) seg = TXT::SEG_DOT;
-		else if (ch != HPVM::BLANK) seg = TXT::NumToSeg(ch);
-
+		u08 seg = TXT::NumToSeg(numStr[i]);
 		TXT::PrintSeg(seg, x, y);
 	}
 }

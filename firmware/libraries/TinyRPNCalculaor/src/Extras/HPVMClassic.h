@@ -7,6 +7,7 @@
 namespace HPVM
 {
 	// clock parameters
+	constexpr u08 CLOCK_RATE_KHZ      = 200;
 	constexpr u08 BIT_TIME_WIDTH_US   = 1000 / CLOCK_RATE_KHZ;
 	constexpr u08 BITS_PER_CYCLE      = 14 * 4;
 	constexpr u16 CYCLE_TIME_WIDTH_US = BITS_PER_CYCLE * BIT_TIME_WIDTH_US;
@@ -16,7 +17,10 @@ namespace HPVM
 	void Operation(u08 op);
 	bool Idling(); // true if idling
 	bool Cycle();  // true if display updated
-	char Display[DISPLAY_SIZE];
+
+	// display render data
+	enum { DIGIT = 0x00, BLANK = 0x10, DASH = 0x11, DOT = 0x12 };
+	char Display[15];
 
 	// cpu defines
 	using bcd = u08;
@@ -128,13 +132,13 @@ namespace HPVM
 	void Operation(u08 op)
 	{
 		key_pc = op;
-		s[KEY_STATUS_BIT] = 1;
+		s[STATUS_BIT_KEY] = 1;
 		bp_idle = 0;
 	}
 
 	bool Idling()
 	{
-		return (bp_idle && s[IDLE_STATUS_BIT]);
+		return (bp_idle && s[STATUS_BIT_IDLE]);
 	}
 
 	bool Cycle()
@@ -381,7 +385,23 @@ namespace HPVM
 		// display update
 		if (disp_update)
 		{
-			render_display(Display, A, B, disp_enable);
+			Display[14] = BLANK;
+			for (s08 d = 0, i = 13; i >= 0; --i)
+			{
+				if (disp_enable)
+				{
+					if (B[i] == 9)
+						Display[d++] = BLANK;
+					else if (i == 2 || i == 13)
+						Display[d++] = (A[i] == 9 ? DASH : BLANK);
+					else
+						Display[d++] = DIGIT + A[i];
+					if (B[i] == 2)
+						Display[d++] = DOT;
+				}
+				else
+					Display[d++] = BLANK;
+			}
 			return true;
 		}
 		return false;

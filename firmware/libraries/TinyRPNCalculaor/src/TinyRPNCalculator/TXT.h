@@ -8,15 +8,13 @@ namespace TXT
 
 	enum
 	{
-		SEG_SPACE = 0x00,
-		SEG_DOT   = 0x80,
-		SEG_DASH  = 0x40,
-
 		SEG_0 = 0x3F, SEG_1 = 0x06, SEG_2 = 0x5B, SEG_3 = 0x4F, SEG_4 = 0x66,
 		SEG_5 = 0x6D, SEG_6 = 0x7D, SEG_7 = 0x07, SEG_8 = 0x7F, SEG_9 = 0x6F,
-		
 		SEG_A = 0x77, SEG_b = 0x7C, SEG_C = 0x39,
 		SEG_d = 0x5E, SEG_E = 0x79, SEG_F = 0x71,
+		SEG_SPACE = 0x00,
+		SEG_DASH  = 0x40,
+		SEG_DOT   = 0x80
 	};
 
 	const u08 num_seg[] DATAMEM =
@@ -24,7 +22,10 @@ namespace TXT
 		SEG_0, SEG_1, SEG_2, SEG_3, SEG_4,
 		SEG_5, SEG_6, SEG_7, SEG_8, SEG_9,
 		SEG_A, SEG_b, SEG_C,
-		SEG_d, SEG_E, SEG_F
+		SEG_d, SEG_E, SEG_F,
+		SEG_SPACE,
+		SEG_DASH,
+		SEG_DOT
 	};
 
 	struct Font

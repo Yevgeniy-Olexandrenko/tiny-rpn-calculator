@@ -6,16 +6,11 @@
 
 namespace HPVM
 {
-	constexpr u08 CLOCK_RATE_KHZ  = 200;
-	constexpr u08 IDLE_STATUS_BIT = 8;
-	constexpr u08 KEY_STATUS_BIT  = 0;
+	constexpr u08 STATUS_BIT_KEY  = 0;
+	constexpr u08 STATUS_BIT_IDLE = 8;
 
 	// HP-35 idle state breakpoint
 	constexpr w16 BP_IDLE{ 0x00C5 };
-
-	// HP-35 display render data
-	constexpr u08 DISPLAY_SIZE = 15;
-	enum { DIGIT = 0x00, BLANK = 0x10, DASH = 0x11, DOT = 0x12 };
 
 	// HP-35 key operation
 	enum
@@ -98,28 +93,7 @@ namespace HPVM
 		0x36, 0x16, 0x06, 0x16, 0x76, 0x96, 0x86, 0x06, 0x56, 0x56, 0x36, 0xDD, 0xEB, 0x4B, 0x61, 0xAE,
 		0x5E, 0x7E, 0xB3, 0x7A, 0xF2, 0x67, 0x33, 0xC3, 0x26, 0x36, 0x06, 0x26, 0x56, 0x81, 0x53, 0x7E
 	};
+
 	static_assert(sizeof(rom_l) == 192, "HP-35 ROM low bits must cover 768 words");
 	static_assert(sizeof(rom_h) == 768, "HP-35 ROM high bits must cover 768 words");
-
-	// Convert HP-35 display registers to the glyphs used by the sketch.
-	void render_display(char display[DISPLAY_SIZE], const u08 a[14], const u08 b[14], u08 enabled)
-	{
-		display[14] = BLANK;
-		for (s08 d = 0, i = 13; i >= 0; --i)
-		{
-			if (enabled)
-			{
-				if (b[i] == 9)
-					display[d++] = BLANK;
-				else if (i == 2 || i == 13)
-					display[d++] = (a[i] == 9 ? DASH : BLANK);
-				else
-					display[d++] = DIGIT + a[i];
-				if (b[i] == 2)
-					display[d++] = DOT;
-			}
-			else
-				display[d++] = BLANK;
-		}
-	}
 }
