@@ -14,15 +14,36 @@ namespace HPVM
 		OpMUL_, OpNUM1, OpNUM2, OpNUM3,
 		OpDIV_, OpNUM0, OpDOT_, OpDSP_,
 
-		// shifted by ARC key operations
+		// shifted operations
 		FlSHFT = 0x80,
-		// TODO
+		OpPOW_ = FlSHFT + OpINV_,
+		OpASIN = FlSHFT + OpSIN_,
+		OpACOS = FlSHFT + OpCOS_,
+		OpATAN = FlSHFT + OpTAN_,
+		Op2REC = FlSHFT + OpSWAP,
+		Op2POL = FlSHFT + OpROT_,
+		OpLN__ = FlSHFT + OpEXP_,
+		OpLOG_ = FlSHFT + OpSTO_,
+		Op10X_ = FlSHFT + OpRCL_,
+		OpSQRT = FlSHFT + OpCHS_,
+		OpPI__ = FlSHFT + OpEEX_,
+		OpCLR_ = FlSHFT + OpCLX_,
+		OpMSUB = FlSHFT + OpSUB_,
+		OpMADD = FlSHFT + OpADD_,
+		OpMMUL = FlSHFT + OpMUL_,
+		OpMDIV = FlSHFT + OpDIV_
 	};
 
 	// HP-21 key tokens (0 - 29)
 	const u08 key_tokens[] DATAMEM =
 	{
-		// TODO
+		0xB4, 0xB3, 0xB2, 0xB1, 0xB0,
+		0x44, 0x43, 0x42, 0x41, 0x40,
+		0xD4, 0xD2, 0xD1, 0xD0,
+		0x64, 0x63, 0x62, 0x61,
+		0xA4, 0xA3, 0xA2, 0xA1,
+		0x74, 0x73, 0x72, 0x71,
+		0x94, 0x93, 0x92, 0x91,
 	};
 
 	// HP-21 firmware ROM (1024 words)
