@@ -55,7 +55,7 @@ u08  select;
 
 u16 cycles;
 u08 hidden[15];
-u08 lastOp = HPVM::OpCLR;
+u08 lastOp = HPVM::OpCLR_;
 
 void enterMenu(u08 type)
 {
@@ -115,20 +115,20 @@ void executeOperation(u08 operation)
 			break;
 
 		case KEY_ROTU:
-			HPVM::OpAndWait(HPVM::OpROT);
-			HPVM::OpAndWait(HPVM::OpROT);
-			HPVM::Operation(HPVM::OpROT);
+			HPVM::OpAndWait(HPVM::OpROT_);
+			HPVM::OpAndWait(HPVM::OpROT_);
+			HPVM::Operation(HPVM::OpROT_);
 			break;
 
 		case KEY_MADD:
-			HPVM::OpAndWait(HPVM::OpRCL );
+			HPVM::OpAndWait(HPVM::OpRCL_);
 			HPVM::OpAndWait(HPVM::OpSWAP);
-			HPVM::OpAndWait(HPVM::OpSTO );
-			HPVM::OpAndWait(HPVM::OpADD );
-			HPVM::OpAndWait(HPVM::OpRCL );
+			HPVM::OpAndWait(HPVM::OpSTO_);
+			HPVM::OpAndWait(HPVM::OpADD_);
+			HPVM::OpAndWait(HPVM::OpRCL_);
 			HPVM::OpAndWait(HPVM::OpSWAP);
-			HPVM::OpAndWait(HPVM::OpSTO );
-			HPVM::Operation(HPVM::OpROT );
+			HPVM::OpAndWait(HPVM::OpSTO_);
+			HPVM::Operation(HPVM::OpROT_);
 			break;
 
 		case MENU_MATH:
