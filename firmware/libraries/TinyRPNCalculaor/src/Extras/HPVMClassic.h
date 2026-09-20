@@ -15,6 +15,7 @@ namespace HPVM
 
 	// public interface
 	void Operation(u08 op);
+	void OpAndWait(u08 op);
 	bool Idling(); // true if idling
 	bool Cycle();  // true if display updated
 
@@ -72,36 +73,31 @@ namespace HPVM
 
 	void reg_clr(reg r)
 	{
-		for (u08 i = ff; i <= fl; ++i)
-			r[i] = 0;
+		for (u08 i = ff; i <= fl; ++i) r[i] = 0;
 	}
 
 	void reg_math(reg r, const reg x, const reg y, const u08 sub)
 	{
-		for (u08 i = ff; i <= fl; ++i)
-			r[i] = alu(x[i], y[i], sub);
+		for (u08 i = ff; i <= fl; ++i) r[i] = alu(x[i], y[i], sub);
 	}
 
 	void reg_math(reg r, const u08 sub)
 	{
 		carry = 1;
-		for (u08 i = ff; i <= fl; ++i)
-			r[i] = alu(r[i], 0, sub);
+		for (u08 i = ff; i <= fl; ++i) r[i] = alu(r[i], 0, sub);
 	}
 
 	void reg_shr(reg r)
 	{
 		if (ff > fl) return;
-		for (u08 i = ff; i < fl; ++i)
-			r[i] = r[i + 1];
+		for (u08 i = ff; i < fl; ++i) r[i] = r[i + 1];
 		r[fl] = 0;
 	}
 
 	void reg_shl(reg r)
 	{
 		if (ff > fl) return;
-		for (u08 i = fl; i > ff; --i)
-			r[i] = r[i - 1];
+		for (u08 i = fl; i > ff; --i) r[i] = r[i - 1];
 		r[ff] = 0;
 	}
 
@@ -122,8 +118,7 @@ namespace HPVM
 	bool reg_nonzero(const reg r)
 	{
 		u08 bits = 0;
-		for (u08 i = ff; i <= fl; ++i)
-			bits |= r[i];
+		for (u08 i = ff; i <= fl; ++i) bits |= r[i];
 		return bits != 0;
 	}
 
@@ -131,9 +126,23 @@ namespace HPVM
 	// C&T, S0 is not reasserted while a key is held
 	void Operation(u08 op)
 	{
-		key_pc = op;
+		// handle shift key
+		if (op & FlSHFT)
+		{
+			OpAndWait(OpSHFT);
+			op ^= FlSHFT;
+		}
+
+		// handle operation key
+		key_pc = MEM::DataRead(key_tokens + op);
 		s[STATUS_BIT_KEY] = 1;
 		bp_idle = 0;
+	}
+
+	void OpAndWait(u08 op)
+	{
+		Operation(op);
+		do Cycle(); while (!Idling());
 	}
 
 	bool Idling()

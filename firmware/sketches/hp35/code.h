@@ -55,7 +55,7 @@ u08  select;
 
 u16 cycles;
 u08 hidden[15];
-u08 lastOp = HPVM::OpNONE;
+u08 lastOp = HPVM::OpCLR;
 
 void enterMenu(u08 type)
 {
@@ -92,12 +92,6 @@ b08 getBCDFromStack(u08& out, u08 min, u08 max)
 	return false;
 }
 
-void executeOperationAndWait(u08 operation)
-{
-	HPVM::Operation(operation);
-	do HPVM::Cycle(); while (!HPVM::Idling());
-}
-
 void executeOperation(u08 operation)
 {
 	isFunc = false;
@@ -110,9 +104,9 @@ void executeOperation(u08 operation)
 			break;
 
 		case KEY_FUNC:
-			executeOperationAndWait(HPVM::OpSWAP);
+			HPVM::OpAndWait(HPVM::OpSWAP);
 			memcpy(hidden, HPVM::Display, 15);
-			executeOperationAndWait(HPVM::OpSWAP);
+			HPVM::OpAndWait(HPVM::OpSWAP);
 			isFunc = true;
 			break;
 
@@ -121,20 +115,20 @@ void executeOperation(u08 operation)
 			break;
 
 		case KEY_ROTU:
-			executeOperationAndWait(HPVM::OpROT);
-			executeOperationAndWait(HPVM::OpROT);
+			HPVM::OpAndWait(HPVM::OpROT);
+			HPVM::OpAndWait(HPVM::OpROT);
 			HPVM::Operation(HPVM::OpROT);
 			break;
 
 		case KEY_MADD:
-			executeOperationAndWait(HPVM::OpRCL);
-			executeOperationAndWait(HPVM::OpSWAP);
-			executeOperationAndWait(HPVM::OpSTO);
-			executeOperationAndWait(HPVM::OpADD);
-			executeOperationAndWait(HPVM::OpRCL);
-			executeOperationAndWait(HPVM::OpSWAP);
-			executeOperationAndWait(HPVM::OpSTO);
-			HPVM::Operation(HPVM::OpROT);
+			HPVM::OpAndWait(HPVM::OpRCL );
+			HPVM::OpAndWait(HPVM::OpSWAP);
+			HPVM::OpAndWait(HPVM::OpSTO );
+			HPVM::OpAndWait(HPVM::OpADD );
+			HPVM::OpAndWait(HPVM::OpRCL );
+			HPVM::OpAndWait(HPVM::OpSWAP);
+			HPVM::OpAndWait(HPVM::OpSTO );
+			HPVM::Operation(HPVM::OpROT );
 			break;
 
 		case MENU_MATH:
@@ -147,21 +141,6 @@ void executeOperation(u08 operation)
 
 		case MENU_PROG:
 			enterMenu(MENU_PROG_OPS);
-			break;
-		
-		case TRIG_ASIN:
-			executeOperationAndWait(HPVM::OpARC);
-			HPVM::Operation(HPVM::OpSIN);
-			break;
-
-		case TRIG_ACOS:
-			executeOperationAndWait(HPVM::OpARC);
-			HPVM::Operation(HPVM::OpCOS);
-			break;
-		
-		case TRIG_ATAN:
-			executeOperationAndWait(HPVM::OpARC);
-			HPVM::Operation(HPVM::OpTAN);
 			break;
 
 		case PROG_TIME:

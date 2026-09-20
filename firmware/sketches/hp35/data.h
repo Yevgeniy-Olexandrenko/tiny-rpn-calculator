@@ -310,25 +310,28 @@ const TXT::Font digits7x16 PROGMEM =
 // HP35 Operations (basic + extended)
 // -----------------------------------------------------------------------------
 
-#define KEY_FUNC  (HPVM::OpNONE -  1)
-#define KEY_LAST  (HPVM::OpNONE -  2)
-#define KEY_ROTU  (HPVM::OpNONE -  3)
-#define KEY_MADD  (HPVM::OpNONE -  4)
-#define MENU_MATH (HPVM::OpNONE -  5)
-#define MENU_TRIG (HPVM::OpNONE -  6)
-#define MENU_PROG (HPVM::OpNONE -  7)
-#define TRIG_ASIN (HPVM::OpNONE -  8)
-#define TRIG_ACOS (HPVM::OpNONE -  9)
-#define TRIG_ATAN (HPVM::OpNONE - 10)
-#define PROG_TIME (HPVM::OpNONE - 11)
-#define PROG_DATE (HPVM::OpNONE - 12)
-#define PROG_YEAR (HPVM::OpNONE - 13)
+enum
+{
+	BASE = 0xFF,
+	KEY_FUNC  = BASE - 0,
+	KEY_LAST  = BASE - 1,
+	KEY_ROTU  = BASE - 2,
+	KEY_MADD  = BASE - 3,
+	MENU_MATH = BASE - 4,
+	MENU_TRIG = BASE - 5,
+	MENU_PROG = BASE - 6,
+	PROG_TIME = BASE - 7,
+	PROG_DATE = BASE - 8,
+	PROG_YEAR = BASE - 9
+};
 
 const u08 mainOps[] DATAMEM =
 {
+	// main operations
 	HPVM::OpNUM0, HPVM::OpNUM1, HPVM::OpNUM2, HPVM::OpNUM3, HPVM::OpNUM4, HPVM::OpNUM5, HPVM::OpNUM6, HPVM::OpNUM7,
 	HPVM::OpNUM8, HPVM::OpNUM9, HPVM::OpDOT,  HPVM::OpPUSH, HPVM::OpCLX,  HPVM::OpCHS,  HPVM::OpEEX,  KEY_FUNC,
 
+	// F-shifted operations
 	KEY_LAST,     HPVM::OpRCL,  HPVM::OpSTO,  HPVM::OpSUB,  HPVM::OpPI,   KEY_MADD,     HPVM::OpMUL,  MENU_TRIG,
 	MENU_PROG,    HPVM::OpDIV,  HPVM::OpSWAP, HPVM::OpADD,  HPVM::OpCLR,  HPVM::OpROT,  KEY_ROTU,     MENU_MATH
 };
@@ -341,8 +344,8 @@ const u08 mathOps[] DATAMEM =
 
 const u08 trigOps[] DATAMEM =
 {
-	HPVM::OpSIN, HPVM::OpCOS,  HPVM::OpTAN,
-	TRIG_ASIN,   TRIG_ACOS,    TRIG_ATAN
+	HPVM::OpSIN,  HPVM::OpCOS,  HPVM::OpTAN,
+	HPVM::OpASIN, HPVM::OpACOS, HPVM::OpATAN
 };
 
 const u08 progOps[] DATAMEM =
