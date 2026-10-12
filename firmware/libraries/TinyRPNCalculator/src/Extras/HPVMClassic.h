@@ -71,20 +71,10 @@ namespace HPVM
 		return bcd(res);
 	}
 
-	void reg_clr(reg r)
-	{
-		for (u08 i = ff; i <= fl; ++i) r[i] = 0;
-	}
-
+	// carry is used as input and holds the result carry/borrow
 	void reg_math(reg r, const reg x, const reg y, const u08 sub)
 	{
 		for (u08 i = ff; i <= fl; ++i) r[i] = alu(x[i], y[i], sub);
-	}
-
-	void reg_math(reg r, const u08 sub)
-	{
-		carry = 1;
-		for (u08 i = ff; i <= fl; ++i) r[i] = alu(r[i], 0, sub);
 	}
 
 	void reg_shr(reg r)
@@ -113,13 +103,6 @@ namespace HPVM
 	void reg_move(reg x, reg y, const u08 swap)
 	{
 		reg_move(x, y, ff, fl, swap);
-	}
-
-	bool reg_nonzero(const reg r)
-	{
-		u08 bits = 0;
-		for (u08 i = ff; i <= fl; ++i) bits |= r[i];
-		return bits != 0;
 	}
 
 	// one-shot key event abstraction, unlike the original
@@ -281,33 +264,39 @@ namespace HPVM
 			if (ff == 0x0F) ff = p;
 			if (fl == 0x0F) fl = (p < 14 ? p : 13);
 
+			// helper registers for unified math:
+			// zz - always zero, tt - discarded result of a test
+			static reg zz;
+			static reg tt;
+
 			// process opcode
 			switch(op_code >> 3)
 			{
 				case 0x00: // IF B[f] = 0
-					carry = reg_nonzero(B);
+					reg_math(tt, zz, B, SUB); // borrow if B != 0
 					break;
 				case 0x01: // 0 -> B[f]
-					reg_clr(B);
+					reg_move(B, zz, COPY);
 					break;
 				case 0x02: // IF A >= C[f]
-					for (u08 i = ff; i <= fl; ++i) alu(A[i], C[i], SUB);
+					reg_math(tt, A, C, SUB);
 					break;
 				case 0x03: // IF C[f] >= 1
-					carry = !reg_nonzero(C);
+					carry = 1;
+					reg_math(tt, C, zz, SUB); // borrow if C == 0
 					break;
 				case 0x04: // B -> C[f]
 					reg_move(C, B, COPY);
 					break;
 				case 0x05: // 0 – C -> C[f]
-					for (u08 i = ff; i <= fl; ++i) C[i] = alu(0, C[i], SUB);
+					reg_math(C, zz, C, SUB);
 					break;
 				case 0x06: // 0 -> C[f]
-					reg_clr(C);
+					reg_move(C, zz, COPY);
 					break;
 				case 0x07: // 0 – C – 1 -> C[f]
-					carry = 1; 
-					for (u08 i = ff; i <= fl; ++i) C[i] = alu(0, C[i], SUB);
+					carry = 1;
+					reg_math(C, zz, C, SUB);
 					break;
 				case 0x08: // SHIFT LEFT A[f]
 					reg_shl(A);
@@ -319,22 +308,24 @@ namespace HPVM
 					reg_math(C, A, C, SUB);
 					break;
 				case 0x0B: // C – 1 -> C[f]
-					reg_math(C, SUB);
+					carry = 1;
+					reg_math(C, C, zz, SUB);
 					break;
 				case 0x0C: // C -> A[f]
 					reg_move(A, C, COPY);
 					break;
 				case 0x0D: // IF C[f] = 0
-					carry = reg_nonzero(C);
+					reg_math(tt, zz, C, SUB); // borrow if C != 0
 					break;
 				case 0x0E: // A + C -> C[f]
 					reg_math(C, A, C, ADD);
 					break;
 				case 0x0F: // C + 1 -> C[f]
-					reg_math(C, ADD);
+					carry = 1;
+					reg_math(C, C, zz, ADD);
 					break;
 				case 0x10: // IF A >= B[f]
-					for (u08 i = ff; i <= fl; ++i) alu(A[i], B[i], SUB);
+					reg_math(tt, A, B, SUB);
 					break;
 				case 0x11: // B EXCHANGE C[f]
 					reg_move(B, C, SWAP);
@@ -343,7 +334,8 @@ namespace HPVM
 					reg_shr(C);
 					break;
 				case 0x13: // IF A[f] >= 1
-					carry = !reg_nonzero(A);
+					carry = 1;
+					reg_math(tt, A, zz, SUB); // borrow if A == 0
 					break;
 				case 0x14: // SHIFT RIGHT B[f]
 					reg_shr(B);
@@ -355,7 +347,7 @@ namespace HPVM
 					reg_shr(A);
 					break;
 				case 0x17: // 0 -> A[f]
-					reg_clr(A);
+					reg_move(A, zz, COPY);
 					break;
 				case 0x18: // A – B -> A[f]
 					reg_math(A, A, B, SUB);
@@ -367,7 +359,8 @@ namespace HPVM
 					reg_math(A, A, C, SUB);
 					break;
 				case 0x1B: // A – 1 -> A[f]
-					reg_math(A, SUB);
+					carry = 1;
+					reg_math(A, A, zz, SUB);
 					break;
 				case 0x1C: // A + B -> A[f]
 					reg_math(A, A, B, ADD);
@@ -379,7 +372,8 @@ namespace HPVM
 					reg_math(A, A, C, ADD);
 					break;
 				case 0x1F: // A + 1 -> A[f]
-					reg_math(A, ADD);
+					carry = 1;
+					reg_math(A, A, zz, ADD);
 					break;
 			}
 		}
