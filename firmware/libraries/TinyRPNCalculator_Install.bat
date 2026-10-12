@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set "LIB_NAME=TinyRPNCalculaor"
+set "LIB_NAME=TinyRPNCalculator"
 
 net session >nul 2>&1
 if %errorLevel% neq 0 (
