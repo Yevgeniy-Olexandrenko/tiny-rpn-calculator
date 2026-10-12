@@ -28,7 +28,7 @@ void enterCalcMode()
 
 void enterRTCMode()
 {
-	battery = (u08)((PWR::Level() * 5 + 50) / 100);
+	battery = (u08)((PWR::Level() + 10U) / 20U); // 0..100% -> 0..5 bars
 
 	LCD::TurnOn();
 	TMR::Start(TMR::TIMEOUT_64MS);
@@ -293,8 +293,8 @@ void renderRTCMode()
 	TXT::PrintSegBCD(RTC::Seconds, RTC_POS_SECONDS, 0);
 
 	TXT::SetFont(menu5x8);
-	u08 month = BCD::Decode(RTC::Month) - 1;
-	TXT::PrintString(DPSTR(strMonth), month, RTC_POS_MONTH, 0);
+	u08 month = BCD::Decode(RTC::Month);
+	TXT::PrintString(DPSTR(strMonth), month - 1, RTC_POS_MONTH, 0);
 	TXT::PrintBCD(RTC::Date, RTC_POS_DATE, 0);
 	TXT::PrintBCD(RTC::Year, RTC_POS_YEAR, 0);
 	TXT::PrintChar(RTC_DATE_SLASH, RTC_POS_SLASH, 0);

@@ -158,9 +158,11 @@ namespace HPVM
 		// fetch and decode ROM
 		u16 addr_h  = (u16(rom) << 8 | pc);
 		u08 addr_l  = (addr_h >> 2);
-		u08 shift   = (addr_h & 0x03) << 1;
-		u08 op_type = (MEM::ProgRead(rom_l + addr_l) >> shift) & 0x03;
-		u08 op_code =  MEM::ProgRead(rom_h + addr_h);
+		u08 op_type = MEM::ProgRead(rom_l + addr_l);
+		if (pc & 0x02) op_type = __builtin_avr_swap(op_type); // >> 4
+		if (pc & 0x01) op_type >>= 2;
+		op_type &= 0x03;
+		u08 op_code = MEM::ProgRead(rom_h + addr_h);
 
 		u08 disp_update = 0;
 		u08 prev_carry = carry;
@@ -231,7 +233,7 @@ namespace HPVM
 					p &= 0x0F;
 					break;
 				default:
-					u08 nnnn = op_code >> 4;
+					u08 nnnn = __builtin_avr_swap(op_code) & 0x0F; // >> 4
 					switch(op_code & 0x0F)
 					{
 						case 0x01: // 1 -> Sn
@@ -274,7 +276,8 @@ namespace HPVM
 		{
 			// get register boundaries
 			fl = MEM::DataRead(field_bounds + (op_code & 0x07));
-			ff = fl & 0x0F; fl >>= 4;
+			ff = fl & 0x0F;
+			fl = __builtin_avr_swap(fl) & 0x0F; // >> 4
 			if (ff == 0x0F) ff = p;
 			if (fl == 0x0F) fl = (p < 14 ? p : 13);
 
@@ -395,7 +398,7 @@ namespace HPVM
 		if (disp_update)
 		{
 			Display[14] = BLANK;
-			for (s08 d = 0, i = 13; i >= 0; --i)
+			for (u08 d = 0, i = 14; i-- > 0;)
 			{
 				if (disp_enable)
 				{

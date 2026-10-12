@@ -101,7 +101,7 @@ namespace TXT
 					{
 						db = MEM::ProgRead(dp + xi) ^ inverse;
 						if (font_sy == x2)
-							db = expand4bit((db >> (si << 2)) & 0x0F);
+							db = expand4bit((si ? db >> 4 : db) & 0x0F);
 						else if (font_sy == x4)
 							db = expand2bit((db >> (si << 1)) & 0x03);
 					}
@@ -186,13 +186,14 @@ namespace TXT
 	void PrintSeg(u08 seg, u08 x, u08 y)
 	{
 		u08 ds = font.bytesInRow * font.rowsOfBytes;
-		for (u08 yi = 0; yi < font.rowsOfBytes; ++yi)
+		const u08* rp = font.bytes;
+		for (u08 yi = 0; yi < font.rowsOfBytes; ++yi, rp += font.bytesInRow)
 		{
 			LCD::BeginWrite(x, y + yi);
 			for (u08 xi = 0; xi < font.bytesInRow; ++xi)
 			{
 				u08 db = 0;
-				const u08* dp = &font.bytes[yi * font.bytesInRow + xi];
+				const u08* dp = rp + xi;
 				for (u08 ss = seg; ss; ss >>= 1)
 				{
 					if (ss & 0x01) db |= MEM::ProgRead(dp);
