@@ -340,21 +340,22 @@ namespace HPVM
 		if (disp_update)
 		{
 			Display[14] = BLANK;
-			for (u08 d = 0, i = 14; i-- > 0;)
+			char* dp = Display;
+			for (u08 i = 14; i-- > 0;)
 			{
 				if (disp_enable)
 				{
 					if (B[i] == 9)
-						Display[d++] = BLANK;
+						*dp++ = BLANK;
 					else if (i == 2 || i == 13)
-						Display[d++] = (A[i] == 9 ? DASH : BLANK);
+						*dp++ = (A[i] == 9 ? DASH : BLANK);
 					else
-						Display[d++] = DIGIT + A[i];
+						*dp++ = DIGIT + A[i];
 					if (B[i] == 2)
-						Display[d++] = DOT;
+						*dp++ = DOT;
 				}
 				else
-					Display[d++] = BLANK;
+					*dp++ = BLANK;
 			}
 			return true;
 		}

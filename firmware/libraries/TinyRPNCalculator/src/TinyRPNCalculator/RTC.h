@@ -64,15 +64,14 @@ namespace RTC
 
 	void ReadTimeDate()
 	{
-		u08 skip;
 		I2C::StartWrite(I2C_ADDR);
 		I2C::Write(REG_SECONDS);
 		I2C::StartRead(I2C_ADDR);
 		I2C::ReadAck(Seconds);
 		I2C::ReadAck(Minutes);
 		I2C::ReadAck(Hours);
-		I2C::ReadAck(skip);
-		I2C::ReadAck(Date);
+		I2C::ReadAck(Date); // skip day of the week
+		I2C::ReadAck(Date); // read day of the month
 		I2C::ReadAck(Month);
 		I2C::ReadNack(Year);
 		I2C::Stop();
