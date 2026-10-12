@@ -23,8 +23,20 @@ namespace I2C
 	#define sda_read()     isb_set(I2C_PIN, I2C_SDA)
 	#define scl_release()  clr_bit(I2C_DDR, I2C_SCL)
 	#define scl_pulldown() set_bit(I2C_DDR, I2C_SCL)
-	#define i2c_delay()    __builtin_avr_delay_cycles(I2C_DELAY_CYCLES)
-	
+
+	// With NOINLINE one out-of-line delay instead of many inline copies
+	// saves flash, and the call overhead (rcall + ret = 7 cycles) is part
+	// of the delay. Otherwise the delay is inlined and takes full time.
+	NOINLINE
+	void i2c_delay()
+	{
+	#if ENABLE_OPT_NOINLINE
+		__builtin_avr_delay_cycles(I2C_DELAY_CYCLES > 7 ? I2C_DELAY_CYCLES - 7 : 0);
+	#else
+		__builtin_avr_delay_cycles(I2C_DELAY_CYCLES);
+	#endif
+	}
+
 	NOINLINE
 	u08 transfer(u08 data)
 	{
@@ -135,5 +147,4 @@ namespace I2C
 	#undef sda_read
 	#undef scl_release
 	#undef scl_pulldown
-	#undef i2c_delay
 }

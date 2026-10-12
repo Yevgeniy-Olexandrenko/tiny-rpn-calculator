@@ -266,14 +266,17 @@ void updateCalcMode()
 			renderCalcMode();
 		}
 		
-		for (cycles += HPVM_CYCLES_PER_FRAME; cycles > 0; --cycles)
+		// local counter, unused cycles are carried to the next frame
+		u16 n = cycles + HPVM_CYCLES_PER_FRAME;
+		for (; n > 0; --n)
 		{
-			if (HPVM::Cycle()) 
+			if (HPVM::Cycle())
 			{
 				renderCalcMode();
 				break;
 			}
 		}
+		cycles = n;
 	}
 }
 
