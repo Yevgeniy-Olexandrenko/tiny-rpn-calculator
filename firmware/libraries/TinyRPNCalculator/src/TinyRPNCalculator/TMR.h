@@ -14,7 +14,7 @@ namespace TMR
 
 	volatile u08 Timeout;
 	volatile u16 Millis;
-	volatile b08 wait;
+	volatile u08 wait;
 
 	NOINLINE
 	void wdt_setup(u08 wdtr)

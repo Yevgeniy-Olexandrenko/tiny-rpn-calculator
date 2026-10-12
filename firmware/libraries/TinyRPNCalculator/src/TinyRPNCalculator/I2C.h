@@ -54,7 +54,7 @@ namespace I2C
 	}
 
 	NOINLINE
-	void Read(u08& data, b08 ack)
+	void Read(u08& data, u08 ack)
 	{
 		data = transfer(0xFF);
 		if (ack) sda_pulldown();

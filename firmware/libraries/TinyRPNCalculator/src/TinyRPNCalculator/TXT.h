@@ -59,7 +59,7 @@ namespace TXT
 		return b | (b << 2);
 	}
 
-	void SetInverse(b08 enable)
+	void SetInverse(u08 enable)
 	{
 		inverse = -enable;
 	}

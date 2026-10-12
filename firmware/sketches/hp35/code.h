@@ -4,7 +4,7 @@
 // Switch between working modes
 // -----------------------------------------------------------------------------
 
-b08 rtcMode;
+u08 rtcMode;
 u08 battery;
 
 u08 newKey;
@@ -47,8 +47,8 @@ NOINLINE void setupAndEnterRTCMode()
 // Calculator operations execution
 // -----------------------------------------------------------------------------
 
-b08 isFunc;
-b08 isMenu;
+u08 isFunc;
+u08 isMenu;
 
 Menu menu;
 u08  select;
@@ -72,7 +72,7 @@ void dropStackTop()
 	reg_move(E, F, 0, 13, COPY);
 }
 
-b08 getBCDFromStack(u08& out, u08 min, u08 max)
+u08 getBCDFromStack(u08& out, u08 min, u08 max)
 {
 	if (HPVM::C[1] == 0 && HPVM::C[0] < 3)
 	{
