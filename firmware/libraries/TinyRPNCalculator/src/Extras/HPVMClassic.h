@@ -41,15 +41,64 @@ namespace HPVM
 	enum { COPY = 0, SWAP = 1 };
 
 	// registers, stored contiguously in this order: stack registers
-	// C..F are moved and rotated by multi-register reg_move() calls
-	reg regs[7];
-	reg& A = regs[0];
-	reg& B = regs[1];
-	reg& C = regs[2]; // X
-	reg& D = regs[3]; // Y
-	reg& E = regs[4]; // Z
-	reg& F = regs[5]; // T
-	reg& M = regs[6];
+	// C..F are moved and rotated by multi-register reg_move() calls,
+	// ZZ is always zero, TT holds the discarded result of a test
+	enum { rA, rB, rC, rD, rE, rF, rM, rZZ, rTT };
+	reg regs[9];
+	reg& A = regs[rA];
+	reg& B = regs[rB];
+	reg& C = regs[rC]; // X
+	reg& D = regs[rD]; // Y
+	reg& E = regs[rE]; // Z
+	reg& F = regs[rF]; // T
+	reg& M = regs[rM];
+
+	bcd* reg_ptr(u08 i)
+	{
+		return regs[0] + u08((i << 4) - (i << 1)); // i * 14
+	}
+
+	// arithmetic operations, 2 bytes each:
+	// hi: kind (7..6), sub/swap (5), result reg (4..1), carry in (0)
+	// lo: operand x reg (7..4), operand y reg (3..0)
+	enum { MATH = 0x00, MOVE = 0x40, SHL = 0x80, SHR = 0xC0 };
+	#define OP(kind, ci, sw, r, x, y) u16(((kind) | (sw) << 5 | (r) << 1 | (ci)) << 8 | (x) << 4 | (y))
+	const u16 math_ops[] DATAMEM =
+	{
+		OP(MATH, 0, SUB,  rTT, rZZ, rB ), // 0x00 IF B[f] = 0
+		OP(MOVE, 0, COPY, rB,  rZZ, 0  ), // 0x01 0 -> B[f]
+		OP(MATH, 0, SUB,  rTT, rA,  rC ), // 0x02 IF A >= C[f]
+		OP(MATH, 1, SUB,  rTT, rC,  rZZ), // 0x03 IF C[f] >= 1
+		OP(MOVE, 0, COPY, rC,  rB,  0  ), // 0x04 B -> C[f]
+		OP(MATH, 0, SUB,  rC,  rZZ, rC ), // 0x05 0 – C -> C[f]
+		OP(MOVE, 0, COPY, rC,  rZZ, 0  ), // 0x06 0 -> C[f]
+		OP(MATH, 1, SUB,  rC,  rZZ, rC ), // 0x07 0 – C – 1 -> C[f]
+		OP(SHL,  0, 0,    rA,  0,   0  ), // 0x08 SHIFT LEFT A[f]
+		OP(MOVE, 0, COPY, rB,  rA,  0  ), // 0x09 A -> B[f]
+		OP(MATH, 0, SUB,  rC,  rA,  rC ), // 0x0A A – C -> C[f]
+		OP(MATH, 1, SUB,  rC,  rC,  rZZ), // 0x0B C – 1 -> C[f]
+		OP(MOVE, 0, COPY, rA,  rC,  0  ), // 0x0C C -> A[f]
+		OP(MATH, 0, SUB,  rTT, rZZ, rC ), // 0x0D IF C[f] = 0
+		OP(MATH, 0, ADD,  rC,  rA,  rC ), // 0x0E A + C -> C[f]
+		OP(MATH, 1, ADD,  rC,  rC,  rZZ), // 0x0F C + 1 -> C[f]
+		OP(MATH, 0, SUB,  rTT, rA,  rB ), // 0x10 IF A >= B[f]
+		OP(MOVE, 0, SWAP, rB,  rC,  0  ), // 0x11 B EXCHANGE C[f]
+		OP(SHR,  0, 0,    rC,  0,   0  ), // 0x12 SHIFT RIGHT C[f]
+		OP(MATH, 1, SUB,  rTT, rA,  rZZ), // 0x13 IF A[f] >= 1
+		OP(SHR,  0, 0,    rB,  0,   0  ), // 0x14 SHIFT RIGHT B[f]
+		OP(MATH, 0, ADD,  rC,  rC,  rC ), // 0x15 C + C -> C[f]
+		OP(SHR,  0, 0,    rA,  0,   0  ), // 0x16 SHIFT RIGHT A[f]
+		OP(MOVE, 0, COPY, rA,  rZZ, 0  ), // 0x17 0 -> A[f]
+		OP(MATH, 0, SUB,  rA,  rA,  rB ), // 0x18 A – B -> A[f]
+		OP(MOVE, 0, SWAP, rA,  rB,  0  ), // 0x19 A EXCHANGE B[f]
+		OP(MATH, 0, SUB,  rA,  rA,  rC ), // 0x1A A – C -> A[f]
+		OP(MATH, 1, SUB,  rA,  rA,  rZZ), // 0x1B A – 1 -> A[f]
+		OP(MATH, 0, ADD,  rA,  rA,  rB ), // 0x1C A + B -> A[f]
+		OP(MOVE, 0, SWAP, rA,  rC,  0  ), // 0x1D A EXCHANGE C[f]
+		OP(MATH, 0, ADD,  rA,  rA,  rC ), // 0x1E A + C -> A[f]
+		OP(MATH, 1, ADD,  rA,  rA,  rZZ), // 0x1F A + 1 -> A[f]
+	};
+	#undef OP
 
 	// state
 	u08 rom, pc, ret_pc, key_pc;
@@ -259,117 +308,21 @@ namespace HPVM
 			if (ff == 0x0F) ff = p;
 			if (fl == 0x0F) fl = (p < 14 ? p : 13);
 
-			// helper registers for unified math:
-			// zz - always zero, tt - discarded result of a test
-			static reg zz;
-			static reg tt;
-
-			// process opcode
-			switch(op_code >> 3)
+			// decode and process operation from the table
+			const u08* opp = (const u08*)(math_ops + (op_code >> 3));
+			u08 lo = MEM::DataRead(opp);
+			u08 hi = MEM::DataRead(opp + 1);
+			bcd* r = reg_ptr((hi >> 1) & 0x0F);
+			bcd* x = reg_ptr(__builtin_avr_swap(lo) & 0x0F); // >> 4
+			bcd* y = reg_ptr(lo & 0x0F);
+			u08 sw = hi & 0x20;
+			carry = hi & 0x01;
+			switch (hi & 0xC0)
 			{
-				case 0x00: // IF B[f] = 0
-					reg_math(tt, zz, B, SUB); // borrow if B != 0
-					break;
-				case 0x01: // 0 -> B[f]
-					reg_move(B, zz, COPY);
-					break;
-				case 0x02: // IF A >= C[f]
-					reg_math(tt, A, C, SUB);
-					break;
-				case 0x03: // IF C[f] >= 1
-					carry = 1;
-					reg_math(tt, C, zz, SUB); // borrow if C == 0
-					break;
-				case 0x04: // B -> C[f]
-					reg_move(C, B, COPY);
-					break;
-				case 0x05: // 0 – C -> C[f]
-					reg_math(C, zz, C, SUB);
-					break;
-				case 0x06: // 0 -> C[f]
-					reg_move(C, zz, COPY);
-					break;
-				case 0x07: // 0 – C – 1 -> C[f]
-					carry = 1;
-					reg_math(C, zz, C, SUB);
-					break;
-				case 0x08: // SHIFT LEFT A[f]
-					reg_shl(A);
-					break;
-				case 0x09: // A -> B[f]
-					reg_move(B, A, COPY);
-					break;
-				case 0x0A: // A – C -> C[f]
-					reg_math(C, A, C, SUB);
-					break;
-				case 0x0B: // C – 1 -> C[f]
-					carry = 1;
-					reg_math(C, C, zz, SUB);
-					break;
-				case 0x0C: // C -> A[f]
-					reg_move(A, C, COPY);
-					break;
-				case 0x0D: // IF C[f] = 0
-					reg_math(tt, zz, C, SUB); // borrow if C != 0
-					break;
-				case 0x0E: // A + C -> C[f]
-					reg_math(C, A, C, ADD);
-					break;
-				case 0x0F: // C + 1 -> C[f]
-					carry = 1;
-					reg_math(C, C, zz, ADD);
-					break;
-				case 0x10: // IF A >= B[f]
-					reg_math(tt, A, B, SUB);
-					break;
-				case 0x11: // B EXCHANGE C[f]
-					reg_move(B, C, SWAP);
-					break;
-				case 0x12: // SHIFT RIGHT C[f]
-					reg_shr(C);
-					break;
-				case 0x13: // IF A[f] >= 1
-					carry = 1;
-					reg_math(tt, A, zz, SUB); // borrow if A == 0
-					break;
-				case 0x14: // SHIFT RIGHT B[f]
-					reg_shr(B);
-					break;
-				case 0x15: // C + C -> C[f]
-					reg_math(C, C, C, ADD);
-					break;
-				case 0x16: // SHIFT RIGHT A[f]
-					reg_shr(A);
-					break;
-				case 0x17: // 0 -> A[f]
-					reg_move(A, zz, COPY);
-					break;
-				case 0x18: // A – B -> A[f]
-					reg_math(A, A, B, SUB);
-					break;
-				case 0x19: // A EXCHANGE B[f]
-					reg_move(A, B, SWAP);
-					break;
-				case 0x1A: // A – C -> A[f]
-					reg_math(A, A, C, SUB);
-					break;
-				case 0x1B: // A – 1 -> A[f]
-					carry = 1;
-					reg_math(A, A, zz, SUB);
-					break;
-				case 0x1C: // A + B -> A[f]
-					reg_math(A, A, B, ADD);
-					break;
-				case 0x1D: // A EXCHANGE C[f]
-					reg_move(A, C, SWAP);
-					break;
-				case 0x1E: // A + C -> A[f]
-					reg_math(A, A, C, ADD);
-					break;
-				case 0x1F: // A + 1 -> A[f]
-					carry = 1;
-					reg_math(A, A, zz, ADD);
-					break;
+				case MATH: reg_math(r, x, y, sw); break;
+				case MOVE: reg_move(r, x, sw); break;
+				case SHL:  reg_shl(r); break;
+				case SHR:  reg_shr(r); break;
 			}
 		}
 
