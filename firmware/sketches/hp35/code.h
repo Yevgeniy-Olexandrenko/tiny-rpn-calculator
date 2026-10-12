@@ -67,9 +67,7 @@ void enterMenu(u08 type)
 void dropStackTop()
 {
 	using namespace HPVM;
-	reg_move(C, D, 0, 13, COPY);
-	reg_move(D, E, 0, 13, COPY);
-	reg_move(E, F, 0, 13, COPY);
+	reg_move(C, D, 0, 41, COPY); // C, D, E <- D, E, F
 }
 
 u08 getBCDFromStack(u08& out, u08 min, u08 max)

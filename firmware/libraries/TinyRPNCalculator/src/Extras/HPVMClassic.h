@@ -40,14 +40,16 @@ namespace HPVM
 	enum { ADD  = 0, SUB  = 1 };
 	enum { COPY = 0, SWAP = 1 };
 
-	// registers
-	reg A;
-	reg B;
-	reg C; // X
-	reg D; // Y
-	reg E; // Z
-	reg F; // T
-	reg M;
+	// registers, stored contiguously in this order: stack registers
+	// C..F are moved and rotated by multi-register reg_move() calls
+	reg regs[7];
+	reg& A = regs[0];
+	reg& B = regs[1];
+	reg& C = regs[2]; // X
+	reg& D = regs[3]; // Y
+	reg& E = regs[4]; // Z
+	reg& F = regs[5]; // T
+	reg& M = regs[6];
 
 	// state
 	u08 rom, pc, ret_pc, key_pc;
@@ -180,8 +182,7 @@ namespace HPVM
 					break;
 				case 0x6A: // STACK -> A
 					reg_move(A, D, 0, 13, COPY);
-					reg_move(D, E, 0, 13, COPY);
-					reg_move(E, F, 0, 13, COPY);
+					reg_move(D, E, 0, 27, COPY); // D, E <- E, F
 					break;
 				case 0x8A: // DISPLAY OFF
 					if (disp_enable)
@@ -194,16 +195,10 @@ namespace HPVM
 					reg_move(C, M, 0, 13, COPY);
 					break;
 				case 0xCA: // DOWN ROTATE
-					reg_move(C, D, 0, 13, SWAP);
-					reg_move(D, E, 0, 13, SWAP);
-					reg_move(E, F, 0, 13, SWAP);
+					reg_move(C, D, 0, 41, SWAP); // C <- D <- E <- F <- C
 					break;
 				case 0xEA: // CLEAR REGISTERS
-					for (u08 i = 0; i <= 13; ++i)
-						A[i] = B[i] =
-						C[i] = D[i] =
-						E[i] = F[i] =
-						M[i] = 0;
+					for (u08 i = 0; i < sizeof(regs); ++i) regs[0][i] = 0;
 					break;
 				case 0x0C: // RETURN
 					pc = ret_pc;
