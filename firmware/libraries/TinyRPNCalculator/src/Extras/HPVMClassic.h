@@ -16,8 +16,8 @@ namespace HPVM
 	// public interface
 	void Operation(u08 op);
 	void OpAndWait(u08 op);
-	bool Idling(); // true if idling
-	bool Cycle();  // true if display updated
+	b08 Idling(); // true if idling
+	b08 Cycle();  // true if display updated
 
 	// display render data
 	enum { DIGIT = 0x00, BLANK = 0x10, DASH = 0x11, DOT = 0x12 };
@@ -103,7 +103,7 @@ namespace HPVM
 	// state
 	u08 rom, pc, ret_pc, key_pc;
 	u08 carry, p, ff, fl, s[12];
-	u08 disp_enable, bp_idle;
+	b08 disp_enable, bp_idle;
 
 	// basic math
 	bcd alu(const bcd x, const bcd y, const u08 sub)
@@ -179,12 +179,12 @@ namespace HPVM
 		do Cycle(); while (!Idling());
 	}
 
-	bool Idling()
+	b08 Idling()
 	{
 		return (bp_idle && s[STATUS_BIT_IDLE]);
 	}
 
-	bool Cycle()
+	b08 Cycle()
 	{
 		// handle idle state breakpoint
 		if (rom == BP_IDLE.msb && pc == BP_IDLE.lsb) bp_idle = 1;

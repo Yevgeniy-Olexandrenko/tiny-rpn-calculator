@@ -71,9 +71,9 @@ namespace TXT
 		return db;
 	}
 
-	void SetInverse(u08 enable)
+	void SetInverse(b08 enable)
 	{
-		inverse = -enable;
+		inverse = (enable ? 0xFF : 0x00);
 	}
 
 	void SetScale(u08 sx, u08 sy)

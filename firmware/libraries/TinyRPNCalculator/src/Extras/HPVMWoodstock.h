@@ -16,12 +16,12 @@ namespace HPVM
 	// public interface
 	void Operation(u08 op);
 	void OpAndWait(u08 op);
-	bool Idling(); // true if idling
-	bool Cycle();  // true if display updated
+	b08 Idling(); // true if idling
+	b08 Cycle();  // true if display updated
 
 	// external flag inputs, sampled every cycle
-	bool F1; // false sets S5 (HP-21: battery is ok)
-	bool F2; // true sets S3 (HP-21: RAD angle mode)
+	b08 F1; // false sets S5 (HP-21: battery is ok)
+	b08 F2; // true sets S3 (HP-21: RAD angle mode)
 
 	// display render data: 7-segment patterns (see TXT::SEG_*) of 12 positions
 	u08 Display[12];
@@ -116,11 +116,10 @@ namespace HPVM
 
 	// state
 	u16 pc, ret_pc[2];
-	u08 sp, key_pc, key_new, del_rom, then_goto;
+	u08 sp, key_pc, key_new, del_rom;
 	u08 carry, p, ff, fl, f, s[16];
 	u08 base = 10;
-	u08 disp_enable;
-	bool key_hit;
+	b08 disp_enable, key_hit, then_goto;
 
 	// basic math, decimal or binary, digits are 4-bit wide
 	bcd alu(const bcd x, const bcd y, const u08 sub)
@@ -204,12 +203,12 @@ namespace HPVM
 		do Cycle(); while (!Idling());
 	}
 
-	bool Idling()
+	b08 Idling()
 	{
 		return (pc == BP_IDLE && !s[STATUS_BIT_KEY] && !key_hit);
 	}
 
-	bool Cycle()
+	b08 Cycle()
 	{
 		// deliver latched key in idle state
 		if (pc == BP_IDLE && !s[STATUS_BIT_KEY] && key_hit)

@@ -30,7 +30,7 @@ Flash size is the main constraint. Each sketch's `.ino` records a "Reference com
 
 ## Architecture
 
-**Library (`src/TinyRPNCalculator.h`)** is header-only. It includes every module, each a namespace in `src/TinyRPNCalculator/`: `MEM` (PROGMEM/EEPROM data access), `BCD`, `ADC`, `I2C`, `LCD` (SSD1306), `TXT` (text rendering with custom fonts), `RTC` (DS3231M), `KBD` (analog keyboard decoding via resistor ladder), `PWR` (sleep/power-down, battery level), `TMR` (WDT-based frame timer, `Millis`, `Sync()`), `FNT` (fonts). `SYS::Init()`/`SYS::Down()` tie them together. Use the project types `u08/u16/u32/s08/s16/s32/w16` defined there (plain `bool` for booleans).
+**Library (`src/TinyRPNCalculator.h`)** is header-only. It includes every module, each a namespace in `src/TinyRPNCalculator/`: `MEM` (PROGMEM/EEPROM data access), `BCD`, `ADC`, `I2C`, `LCD` (SSD1306), `TXT` (text rendering with custom fonts), `RTC` (DS3231M), `KBD` (analog keyboard decoding via resistor ladder), `PWR` (sleep/power-down, battery level), `TMR` (WDT-based frame timer, `Millis`, `Sync()`), `FNT` (fonts). `SYS::Init()`/`SYS::Down()` tie them together. Use the project types `b08/u08/u16/u32/s08/s16/s32/w16` defined there (no plain `bool`): `b08` (alias of `bool`) for flags, predicates and boolean parameters; CPU bits used in arithmetic (VM `carry`, status bits `s[]`) and local temporary flags like `disp_update` stay `u08`, which is smaller there (measured).
 
 Compile-time options, `#define`d in the sketch before including the library:
 - `ENABLE_OPT_DATAMEM` — `DATAMEM` maps to `EEMEM` (read via `MEM::DataRead/DataCopy`) instead of `PROGMEM`, freeing flash. Small constant tables (key tokens, field bounds, menus) are declared `DATAMEM`; large ones (ROM) stay `PROGMEM`.

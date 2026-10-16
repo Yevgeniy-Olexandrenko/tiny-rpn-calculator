@@ -12,6 +12,7 @@
 #include <ctime>
 #include <string>
 
+using b08 = bool;
 using u08 = uint8_t; using u16 = uint16_t; using u32 = uint32_t;
 using s08 = int8_t;  using s16 = int16_t;  using s32 = int32_t;
 union w16 { u16 val; struct { u08 lsb, msb; }; };

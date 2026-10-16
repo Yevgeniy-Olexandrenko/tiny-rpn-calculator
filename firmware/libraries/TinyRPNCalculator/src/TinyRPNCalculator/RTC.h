@@ -50,13 +50,13 @@ namespace RTC
 
 	// supported years are 2000-2099,
 	// so every fourth year is leap
-	u08 is_leap_year(u08 year)
+	b08 is_leap_year(u08 year)
 	{
 		return !(year & 3);
 	}
 
 	NOINLINE
-	u08 get_days_in_month(u08 month, u08 leap)
+	u08 get_days_in_month(u08 month, b08 leap)
 	{
 		u08 i = month - 1;
 		if (i >= sizeof(days_per_month)) return 0;
@@ -113,7 +113,7 @@ namespace RTC
 		return temp;
 	}
 
-	u08 IsLeapYear()
+	b08 IsLeapYear()
 	{
 		return is_leap_year(BCD::Decode(Year));
 	}
@@ -130,7 +130,7 @@ namespace RTC
 		u08 d = BCD::Decode(Date);
 
 		// helper returns zero for an invalid month
-		u08 leap = is_leap_year(y);
+		b08 leap = is_leap_year(y);
 		if (!d || d > get_days_in_month(m, leap)) return 0;
 
 		// days since 1970 fit 16 bits: 10957 days before 2000,

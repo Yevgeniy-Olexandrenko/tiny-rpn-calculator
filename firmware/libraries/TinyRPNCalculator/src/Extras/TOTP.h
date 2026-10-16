@@ -34,7 +34,7 @@ namespace TOTP
 	};
 
 	// copies the record by its index, returns false if there's no such record
-	bool ReadKey(const u08* area, u08 index, Key& key)
+	b08 ReadKey(const u08* area, u08 index, Key& key)
 	{
 		const u08* end = area + MEM::DataRead(area + SIGNATURE_SIZE - 1);
 		for (const u08* p = area + SIGNATURE_SIZE; p < end;)

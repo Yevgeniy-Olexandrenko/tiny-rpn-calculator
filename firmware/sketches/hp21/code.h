@@ -4,7 +4,7 @@
 // Switch between working modes
 // -----------------------------------------------------------------------------
 
-u08 rtcMode;
+b08 rtcMode;
 u08 battery;
 
 u08 newKey;
@@ -47,8 +47,8 @@ NOINLINE void setupAndEnterRTCMode()
 // Calculator operations execution
 // -----------------------------------------------------------------------------
 
-u08 isFunc;
-u08 isMenu;
+b08 isFunc;
+b08 isMenu;
 
 Menu menu;
 u08  select;
@@ -73,7 +73,7 @@ void dropStackTop()
 	reg_move(T, Z, 0, 13, COPY);
 }
 
-u08 getBCDFromStack(u08& out, u08 min, u08 max)
+b08 getBCDFromStack(u08& out, u08 min, u08 max)
 {
 	// positive integer 0..999: mantissa sign, exponent sign and
 	// exponent tens are zero, exponent units 0..2

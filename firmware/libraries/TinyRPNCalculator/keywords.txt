@@ -1,6 +1,7 @@
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
+b08	KEYWORD1
 u08	KEYWORD1
 u16	KEYWORD1
 u32	KEYWORD1
