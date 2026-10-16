@@ -53,17 +53,17 @@ namespace TOTP
 	}
 
 	// returns 6-digit code (0..999999) for the counter
-	NOINLINE u32 GetCode(const Key& key, u32 counter)
+	NOINLINE
+	u32 GetCode(const Key& key, u32 counter)
 	{
 		// HMAC of the counter as 64-bit big endian (RFC 4226)
-		SHA1 sha1;
-		sha1.InitHmac(key.data, key.length);
+		SHA1::InitHmac(key.data, key.length);
 		for (u08 i = 8; i-- > 0;)
 		{
 			// counter bytes from the most significant one (MCU is little endian)
-			sha1.Write(i < 4 ? reinterpret_cast<u08*>(&counter)[i] : 0x00);
+			SHA1::Write(i < 4 ? reinterpret_cast<u08*>(&counter)[i] : 0x00);
 		}
-		const u08* hash = sha1.ResultHmac();
+		const u08* hash = SHA1::ResultHmac();
 
 		// dynamic truncation to 31-bit number
 		const u08* p = hash + (hash[SHA1::HASH_SIZE - 1] & 0x0F);

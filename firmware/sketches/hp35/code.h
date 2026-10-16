@@ -59,6 +59,10 @@ u16 cycles;
 u08 hidden[15];
 u08 lastOp = HPVM::OpCLR_;
 
+// RTC keeps local time, RAM survives sleeping and any reset
+// rewrites RTC with the build time anyway, so no need to store
+s08 gmtZone = TOTP_GMT_ZONE;
+
 void enterMenu(u08 type)
 {
 	isMenu = true;
@@ -147,27 +151,22 @@ void executeOperation(u08 operation)
 			break;
 
 		case PROG_TIME:
+			// stack: X - seconds, Y - minutes, Z - hours
 			RTC::ReadTimeDate();
-			if (getBCDFromStack(RTC::Minutes, 0x00, 0x59) && 
+			if (getBCDFromStack(RTC::Seconds, 0x00, 0x59) &&
+			    getBCDFromStack(RTC::Minutes, 0x00, 0x59) &&
 			    getBCDFromStack(RTC::Hours,   0x00, 0x23))
 			{
-				RTC::Seconds = 0x00;
 				setupAndEnterRTCMode();
 			}
 			break;
 
 		case PROG_DATE:
+			// stack: X - year, Y - month, Z - date
 			RTC::ReadTimeDate();
-			if (getBCDFromStack(RTC::Month, 0x01, 0x12) &&
+			if (getBCDFromStack(RTC::Year,  0x00, 0x99) &&
+			    getBCDFromStack(RTC::Month, 0x01, 0x12) &&
 			    getBCDFromStack(RTC::Date,  0x01, 0x31))
-			{
-				setupAndEnterRTCMode();
-			}
-			break;
-
-		case PROG_YEAR:
-			RTC::ReadTimeDate();
-			if (getBCDFromStack(RTC::Year, 0x00, 0x99))
 			{
 				setupAndEnterRTCMode();
 			}
@@ -177,6 +176,21 @@ void executeOperation(u08 operation)
 			void enterTOTPMode();
 			enterTOTPMode();
 			break;
+
+		case PROG_ZONE:
+		{
+			// signed integer, mantissa sign is 9 for negative numbers
+			u08 sign = HPVM::C[13];
+			u08 zone;
+			HPVM::C[13] = 0;
+			if (getBCDFromStack(zone, 0x00, 0x14))
+			{
+				gmtZone = BCD::Decode(zone);
+				if (sign) gmtZone = -gmtZone;
+			}
+			else HPVM::C[13] = sign;
+			break;
+		}
 
 		case KEY_NOP:
 			break;
@@ -371,7 +385,7 @@ void updateTOTPMode()
 
 	// recompute the code when its time step or the key changes
 	RTC::ReadTimeDate();
-	u32 time = RTC::GetTimestamp(TOTP_GMT_ZONE);
+	u32 time = RTC::GetTimestamp(gmtZone);
 	u32 counter = time / TOTP::PERIOD;
 	if (counter != totpCounter)
 	{

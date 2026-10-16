@@ -3,34 +3,30 @@
 // -----------------------------------------------------------------------------
 // SHA-1 hash (FIPS 180-2) and HMAC-SHA1 (RFC 2104)
 // Message length is limited to 65535 bytes, HMAC key length to 64 bytes.
-// The object takes 90 bytes of RAM, so keep it on the stack while hashing.
 // -----------------------------------------------------------------------------
 
-const u08 sha1_init_state[] PROGMEM =
+namespace SHA1
 {
-	0x01, 0x23, 0x45, 0x67, // H0
-	0x89, 0xab, 0xcd, 0xef, // H1
-	0xfe, 0xdc, 0xba, 0x98, // H2
-	0x76, 0x54, 0x32, 0x10, // H3
-	0xf0, 0xe1, 0xd2, 0xc3  // H4
-};
+	constexpr u08 BLOCK_SIZE = 64;
+	constexpr u08 HASH_SIZE  = 20;
 
-class SHA1
-{
-public:
-	static constexpr u08 BLOCK_SIZE = 64;
-	static constexpr u08 HASH_SIZE  = 20;
+	constexpr u32 K00 = 0x5a827999;
+	constexpr u32 K20 = 0x6ed9eba1;
+	constexpr u32 K40 = 0x8f1bbcdc;
+	constexpr u32 K60 = 0xca62c1d6;
 
-private:
-	static constexpr u32 K00 = 0x5a827999;
-	static constexpr u32 K20 = 0x6ed9eba1;
-	static constexpr u32 K40 = 0x8f1bbcdc;
-	static constexpr u32 K60 = 0xca62c1d6;
+	constexpr u08 HMAC_IPAD = 0x36;
+	constexpr u08 HMAC_OPAD = 0x5c;
 
-	static constexpr u08 HMAC_IPAD = 0x36;
-	static constexpr u08 HMAC_OPAD = 0x5c;
+	const u08 init_state[] PROGMEM =
+	{
+		0x01, 0x23, 0x45, 0x67, // H0
+		0x89, 0xab, 0xcd, 0xef, // H1
+		0xfe, 0xdc, 0xba, 0x98, // H2
+		0x76, 0x54, 0x32, 0x10, // H3
+		0xf0, 0xe1, 0xd2, 0xc3  // H4
+	};
 
-	// small fields go first: AVR reaches them faster by base + offset
 	u08 offset; // write position in the block
 	u16 length; // message length in bytes
 
@@ -42,7 +38,8 @@ private:
 	union { u08 b[BLOCK_SIZE]; u32 w[BLOCK_SIZE / 4]; } block;
 
 	// bit by bit rotation is slow, but much smaller on AVR
-	static NOINLINE u32 rol32(u32 x, u08 bits)
+	NOINLINE
+	u32 rol32(u32 x, u08 bits)
 	{
 		while (bits--) x = (x << 1) | (x >> 31);
 		return x;
@@ -113,19 +110,10 @@ private:
 		}
 	}
 
-	void write_key_pad(u08 pad)
+	NOINLINE
+	void Init()
 	{
-		// key padded with zeros to the block size
-		for (u08 i = 0; i < BLOCK_SIZE; ++i)
-		{
-			Write((i < hmac_key_len ? hmac_key[i] : 0) ^ pad);
-		}
-	}
-
-public:
-	NOINLINE void Init()
-	{
-		MEM::ProgCopy(state.b, sha1_init_state, HASH_SIZE);
+		MEM::ProgCopy(state.b, init_state, HASH_SIZE);
 		offset = 0;
 		length = 0;
 	}
@@ -164,6 +152,15 @@ public:
 		return state.b;
 	}
 
+	void write_key_pad(u08 pad)
+	{
+		// key padded with zeros to the block size
+		for (u08 i = 0; i < BLOCK_SIZE; ++i)
+		{
+			Write((i < hmac_key_len ? hmac_key[i] : 0) ^ pad);
+		}
+	}
+
 	// key stays in caller's RAM until ResultHmac(), its length is up to 64
 	void InitHmac(const u08* key, u08 keyLength)
 	{
@@ -188,4 +185,4 @@ public:
 		Write(inner_hash, HASH_SIZE);
 		return Result();
 	}
-};
+}

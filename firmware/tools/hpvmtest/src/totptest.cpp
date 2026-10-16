@@ -65,21 +65,19 @@ std::string hex(const u08* data, int size)
 
 std::string sha1(const std::string& msg, int repeat = 1)
 {
-	SHA1 h;
-	h.Init();
+	SHA1::Init();
 	while (repeat--)
 	{
-		for (char c : msg) h.Write(u08(c));
+		for (char c : msg) SHA1::Write(u08(c));
 	}
-	return hex(h.Result(), SHA1::HASH_SIZE);
+	return hex(SHA1::Result(), SHA1::HASH_SIZE);
 }
 
 std::string hmac(const std::string& key, const std::string& msg)
 {
-	SHA1 h;
-	h.InitHmac((const u08*)key.data(), u08(key.size()));
-	h.Write((const u08*)msg.data(), u08(msg.size()));
-	return hex(h.ResultHmac(), SHA1::HASH_SIZE);
+	SHA1::InitHmac((const u08*)key.data(), u08(key.size()));
+	SHA1::Write((const u08*)msg.data(), u08(msg.size()));
+	return hex(SHA1::ResultHmac(), SHA1::HASH_SIZE);
 }
 
 std::string code(const TOTP::Key& key, u32 time)
@@ -247,7 +245,6 @@ int main()
 	expect("timestamp 2024-04-00", ts(24, 4, 0), "0");
 	expect("timestamp 2024-04-31", ts(24, 4, 31), "0");
 
-	printf("sizeof(SHA1) = %d bytes\n", int(sizeof(SHA1)));
 	printf("%d failures\n", fails);
 	return fails;
 }
