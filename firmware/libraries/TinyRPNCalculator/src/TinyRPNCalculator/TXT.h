@@ -59,6 +59,17 @@ namespace TXT
 		return b | (b << 2);
 	}
 
+	// expand char data byte for vertical scale, si - index of the screen page
+	NOINLINE
+	u08 scale_y(u08 db, u08 si)
+	{
+		if (font_sy == x2)
+			return expand4bit((si ? db >> 4 : db) & 0x0F);
+		if (font_sy == x4)
+			return expand2bit((db >> (si << 1)) & 0x03);
+		return db;
+	}
+
 	void SetInverse(u08 enable)
 	{
 		inverse = -enable;
@@ -99,11 +110,7 @@ namespace TXT
 					// get char data if available
 					if (dp)
 					{
-						db = MEM::ProgRead(dp + xi) ^ inverse;
-						if (font_sy == x2)
-							db = expand4bit((si ? db >> 4 : db) & 0x0F);
-						else if (font_sy == x4)
-							db = expand2bit((db >> (si << 1)) & 0x03);
+						db = scale_y(MEM::ProgRead(dp + xi) ^ inverse, si);
 					}
 					LCD::Write(db, font_sx);
 				}
