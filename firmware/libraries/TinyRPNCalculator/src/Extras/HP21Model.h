@@ -1,8 +1,15 @@
 #pragma once
 
+// -----------------------------------------------------------------------------
+// HP-21 model data. Include before HPVMWoodstock.h
+// -----------------------------------------------------------------------------
+
 namespace HPVM
 {
-	// HP-35 key operation
+	// HP-21 idle state breakpoint: the key waiting loop (octal 0376)
+	constexpr u16 BP_IDLE = 0x00FE;
+
+	// HP-21 key operation
 	enum
 	{
 		// main operations
@@ -46,9 +53,18 @@ namespace HPVM
 		0x94, 0x93, 0x92, 0x91,
 	};
 
+	// HP-21 character generator, 7-segment patterns of A digit values
+	const u08 char_gen[] DATAMEM =
+	{
+		TXT::SEG_0, TXT::SEG_1, TXT::SEG_2, TXT::SEG_3,
+		TXT::SEG_4, TXT::SEG_5, TXT::SEG_6, TXT::SEG_7,
+		TXT::SEG_8, TXT::SEG_9, TXT::SEG_r, TXT::SEG_H,
+		TXT::SEG_o, TXT::SEG_P, TXT::SEG_E, TXT::SEG_SPACE
+	};
+
 	// HP-21 firmware ROM (1024 words)
 	// bits 1..0: four instructions per byte, first in bits 1..0
-	const uint8_t rom_l[] PROGMEM =
+	const u08 rom_l[] PROGMEM =
 	{
 		0x0A, 0x02, 0x89, 0x06, 0xA4, 0xB8, 0x85, 0x88, 0xAA, 0x6B, 0x12, 0x9E, 0x00, 0x28, 0x93, 0xE7,
 		0x0C, 0x92, 0xAA, 0x2A, 0xA6, 0x89, 0xBA, 0x82, 0x05, 0x81, 0x0B, 0x83, 0x2A, 0xA6, 0x04, 0x23,
@@ -69,7 +85,7 @@ namespace HPVM
 	};
 
 	// bits 9..2: one instruction per byte
-	const uint8_t rom_h[] PROGMEM =
+	const u08 rom_h[] PROGMEM =
 	{
 		0x6E, 0x6E, 0xF2, 0x42, 0x46, 0x23, 0x12, 0x32, 0xE7, 0xDD, 0x03, 0x46, 0x0E, 0x49, 0xE2, 0x17,
 		0x14, 0x83, 0x92, 0xD2, 0x2D, 0x2E, 0xBC, 0x01, 0xE9, 0xF3, 0x8F, 0x71, 0x9F, 0x71, 0x1F, 0xE9,
