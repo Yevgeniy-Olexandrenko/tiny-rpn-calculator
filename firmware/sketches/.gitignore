@@ -2,3 +2,4 @@
 !**/build/*.ino.hex
 !**/build/*.ino.eep
 **/.*/*
+**/data/totp.local.txt
