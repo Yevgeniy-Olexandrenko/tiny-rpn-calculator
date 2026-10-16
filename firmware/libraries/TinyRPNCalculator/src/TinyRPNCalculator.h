@@ -45,7 +45,7 @@ using u32 = uint32_t;
 using s08 = int8_t;
 using s16 = int16_t;
 using s32 = int32_t;
-using w16 = union { u16 val; struct { u08 lsb, msb; }; };
+union w16 { u16 val; struct { u08 lsb, msb; }; };
 
 // bits manipulations
 #define set_bit(sfr, bit) (  (sfr) |=  _BV(bit) )

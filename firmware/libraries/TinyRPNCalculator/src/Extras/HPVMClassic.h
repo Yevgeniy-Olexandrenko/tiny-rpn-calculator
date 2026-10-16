@@ -21,7 +21,7 @@ namespace HPVM
 
 	// display render data
 	enum { DIGIT = 0x00, BLANK = 0x10, DASH = 0x11, DOT = 0x12 };
-	char Display[15];
+	u08 Display[15];
 
 	// cpu defines
 	using bcd = u08;
@@ -247,7 +247,7 @@ namespace HPVM
 					reg_move(C, D, 0, 41, SWAP); // C <- D <- E <- F <- C
 					break;
 				case 0xEA: // CLEAR REGISTERS
-					for (u08 i = 0; i < sizeof(regs); ++i) regs[0][i] = 0;
+					for (u08 i = 0; i < sizeof(regs); ++i) ((bcd*)regs)[i] = 0;
 					break;
 				case 0x0C: // RETURN
 					pc = ret_pc;
@@ -340,7 +340,7 @@ namespace HPVM
 		if (disp_update)
 		{
 			Display[14] = BLANK;
-			char* dp = Display;
+			u08* dp = Display;
 			for (u08 i = 14; i-- > 0;)
 			{
 				if (disp_enable)

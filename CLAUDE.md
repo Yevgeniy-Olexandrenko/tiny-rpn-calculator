@@ -24,7 +24,7 @@ There is no CLI build script, test suite or linter. Builds are done in the Ardui
 3. Fuses for PCB rev 1.x: High `0xD7`, Low `0xF1`, Ext `0xFF`.
 4. "Export compiled binary" puts output in `sketches/<model>/build/`. Only `*.ino.hex` and `*.ino.eep` are committed (see `sketches/.gitignore`). **Both must be flashed**: with `ENABLE_OPT_DATAMEM 1`, `DATAMEM` data lives in EEPROM.
 
-Flash size is the main constraint. Each sketch's `.ino` records a "Reference compilation output" (e.g. hp35: 5684 bytes / 69% flash, 215 bytes RAM); update it when a change materially affects size, and check size impact of any change.
+Flash size is the main constraint. Each sketch's `.ino` records a "Reference compilation output" (e.g. hp35: 5700 bytes / 69% flash, 215 bytes RAM); update it when a change materially affects size, and check size impact of any change.
 
 ## Architecture
 

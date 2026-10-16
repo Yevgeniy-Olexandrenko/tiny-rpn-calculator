@@ -67,12 +67,17 @@ void enterMenu(u08 type)
 void dropStackTop()
 {
 	using namespace HPVM;
-	reg_move(C, D, 0, 41, COPY); // C, D, E <- D, E, F
+	// roll down via ROM to end number entry and refresh display,
+	// then restore T to get a drop: C, D, E <- D, E, F
+	OpAndWait(OpROT_);
+	reg_move(F, E, 0, 13, COPY);
 }
 
 u08 getBCDFromStack(u08& out, u08 min, u08 max)
 {
-	if (HPVM::C[1] == 0 && HPVM::C[0] < 3)
+	// positive integer 0..999: mantissa sign, exponent sign and
+	// exponent tens are zero, exponent units 0..2
+	if ((HPVM::C[13] | HPVM::C[2] | HPVM::C[1]) == 0 && HPVM::C[0] < 3)
 	{
 		u16 value = 0;
 		for (u08 i = 0; i <= HPVM::C[0]; ++i)
@@ -94,6 +99,8 @@ void executeOperation(u08 operation)
 {
 	isFunc = false;
 	isMenu = false;
+	// repeat the last menu operation, including extended ones
+	if (operation == KEY_LAST) operation = lastOp;
 
 	switch (operation)
 	{
@@ -106,10 +113,6 @@ void executeOperation(u08 operation)
 			memcpy(hidden, HPVM::Display, 15);
 			HPVM::OpAndWait(HPVM::OpSWAP);
 			isFunc = true;
-			break;
-
-		case KEY_LAST:
-			HPVM::Operation(lastOp);
 			break;
 
 		case KEY_ROTU:
