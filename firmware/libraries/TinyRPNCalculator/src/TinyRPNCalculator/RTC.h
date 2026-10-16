@@ -55,11 +55,19 @@ namespace RTC
 		return !(year & 3);
 	}
 
+	NOINLINE
 	u08 get_days_in_month(u08 month, u08 leap)
 	{
 		u08 i = month - 1;
 		if (i >= sizeof(days_per_month)) return 0;
 		return (i == 1 && leap ? 29 : MEM::DataRead(days_per_month + i));
+	}
+
+	// one step of time units conversion, shared to save flash
+	NOINLINE
+	u32 mul_add_bcd(u32 t, u08 k, u08 bcd)
+	{
+		return t * k + BCD::Decode(bcd);
 	}
 
 	void ReadTimeDate()
@@ -125,20 +133,15 @@ namespace RTC
 		u08 leap = is_leap_year(y);
 		if (!d || d > get_days_in_month(m, leap)) return 0;
 
-		// y + 30 is years since 1970
-		// the quotient counts prior leap days
-		u32 t = u32(y + 30) * 365 + (y + 30 + 1) / 4;
-
-		// count days before given month
+		// days since 1970 fit 16 bits: 10957 days before 2000,
+		// then whole years and their leap days, and given month
+		u16 days = 10957 + y * 365U + (y + 3) / 4 + d - 1;
 		for (u08 i = 1; i < m; ++i)
-			t += get_days_in_month(i, leap);
+			days += get_days_in_month(i, leap);
 
-		// compute from days to seconds
-		t = 24 * (t + d - 1);
-		t = 60 * (t + BCD::Decode(Hours));
-		t = 60 * (t + BCD::Decode(Minutes));
-		t += BCD::Decode(Seconds);
-		t -= s32(GMTTimeZone) * 3600L;
-		return t;
+		// compute from days to seconds, time zone shifts hours
+		u32 t = mul_add_bcd(days, 24, Hours) - GMTTimeZone;
+		t = mul_add_bcd(t, 60, Minutes);
+		return mul_add_bcd(t, 60, Seconds);
 	}
 }

@@ -1,222 +1,191 @@
 #pragma once
 
 // -----------------------------------------------------------------------------
-// SHA1
+// SHA-1 hash (FIPS 180-2) and HMAC-SHA1 (RFC 2104)
+// Message length is limited to 65535 bytes, HMAC key length to 64 bytes.
+// The object takes 90 bytes of RAM, so keep it on the stack while hashing.
 // -----------------------------------------------------------------------------
 
-#define SHA1_BSIZE 64
-#define SHA1_HSIZE 20
-
-const uint8_t init_state[] PROGMEM =
+const u08 sha1_init_state[] PROGMEM =
 {
-    0x01, 0x23, 0x45, 0x67, // H0
-    0x89, 0xab, 0xcd, 0xef, // H1
-    0xfe, 0xdc, 0xba, 0x98, // H2
-    0x76, 0x54, 0x32, 0x10, // H3
-    0xf0, 0xe1, 0xd2, 0xc3  // H4
+	0x01, 0x23, 0x45, 0x67, // H0
+	0x89, 0xab, 0xcd, 0xef, // H1
+	0xfe, 0xdc, 0xba, 0x98, // H2
+	0x76, 0x54, 0x32, 0x10, // H3
+	0xf0, 0xe1, 0xd2, 0xc3  // H4
 };
 
 class SHA1
 {
-    // -----------------------------------------------------------------------------
-    // Private constants
-    // -----------------------------------------------------------------------------
+public:
+	static constexpr u08 BLOCK_SIZE = 64;
+	static constexpr u08 HASH_SIZE  = 20;
 
-    enum 
-    {
-        K00 = 0x5a827999,
-        K20 = 0x6ed9eba1,
-        K40 = 0x8f1bbcdc,
-        K60 = 0xca62c1d6
-    };
+private:
+	static constexpr u32 K00 = 0x5a827999;
+	static constexpr u32 K20 = 0x6ed9eba1;
+	static constexpr u32 K40 = 0x8f1bbcdc;
+	static constexpr u32 K60 = 0xca62c1d6;
 
-    enum
-    {
-        HMAC_IPAD = 0x36,
-        HMAC_OPAD = 0x5c
-    };
+	static constexpr u08 HMAC_IPAD = 0x36;
+	static constexpr u08 HMAC_OPAD = 0x5c;
 
-    // -----------------------------------------------------------------------------
-    // Private variables
-    // -----------------------------------------------------------------------------
+	// small fields go first: AVR reaches them faster by base + offset
+	u08 offset; // write position in the block
+	u16 length; // message length in bytes
 
-    union Buffer {
-        uint8_t  b[SHA1_BSIZE];
-        uint32_t w[SHA1_BSIZE / sizeof(uint32_t)];
-    };
+	const u08* hmac_key;
+	u08 hmac_key_len;
 
-    union State {
-        uint8_t  b[SHA1_HSIZE];
-        uint32_t w[SHA1_HSIZE / sizeof(uint32_t)];
-    };
+	// words are stored in the MCU's little endian order
+	union { u08 b[HASH_SIZE];  u32 w[HASH_SIZE  / 4]; } state;
+	union { u08 b[BLOCK_SIZE]; u32 w[BLOCK_SIZE / 4]; } block;
 
-    Buffer   buffer;
-    State    state;
+	// bit by bit rotation is slow, but much smaller on AVR
+	static NOINLINE u32 rol32(u32 x, u08 bits)
+	{
+		while (bits--) x = (x << 1) | (x >> 31);
+		return x;
+	}
 
-    uint8_t  buff_offset;
-    uint32_t byte_count;
+	void hash_block()
+	{
+		// working variables a, b, c, d, e
+		union { u08 b[HASH_SIZE]; u32 w[HASH_SIZE / 4]; } v;
+		memcpy(v.w, state.w, HASH_SIZE);
 
-    uint8_t  key_buffer[SHA1_BSIZE];
-    uint8_t  inner_hash[SHA1_HSIZE];
+		for (u08 i = 0; i < 80; ++i)
+		{
+			// message schedule is computed in place in the block,
+			// bitwise operations are done byte by byte: smaller on AVR
+			u08 wi = 4 * (i & 15);
+			if (i >= 16)
+			{
+				u08 w2  = 4 * ((i + 2) & 15);
+				u08 w8  = 4 * ((i + 8) & 15);
+				u08 w13 = 4 * ((i + 13) & 15);
+				for (u08 j = 0; j < 4; ++j)
+				{
+					block.b[wi + j] ^= block.b[w2 + j] ^ block.b[w8 + j] ^ block.b[w13 + j];
+				}
+				block.w[wi / 4] = rol32(block.w[wi / 4], 1);
+			}
 
-    // -----------------------------------------------------------------------------
-    // Private functions
-    // -----------------------------------------------------------------------------
+			union { u08 b[4]; u32 w; } f;
+			for (u08 j = 0; j < 4; ++j)
+			{
+				u08 b = v.b[4 + j], c = v.b[8 + j], d = v.b[12 + j];
+				if (i < 20)
+					f.b[j] = d ^ (b & (c ^ d));
+				else if (i < 40 || i >= 60)
+					f.b[j] = b ^ c ^ d;
+				else
+					f.b[j] = (b & c) | (d & (b | c));
+			}
 
-    uint32_t rol32(uint32_t number, uint8_t bits) 
-    {
-        return ((number << bits) | (number >> (32 - bits)));
-    }
+			u32 t = f.w + rol32(v.w[0], 5) + v.w[4] + block.w[wi / 4];
+			if (i < 20)
+				t += K00;
+			else if (i < 40)
+				t += K20;
+			else if (i < 60)
+				t += K40;
+			else
+				t += K60;
 
-    void hash_block() 
-    {
-        uint32_t a = state.w[0];
-        uint32_t b = state.w[1];
-        uint32_t c = state.w[2];
-        uint32_t d = state.w[3];
-        uint32_t e = state.w[4];
-        uint32_t t;
+			// e = d, d = c, c = b <<< 30, b = a, a = t
+			memmove(v.w + 1, v.w, 4 * sizeof(u32));
+			v.w[2] = rol32(v.w[2], 30);
+			v.w[0] = t;
+		}
 
-        for (uint8_t i = 0; i < 80; i++)
-        {
-            if (i >= 16)
-            {
-                t = buffer.w[(i + 13) & 15]
-                  ^ buffer.w[(i + 8) & 15]
-                  ^ buffer.w[(i + 2) & 15]
-                  ^ buffer.w[i & 15];
-                buffer.w[i & 15] = rol32(t, 1);
-            }
+		for (u08 i = 0; i < 5; ++i) state.w[i] += v.w[i];
+	}
 
-            if (i < 20) 
-                t = (d ^ (b & (c ^ d))) + K00;
-            else if (i < 40) 
-                t = (b ^ c ^ d) + K20;
-            else if (i < 60) 
-                t = ((b & c) | (d & (b | c))) +K40;
-            else 
-                t = (b ^ c ^ d) + K60;
+	void add_byte(u08 data)
+	{
+		// message bytes are big endian within the words
+		block.b[offset ^ 3] = data;
+		if (++offset == BLOCK_SIZE)
+		{
+			hash_block();
+			offset = 0;
+		}
+	}
 
-            t += rol32(a, 5) + e + buffer.w[i & 15];
-            e = d;
-            d = c;
-            c = rol32(b, 30);
-            b = a;
-            a = t;
-        }
-
-        state.w[0] += a;
-        state.w[1] += b;
-        state.w[2] += c;
-        state.w[3] += d;
-        state.w[4] += e;
-    }
-
-    void add_uncounted(uint8_t data) 
-    {
-        buffer.b[buff_offset ^ 3] = data;
-        buff_offset++;
-
-        if (buff_offset == SHA1_BSIZE) 
-        {
-            hash_block();
-            buff_offset = 0;
-        }
-    }
-
-    // -----------------------------------------------------------------------------
-    // Public functions
-    // -----------------------------------------------------------------------------
+	void write_key_pad(u08 pad)
+	{
+		// key padded with zeros to the block size
+		for (u08 i = 0; i < BLOCK_SIZE; ++i)
+		{
+			Write((i < hmac_key_len ? hmac_key[i] : 0) ^ pad);
+		}
+	}
 
 public:
+	NOINLINE void Init()
+	{
+		MEM::ProgCopy(state.b, sha1_init_state, HASH_SIZE);
+		offset = 0;
+		length = 0;
+	}
 
-    void Init()
-    {
-        memcpy_P(state.b, init_state, SHA1_HSIZE);
-        buff_offset = 0;
-        byte_count = 0;
-    }
+	void Write(u08 data)
+	{
+		length++;
+		add_byte(data);
+	}
 
-    uint8_t* Result()
-    {
-        // SHA-1 padding (fips180-2 §5.1.1) to complete the last block. 
-        // Pad with 0x80 followed by 0x00 until the end of the block
-        add_uncounted(0x80);
-        while (buff_offset != SHA1_BSIZE - 8) add_uncounted(0x00);
+	void Write(const u08* data, u08 size)
+	{
+		while (size--) Write(*data++);
+	}
 
-        // Append length in the last 8 bytes
-        add_uncounted(0); // We're only using 32 bit lengths
-        add_uncounted(0); // But SHA-1 supports 64 bit lengths
-        add_uncounted(0); // So zero pad the top bits
-        add_uncounted(byte_count >> 29); // Shifting to multiply by 8
-        add_uncounted(byte_count >> 21); // as SHA-1 supports bitstreams
-        add_uncounted(byte_count >> 13); // as well as byte.
-        add_uncounted(byte_count >> 5);
-        add_uncounted(byte_count << 3);
+	// returns pointer to the 20 bytes of hash, valid until next Init()
+	const u08* Result()
+	{
+		// pad with 0x80 and zeros, finish the block with the message
+		// length in bits as 64-bit big endian (high 5 bytes are zero)
+		u16 len = length;
+		add_byte(0x80);
+		while (offset != BLOCK_SIZE - 8) add_byte(0x00);
+		for (u08 i = 0; i < 5; ++i) add_byte(0x00);
+		add_byte(u08(len >> 13));
+		add_byte(u08(len >> 5));
+		add_byte(u08(len << 3));
 
-        // Swap byte order back
-        for (int i = 0; i < 5; i++)
-        {
-            uint32_t a, b;
-            a = state.w[i];
-            b = a << 24;
-            b |= (a << 8) & 0x00ff0000;
-            b |= (a >> 8) & 0x0000ff00;
-            b |= a >> 24;
-            state.w[i] = b;
-        }
+		// convert words to big endian byte order
+		for (u08 i = 0; i < HASH_SIZE; i += 4)
+		{
+			u08 t;
+			t = state.b[i + 0]; state.b[i + 0] = state.b[i + 3]; state.b[i + 3] = t;
+			t = state.b[i + 1]; state.b[i + 1] = state.b[i + 2]; state.b[i + 2] = t;
+		}
+		return state.b;
+	}
 
-        // Return pointer to hash (20 characters)
-        return state.b;
-    }
+	// key stays in caller's RAM until ResultHmac(), its length is up to 64
+	void InitHmac(const u08* key, u08 keyLength)
+	{
+		hmac_key = key;
+		hmac_key_len = keyLength;
 
-    void InitHmac(const uint8_t* key, uint16_t key_length)
-    {
-        memset(key_buffer, 0, SHA1_BSIZE);
-        if (key_length > SHA1_BSIZE)
-        {
-            // Hash long keys
-            Init();
-            Write(key, key_length);
-            memcpy(key_buffer, Result(), SHA1_HSIZE);
-        }
-        else
-        {
-            // Block length keys are used as is
-            memcpy(key_buffer, key, key_length);
-        }
+		// start inner hash
+		Init();
+		write_key_pad(HMAC_IPAD);
+	}
 
-        // Start inner hash
-        Init();
-        for (uint8_t i = 0; i < SHA1_BSIZE; i++)
-        {
-            Write(key_buffer[i] ^ HMAC_IPAD);
-        }
-    }
+	// returns pointer to the 20 bytes of HMAC, valid until next Init()
+	const u08* ResultHmac()
+	{
+		// complete inner hash
+		u08 inner_hash[HASH_SIZE];
+		memcpy(inner_hash, Result(), HASH_SIZE);
 
-    uint8_t* ResultHmac()
-    {
-        // Complete inner hash
-        memcpy(inner_hash, Result(), SHA1_HSIZE);
-
-        // Calculate outer hash
-        Init();
-        for (uint8_t i = 0; i < SHA1_BSIZE; i++)
-        {
-            Write(key_buffer[i] ^ HMAC_OPAD);
-        }
-        Write(inner_hash, SHA1_HSIZE);
-        return Result();
-    }
-
-    void Write(uint8_t data) 
-    {
-        byte_count++;
-        add_uncounted(data);
-    }
-
-    void Write(const uint8_t* buffer, uint16_t size)
-    {
-        while (size--) Write(*buffer++);
-    }
+		// calculate outer hash
+		Init();
+		write_key_pad(HMAC_OPAD);
+		Write(inner_hash, HASH_SIZE);
+		return Result();
+	}
 };

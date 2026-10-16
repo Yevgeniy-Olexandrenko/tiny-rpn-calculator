@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------------
 
 u08 rtcMode;
+u08 totpMode;
 u08 battery;
 
 u08 newKey;
@@ -33,8 +34,9 @@ void enterRTCMode()
 	LCD::TurnOn();
 	TMR::Start(TMR::TIMEOUT_64MS);
 
-	oldkey  = KBD::Read();
-	rtcMode = true;
+	oldkey   = KBD::Read();
+	rtcMode  = true;
+	totpMode = false;
 }
 
 NOINLINE void setupAndEnterRTCMode()
@@ -170,6 +172,14 @@ void executeOperation(u08 operation)
 				setupAndEnterRTCMode();
 			}
 			break;
+
+		case PROG_TOTP:
+			void enterTOTPMode();
+			enterTOTPMode();
+			break;
+
+		case KEY_NOP:
+			break;
 	}
 }
 
@@ -282,6 +292,93 @@ void updateCalcMode()
 }
 
 // -----------------------------------------------------------------------------
+// TOTP mode
+// -----------------------------------------------------------------------------
+
+u08 totpIndex;
+u08 totpCount;
+u32 totpCounter;
+u32 totpCode;
+
+void enterTOTPMode()
+{
+	// count the keys, stay in calculator mode if there are none
+	TOTP::Key key;
+	for (totpCount = 0; TOTP::ReadKey(totp_keys, totpCount, key); ++totpCount);
+	if (totpCount)
+	{
+		if (totpIndex >= totpCount) totpIndex = 0;
+		totpCounter = 0;
+		totpMode = true;
+	}
+}
+
+void renderTOTPMode(const TOTP::Key& key, u08 left)
+{
+	LCD::Clear();
+
+	// code as two groups of three digits
+	TXT::SetFont(digits7x32);
+	u32 code = totpCode;
+	for (u08 i = 6; i-- > 0;)
+	{
+		u08 x = TOTP_POS_CODE + (i < 3 ? i : i + 1) * TOTP_CHAR_W;
+		TXT::PrintSeg(TXT::NumToSeg(code % 10), x, 0);
+		code /= 10;
+	}
+
+	// seconds left in place of exponent
+	TXT::SetFont(digits7x16);
+	TXT::PrintSegBCD(BCD::Encode(left), TOTP_POS_LEFT, 0);
+
+	// key label under seconds
+	TXT::SetFont(menu5x8);
+	TXT::SetScale(TXT::x1, TXT::x2);
+	for (u08 i = 0, x = TOTP_POS_LABEL; i < TOTP::LABEL_SIZE; ++i, x += TXT::char_dx)
+	{
+		TXT::PrintChar(key.label[i], x, 2);
+	}
+
+	LCD::Flip();
+}
+
+void updateTOTPMode()
+{
+	if (newKey != KBD::NONE)
+	{
+		// select previous or next key, any other key returns to calculator
+		switch (newKey)
+		{
+			default:
+				totpMode = false;
+				renderCalcMode();
+				return;
+			case KBD::ROTU:
+				totpIndex = (totpIndex ? totpIndex : totpCount) - 1;
+				break;
+			case KBD::ROTD:
+				if (++totpIndex == totpCount) totpIndex = 0;
+				break;
+		}
+		totpCounter = 0;
+	}
+
+	TOTP::Key key;
+	TOTP::ReadKey(totp_keys, totpIndex, key);
+
+	// recompute the code when its time step or the key changes
+	RTC::ReadTimeDate();
+	u32 time = RTC::GetTimestamp(TOTP_GMT_ZONE);
+	u32 counter = time / TOTP::PERIOD;
+	if (counter != totpCounter)
+	{
+		totpCounter = counter;
+		totpCode = TOTP::GetCode(key, counter);
+	}
+	renderTOTPMode(key, TOTP::PERIOD - u08(time - counter * TOTP::PERIOD));
+}
+
+// -----------------------------------------------------------------------------
 // RTC mode
 // -----------------------------------------------------------------------------
 
@@ -356,7 +453,9 @@ int main()
 		enterCalcMode();
 
 		// update current operation mode and idle until next frame
-		if (rtcMode) updateRTCMode(); else updateCalcMode();
+		if (rtcMode) updateRTCMode();
+		else if (totpMode) updateTOTPMode();
+		else updateCalcMode();
 		TMR::Sync();
 	}
 	return 0;

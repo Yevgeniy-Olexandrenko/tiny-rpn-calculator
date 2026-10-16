@@ -1,0 +1,11 @@
+# TOTP keys for the calculator, converted by firmware/tools/totp.
+# One key per line: label (1..4 chars of A-Z, 0-9) and Base32 secret or otpauth:// URI.
+# Only HMAC-SHA1, 6 digits, 30 seconds keys are supported.
+#
+# These are test keys: the RFC 6238 key "12345678901234567890", which gives
+# 287082 at unix time 59. Don't put real keys here, this file is committed.
+
+TST1 GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ
+TST2 GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ
+TST3 GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ
+TST4 GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ

@@ -37,6 +37,12 @@
 #define RTC_POS_SLASH         (2 * RTC_DATE_CHAR_W + RTC_POS_DATE)
 #define RTC_POS_YEAR          (1 * RTC_DATE_CHAR_W + RTC_POS_SLASH)
 
+#define TOTP_GMT_ZONE         (+3) // TODO: replace with the ZONE setting
+#define TOTP_CHAR_W           (7 + 1)
+#define TOTP_POS_CODE         (1 * TOTP_CHAR_W)
+#define TOTP_POS_LEFT         (13 * TOTP_CHAR_W)
+#define TOTP_POS_LABEL        (LCD::WIDTH - TOTP::LABEL_SIZE * MENU_CHAR_W)
+
 #define DIMOUT_MILLIS         (10000)
 #define POWEROFF_MILLIS       (20000)
 
@@ -322,7 +328,9 @@ enum
 	MENU_PROG = BASE - 6,
 	PROG_TIME = BASE - 7,
 	PROG_DATE = BASE - 8,
-	PROG_YEAR = BASE - 9
+	PROG_YEAR = BASE - 9,
+	PROG_TOTP = BASE - 10,
+	KEY_NOP   = BASE - 11
 };
 
 const u08 mainOps[] DATAMEM =
@@ -350,7 +358,8 @@ const u08 trigOps[] DATAMEM =
 
 const u08 progOps[] DATAMEM =
 {
-	PROG_TIME, PROG_DATE, PROG_YEAR
+	PROG_TIME, PROG_DATE, PROG_YEAR,
+	PROG_TOTP, KEY_NOP,   KEY_NOP
 };
 
 // -----------------------------------------------------------------------------
@@ -374,7 +383,8 @@ const u08 strMenuTrig[] DATAMEM =
 
 const u08 strMenuProg[] DATAMEM =
 	"\06"
-	" TIME " " DATE " " YEAR ";
+	" TIME " " DATE " " YEAR "
+	" TOTP " "      " "      ";
 
 // -----------------------------------------------------------------------------
 // Menu structures
