@@ -41,7 +41,7 @@
 #define TOTP_CHAR_W           (7 + 1)
 #define TOTP_POS_CODE         (1 * TOTP_CHAR_W)
 #define TOTP_POS_LEFT         (13 * TOTP_CHAR_W)
-#define TOTP_POS_LABEL        (LCD::WIDTH - TOTP::LABEL_SIZE * MENU_CHAR_W)
+#define TOTP_POS_LABEL        (LCD::WIDTH - MENU_ITEM_W)
 
 #define DIMOUT_MILLIS         (10000)
 #define POWEROFF_MILLIS       (20000)

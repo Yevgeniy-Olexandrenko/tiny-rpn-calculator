@@ -331,13 +331,16 @@ void renderTOTPMode(const TOTP::Key& key, u08 left)
 	TXT::SetFont(digits7x16);
 	TXT::PrintSegBCD(BCD::Encode(left), TOTP_POS_LEFT, 0);
 
-	// key label under seconds
+	// key label under seconds, looks like a menu item
 	TXT::SetFont(menu5x8);
 	TXT::SetScale(TXT::x1, TXT::x2);
-	for (u08 i = 0, x = TOTP_POS_LABEL; i < TOTP::LABEL_SIZE; ++i, x += TXT::char_dx)
+	TXT::SetInverse(true);
+	for (u08 i = 0, x = TOTP_POS_LABEL; i < TOTP::LABEL_SIZE + 2; ++i, x += TXT::char_dx)
 	{
-		TXT::PrintChar(key.label[i], x, 2);
+		u08 ch = (i == 0 || i > TOTP::LABEL_SIZE ? ' ' : key.label[i - 1]);
+		TXT::PrintChar(ch, x, 2);
 	}
+	TXT::SetInverse(false);
 
 	LCD::Flip();
 }
