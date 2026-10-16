@@ -319,17 +319,17 @@ const TXT::Font digits7x16 PROGMEM =
 enum
 {
 	BASE = 0xFF,
-	KEY_FUNC  = BASE - 0,
-	KEY_LAST  = BASE - 1,
-	KEY_ROTU  = BASE - 2,
-	MENU_MATH = BASE - 3,
-	MENU_TRIG = BASE - 4,
-	MENU_PROG = BASE - 5,
-	PROG_TIME = BASE - 6,
-	PROG_DATE = BASE - 7,
-	PROG_YEAR = BASE - 8,
-	PROG_DEG  = BASE - 9,
-	PROG_RAD  = BASE - 10
+	KEY_NOP   = BASE - 0,
+	KEY_FUNC  = BASE - 1,
+	KEY_LAST  = BASE - 2,
+	KEY_ROTU  = BASE - 3,
+	MENU_MATH = BASE - 4,
+	MENU_TRIG = BASE - 5,
+	MENU_PROG = BASE - 6,
+	PROG_RAD  = BASE - 7,
+	PROG_DEG  = BASE - 8,
+	PROG_TIME = BASE - 9,
+	PROG_DATE = BASE - 10
 };
 
 const u08 mainOps[] DATAMEM =
@@ -359,8 +359,8 @@ const u08 trigOps[] DATAMEM =
 
 const u08 progOps[] DATAMEM =
 {
-	PROG_TIME, PROG_DATE, PROG_YEAR,
-	PROG_DEG,  PROG_RAD,  HPVM::OpDSP_
+	HPVM::OpDSP_, PROG_RAD,  PROG_DEG,
+	PROG_TIME,    PROG_DATE, KEY_NOP
 };
 
 // -----------------------------------------------------------------------------
@@ -386,8 +386,8 @@ const u08 strMenuTrig[] DATAMEM =
 
 const u08 strMenuProg[] DATAMEM =
 	"\06"
-	" TIME " " DATE " " YEAR "  // Set clock time, date, year
-	" DEG  " " RAD  " " DSP  "; // Angle mode, display format (DSP n: SCI, DSP . n: FIX)
+	" DSP  " " RAD  " " DEG  "  // Display format (DSP n: SCI, DSP . n: FIX), angle mode
+	" TIME " " DATE " "      "; // Set clock time (H M S), date (D M Y)
 
 // -----------------------------------------------------------------------------
 // Menu structures

@@ -26,7 +26,7 @@ There is no CLI build script or linter for the firmware. Builds are done in the 
 3. Fuses for PCB rev 1.x: High `0xD7`, Low `0xF1`, Ext `0xFF`.
 4. "Export compiled binary" puts output in `sketches/<model>/build/`. Only `*.ino.hex` and `*.ino.eep` are committed (see `sketches/.gitignore`). **Both must be flashed**: with `ENABLE_OPT_DATAMEM 1`, `DATAMEM` data lives in EEPROM.
 
-Flash size is the main constraint. Each sketch's `.ino` records a "Reference compilation output" (e.g. hp35 with TOTP: 8096 bytes / 98% flash, 317 bytes RAM; hp21: 6480 bytes / 79%, 238 bytes RAM); update it when a change materially affects size, and check size impact of any change. EEPROM (`DATAMEM`) is tight too: hp35 uses all 512 bytes (126 of them the TOTP keys area), hp21 459 of 512. The IDE does not report EEPROM size or overflow: check the data size of `*.ino.eep` after any change to `DATAMEM` data.
+Flash size is the main constraint. Each sketch's `.ino` records a "Reference compilation output" (e.g. hp35 with TOTP: 8096 bytes / 98% flash, 317 bytes RAM; hp21: 6486 bytes / 79%, 237 bytes RAM); update it when a change materially affects size, and check size impact of any change. EEPROM (`DATAMEM`) is tight too: hp35 uses all 512 bytes (126 of them the TOTP keys area), hp21 459 of 512. The IDE does not report EEPROM size or overflow: check the data size of `*.ino.eep` after any change to `DATAMEM` data.
 
 ## Architecture
 

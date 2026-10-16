@@ -143,30 +143,28 @@ void executeOperation(u08 operation)
 			break;
 
 		case PROG_TIME:
+			// stack: X - seconds, Y - minutes, Z - hours
 			RTC::ReadTimeDate();
-			if (getBCDFromStack(RTC::Minutes, 0x00, 0x59) && 
+			if (getBCDFromStack(RTC::Seconds, 0x00, 0x59) &&
+			    getBCDFromStack(RTC::Minutes, 0x00, 0x59) &&
 			    getBCDFromStack(RTC::Hours,   0x00, 0x23))
 			{
-				RTC::Seconds = 0x00;
 				setupAndEnterRTCMode();
 			}
 			break;
 
 		case PROG_DATE:
+			// stack: X - year, Y - month, Z - date
 			RTC::ReadTimeDate();
-			if (getBCDFromStack(RTC::Month, 0x01, 0x12) &&
+			if (getBCDFromStack(RTC::Year,  0x00, 0x99) &&
+			    getBCDFromStack(RTC::Month, 0x01, 0x12) &&
 			    getBCDFromStack(RTC::Date,  0x01, 0x31))
 			{
 				setupAndEnterRTCMode();
 			}
 			break;
 
-		case PROG_YEAR:
-			RTC::ReadTimeDate();
-			if (getBCDFromStack(RTC::Year, 0x00, 0x99))
-			{
-				setupAndEnterRTCMode();
-			}
+		case KEY_NOP:
 			break;
 	}
 }

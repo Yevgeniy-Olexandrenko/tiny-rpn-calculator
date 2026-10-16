@@ -319,18 +319,18 @@ const TXT::Font digits7x16 PROGMEM =
 enum
 {
 	BASE = 0xFF,
-	KEY_FUNC  = BASE - 0,
-	KEY_LAST  = BASE - 1,
-	KEY_ROTU  = BASE - 2,
-	KEY_MADD  = BASE - 3,
-	MENU_MATH = BASE - 4,
-	MENU_TRIG = BASE - 5,
-	MENU_PROG = BASE - 6,
-	PROG_TIME = BASE - 7,
-	PROG_DATE = BASE - 8,
-	PROG_ZONE = BASE - 9,
-	PROG_TOTP = BASE - 10,
-	KEY_NOP   = BASE - 11
+	KEY_NOP   = BASE - 0,
+	KEY_FUNC  = BASE - 1,
+	KEY_LAST  = BASE - 2,
+	KEY_ROTU  = BASE - 3,
+	KEY_MADD  = BASE - 4,
+	MENU_MATH = BASE - 5,
+	MENU_TRIG = BASE - 6,
+	MENU_PROG = BASE - 7,
+	PROG_TIME = BASE - 8,
+	PROG_DATE = BASE - 9,
+	PROG_ZONE = BASE - 10,
+	PROG_TOTP = BASE - 11
 };
 
 const u08 mainOps[] DATAMEM =
