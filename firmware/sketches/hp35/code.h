@@ -18,11 +18,16 @@ void enterCalcMode()
 		TMR::Start(TMR::TIMEOUT_64MS);
 		if (rtcMode)
 		{
+			// FUNC goes from the clock straight to TOTP codes,
+			// any other key or no TOTP keys - to the calculator
+			void executeOperation(u08 operation);
+			if (newKey == KBD::FUNC) executeOperation(PROG_TOTP);
+
 			newKey  = KBD::NONE;
 			rtcMode = false;
 
 			void renderCalcMode();
-			renderCalcMode();
+			if (!totpMode) renderCalcMode();
 		}
 	}
 }
