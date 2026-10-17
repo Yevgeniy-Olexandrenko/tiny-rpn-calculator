@@ -1,11 +1,9 @@
-# Tiny RPN Calculator — HP-35 Firmware — User Manual
-
-> **Hardware:** PCB rev 1.5 &nbsp;·&nbsp; **Firmware:** `firmware/sketches/hp35` &nbsp;·&nbsp; **Language:** ASD-STE100 (Simplified Technical English), approximately
+# Tiny RPN Calculator — HP-35
 
 <details>
 <summary><b>Contents</b></summary>
 
-1. [About this manual](#1-about-this-manual)
+1. [Introduction](#1-introduction)
 2. [Safety](#2-safety)
 3. [Device description](#3-device-description)
 4. [Power and battery](#4-power-and-battery)
@@ -24,29 +22,24 @@
 
 </details>
 
-## 1. About this manual
+## 1. Introduction
 
-This manual tells you how to use the Tiny RPN Calculator with the HP-35 firmware on PCB rev 1.5.
+This manual tells you how to use the Tiny RPN Calculator (PCB rev 1.5) with the HP-35 firmware. The device has three functions:
 
-The firmware is an emulator. It runs the original ROM of the HP-35 calculator (1972) on a virtual copy of the HP CPU. Thus, the calculations and the results are the same as on the original HP-35.
-
-This manual does not tell you all about the HP-35 functions. For more data, read the [HP-35 Operating Manual](hp35-om-en-remake.pdf).
+- An HP-35 calculator (refer to [8](#8-calculator-mode)).
+- A watch (refer to [7](#7-watch-mode)).
+- A generator of one-time passwords (TOTP) for two-factor authentication (refer to [11](#11-totp-codes)).
 
 ### 1.1 The HP-35 calculator
 
-Hewlett-Packard introduced the HP-35 in 1972. It was the first pocket calculator with these features:
+Hewlett-Packard introduced the HP-35 in 1972. It was the first pocket calculator with transcendental functions (logarithms, exponent, trigonometric functions) and with RPN (refer to [8.1](#81-rpn-and-the-stack)). At that time, most calculators, including large desktop models, had only the four arithmetic operations.
 
-- Transcendental functions: logarithms, exponent, trigonometric functions.
-- RPN (Reverse Polish Notation) with a stack of four registers (refer to [8.1](#81-rpn-and-the-stack)).
+The firmware is an emulator. It runs the original ROM of the HP-35 on a virtual copy of the HP CPU, at the speed of the original calculator. Thus, the calculations, the results and the display format are the same as on the HP-35. The firmware also adds some functions that make the calculator easier to use. This manual marks them as **Extension**.
 
-At that time, most calculators, including large desktop models, had only the four arithmetic operations.
+For more data, refer to:
 
-The processor of the HP-35 is a serial processor. It operates on 56-bit numbers: 14 BCD digits. The display shows a 10-digit mantissa with its sign and a 2-digit exponent with its sign. If a number is too large or too small for the usual format, the calculator shows it in scientific notation automatically.
-
-The emulator of this device executes the original microcode of the HP-35 at the speed of the original calculator. It shows the numbers in the same format as the HP-35. It also adds some functions that make the calculator easier to use. The device also has a watch and a TOTP code generator.
-
-> [!TIP]
-> For photos and the history of the HP-35, refer to the [HP-35 page of the Museum of HP Calculators](https://www.hpmuseum.org/hp35.htm).
+- [HP-35 Operating Manual](hp35-om-en-remake.pdf): all functions of the HP-35, with examples.
+- [HP-35 page of the Museum of HP Calculators](https://www.hpmuseum.org/hp35.htm): photos and history.
 
 ### 1.2 Symbols
 
@@ -84,32 +77,51 @@ In this manual, <kbd>F</kbd> <kbd>9</kbd> means: push the <kbd>F</kbd> key, rele
 > - Do not touch the parts with wet hands.
 
 > [!CAUTION]
-> On PCB rev 1.5, the VCC line connects directly to the battery. There is no voltage regulator.
+> The VCC line of the device connects directly to the battery. There is no voltage regulator.
 > - Do not supply 5 V from the ICSP programmer when the battery is connected. Use a programmer that does not supply power, or set it to 3.3 V.
 > - Do not connect the ICSP programmer and the USB cable at the same time.
 
 ## 3. Device description
 
-The device has the size of a credit card.
+The device has the size and the proportions of a credit card. The drawing shows the primary parts. The positions of the small parts are approximate. The drawing does not show the ICSP connector and the `POWER` jumper.
 
-<p align="center">
-  <img src="images/hp35-device.jpg" width="600" alt="Tiny RPN Calculator: the display at the top left, the keyboard at the bottom">
-  <br>
-  <sub>The photo shows the device with PCB rev 1.4. The parts on PCB rev 1.5 are different (for example, the USB-C connector), but the display and the keyboard are the same.</sub>
-</p>
+```text
+┌──────────────────────────────────────────────────────────────────────┐
+│                                                                    o │
+│  ┌──────────────────────┐                ┌───────┐   ┌──────────┐    │
+│  │                      │   ┌───┐ ┌───┐  │ USB-C │   │          │    │
+│  │   (1) OLED display   │   │MCU│ │RTC│  └───────┘   │   (4)    │    │
+│  │                      │   └───┘ └───┘     (3)      │ Battery  │    │
+│  └──────────────────────┘    (5)   (6)               └──────────┘    │
+├──────────────────────────────────────────────────────────────────────┤
+│                  ┌───────────┬───────────┬───────────┬───────────┐   │
+│                  │ F  MATH   │ 7  TRIG   │ 8  PROG   │ 9  ÷      │   │
+│  Business Card   │    [___]  │    [___]  │    [___]  │    [___]  │   │
+│                  ├───────────┼───────────┼───────────┼───────────┤   │
+│  RPN Calculator  │ E  ROT↑   │ 4  CONST  │ 5  MEM+   │ 6  ×      │   │
+│  with Watch      │    [___]  │    [___]  │    [___]  │    [___]  │   │
+│                  ├───────────┼───────────┼───────────┼───────────┤   │
+│                  │ ±  ROT↓   │ 1  RCL    │ 2  STO    │ 3  −      │   │
+│                  │    [___]  │    [___]  │    [___]  │    [___]  │   │
+│      (2)         ├───────────┼───────────┼───────────┼───────────┤   │
+│    Keyboard      │ C  AC     │ 0  LAST   │ .  X↔Y    │ ↑  +      │   │
+│                  │    [___]  │    [___]  │    [___]  │    [___]  │   │
+│                  └───────────┴───────────┴───────────┴───────────┘   │
+└──────────────────────────────────────────────────────────────────────┘
+```
 
-The device has these primary parts:
+| No. | Part | Function |
+| :---: | --- | --- |
+| 1 | Display | Shows numbers, menus, time and codes (refer to [8.2](#82-display)). |
+| 2 | Keyboard | 16 keys (refer to [6](#6-keyboard)). |
+| 3 | USB-C connector | Supplies power to charge the battery (refer to [4.1](#41-charge-the-battery)). |
+| 4 | Battery | Supplies power to the device. |
+| 5 | Microcontroller | Runs the firmware. |
+| 6 | Real-time clock | Keeps the time and the date. |
+| — | ICSP connector | Programs the microcontroller (refer to [14](#14-firmware-installation)). |
+| — | `POWER` jumper | Connects the battery to the circuit (refer to [4.5](#45-power-jumper-and-reset)). |
 
-| Part | Type | Function |
-| --- | --- | --- |
-| Microcontroller | ATtiny85 | Runs the firmware |
-| Display | OLED, SSD1306, 128 × 32 pixels | Shows numbers, menus, time and codes |
-| Real-time clock | DS3231M | Keeps the time and the date |
-| Keyboard | 16 keys, 4 × 4 | Input |
-| Battery | Rechargeable lithium battery, with protection IC XB5358D0 | Supplies power |
-| Charger | MCP73832, USB-C connector | Charges the battery (15 mA) |
-| ICSP connector | 6 pins | Programs the microcontroller |
-| `POWER` jumper | Solder jumper | Connects the battery to the circuit |
+For the types of the parts, refer to [15](#15-technical-data).
 
 > [!NOTE]
 > The device has no ON/OFF switch. The firmware turns the device off automatically (refer to [4.3](#43-automatic-power-off-and-power-on)).
@@ -126,16 +138,15 @@ The device has these primary parts:
 6. Disconnect the USB cable.
 
 > [!NOTE]
-> - The charge current is approximately 15 mA. A full charge can take some hours.
-> - When you connect or disconnect the USB cable, the device starts and shows the watch screen.
-> - The battery indicator shows on the watch screen only (refer to [7](#7-watch-mode)).
+> - A full charge can take some hours.
+> - When you disconnect the USB cable, the device also starts and shows the watch screen.
 
 ### 4.2 Battery indicator
 
-The watch screen shows the battery level as 0 to 5 bars.
+The watch screen shows the battery level as 0 to 5 bars (refer to [7](#7-watch-mode)).
 
 | Bars | Battery voltage (approximate) | Action |
-| :---: | --- | --- |
+| :--- | --- | --- |
 | `=====` | 4.05 V or more | — |
 | `====` | 3.92 V to 4.04 V | — |
 | `===` | 3.80 V to 3.91 V | — |
@@ -172,7 +183,7 @@ To turn on the device, push a key in one of the **two bottom rows**:
 The device always starts in watch mode.
 
 > [!IMPORTANT]
-> - The keys in the two top rows (<kbd>F</kbd> <kbd>7</kbd> <kbd>8</kbd> <kbd>9</kbd> and <kbd>E</kbd> <kbd>4</kbd> <kbd>5</kbd> <kbd>6</kbd>) do not turn on the device. The voltage from these keys is too low to start the microcontroller.
+> - The keys in the two top rows do not turn on the device. The voltage from these keys is too low to start the microcontroller.
 > - The key that turns on the device does not do an operation.
 > - When the device is off, the calculator keeps the stack (X, Y, Z, T) and the memory. When you go back to calculator mode, you can continue your calculation.
 
@@ -182,7 +193,7 @@ If the battery voltage is 3.5 V or less, the device does not turn on. This preve
 
 1. Connect the USB cable.
 2. Let the battery charge for some minutes.
-3. Push a key in one of the two bottom rows to turn on the device.
+3. Turn on the device (refer to [4.3](#43-automatic-power-off-and-power-on)).
 
 ### 4.5 POWER jumper and reset
 
@@ -191,7 +202,7 @@ The `POWER` jumper connects the battery to the circuit. The real-time clock gets
 > [!IMPORTANT]
 > If the power is fully removed (open `POWER` jumper, fully discharged battery or a new firmware), the firmware does a reset:
 > - The clock is set to the time when the firmware was compiled.
-> - The time zone is set to the default value (UTC+3).
+> - The time zone is set to the default value (refer to [10.3](#103-set-the-time-zone)).
 > - The calculator stack and memory are cleared.
 >
 > After a reset, set the time and the date again (refer to [10](#10-set-the-time-the-date-and-the-time-zone)).
@@ -229,12 +240,6 @@ To change the mode, use these keys:
 Each key has two functions:
 - The **primary function** (large legend on the key). Push the key.
 - The **shifted function** (small legend above the key). Push <kbd>F</kbd>, then push the key.
-
-<p align="center">
-  <img src="images/hp35-keyboard.jpg" width="500" alt="Keyboard of the Tiny RPN Calculator with the primary and the shifted legends">
-</p>
-
-This manual shows the keys in the same layout:
 
 <table>
   <tr>
@@ -322,10 +327,7 @@ The watch screen shows:
 
 In watch mode, the display is always dim.
 
-| Key | Result |
-| --- | --- |
-| <kbd>F</kbd> | Opens TOTP mode (if the device has TOTP keys). |
-| Other keys | Open calculator mode. The key does not do an operation. |
+In watch mode, a key only changes the mode (refer to [5](#5-operating-modes)). It does not do a calculator operation.
 
 ## 8. Calculator mode
 
@@ -591,8 +593,6 @@ TOTP (Time-based One-Time Password, RFC 6238) is a 6-digit code for two-factor a
 └──────────────────────────────────────────────────────┘
 ```
 
-Each key has a label of 1 to 4 characters.
-
 The device keeps the keys in a keys area of 121 bytes. Each key uses 5 bytes plus the length of its secret. Thus, the number of keys is related to the length of the secrets:
 
 | Secret (Base32 characters) | Secret (bytes) | Bytes for each key | Maximum number of keys |
@@ -648,7 +648,7 @@ The TOTP keys are in the EEPROM of the microcontroller. To install your keys, yo
 
 > [!NOTE]
 > - Only HMAC-SHA1 keys with 6 digits and a 30-second period are supported. Most web sites use these settings.
-> - A label can contain the letters A–Z and the digits 0–9.
+> - A label has 1 to 4 characters: the letters A–Z and the digits 0–9.
 > - The default firmware contains 4 test keys (`TST1` to `TST4`). They are not real keys.
 
 ## 12. Examples
@@ -764,10 +764,11 @@ Add 12.5, 7.25 and 30 in the memory.
 
 1. Run `firmware/libraries/TinyRPNCalculator_Install.bat` as administrator.
 2. Open `firmware/sketches/hp35/hp35.ino` in the Arduino IDE.
-3. Set the PCB revision to 1.5:
+3. Make sure that the sketch selects PCB rev 1.5:
    ```cpp
-   #define  PCB_REVISION        15 // 14 - PCB rev 1.3/1.4, 15 - PCB rev 1.5
+   #define  PCB_REVISION        15
    ```
+   With a different value, the display and the charge indicator do not operate correctly.
 4. Set the board options:
 
    | Option | Value |
@@ -792,9 +793,6 @@ Add 12.5, 7.25 and 30 in the memory.
 > [!CAUTION]
 > You must write the EEPROM file too. The firmware keeps the menus, the key tables and the TOTP keys in the EEPROM. If you write only the `.hex` file, the device does not operate correctly.
 
-> [!CAUTION]
-> Do not use the firmware compiled with `PCB_REVISION 14` on PCB rev 1.5. The display and the charge indicator do not operate correctly.
-
 </details>
 
 ## 15. Technical data
@@ -805,16 +803,9 @@ Add 12.5, 7.25 and 30 in the memory.
 | Display | OLED 128 × 32, SSD1306, I²C |
 | Real-time clock | DS3231M, I²C, temperature-compensated |
 | Keyboard | 16 keys on one analog input (resistor ladder) |
-| Power supply | Rechargeable lithium battery, 3.5 V to 4.2 V, no voltage regulator |
-| Charger | MCP73832, 4.2 V, 15 mA, USB-C (5 V) |
+| Battery | Rechargeable lithium battery, 3.5 V to 4.2 V |
 | Battery protection | XB5358D0 |
-| Calculator | HP-35 ROM, 10-digit mantissa, 2-digit exponent, angles in degrees |
-| Stack | 4 registers (X, Y, Z, T) and 1 memory register |
-| Dim timeout | 10 s |
-| Power-off timeout | 20 s |
-| Power-on keys | Two bottom rows of the keyboard |
-| TOTP | RFC 6238, HMAC-SHA1, 6 digits, 30 s, keys area of 121 bytes |
-| Default time zone | UTC+3 |
+| Charger | MCP73832, 4.2 V, 15 mA, from USB-C (5 V) |
 | Schematic | [Tiny-RPN-Calculator-rev1.5_Schematic.pdf](../../hardware/pcb-rev1.5/Tiny-RPN-Calculator-rev1.5_Schematic.pdf) |
 
 ## 16. Quick reference
