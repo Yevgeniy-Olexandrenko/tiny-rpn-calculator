@@ -86,27 +86,23 @@ In this manual, <kbd>F</kbd> <kbd>9</kbd> means: push the <kbd>F</kbd> key, rele
 The device has the size and the proportions of a credit card. The drawing shows the primary parts. The positions of the small parts are approximate. The drawing does not show the ICSP connector and the `POWER` jumper.
 
 ```text
-┌──────────────────────────────────────────────────────────────────────┐
-│                                                                    o │
-│  ┌──────────────────────┐                ┌───────┐   ┌──────────┐    │
-│  │                      │   ┌───┐ ┌───┐  │ USB-C │   │          │    │
-│  │   (1) OLED display   │   │MCU│ │RTC│  └───────┘   │   (4)    │    │
-│  │                      │   └───┘ └───┘     (3)      │ Battery  │    │
-│  └──────────────────────┘    (5)   (6)               └──────────┘    │
+┌─────────────────────────────────────────┬─────────────┬──────────────┐
+│  ┌──────────────────────┐               │ (3) USB-C   │            o │
+│  │                      │   ┌───┐ ┌───┐ └─────────────┘ ┌────────┐   │
+│  │   (1) OLED display   │   │MCU│ │RTC│     ┌───┐       │  (4)   │   │
+│  │                      │   └───┘ └───┘     │CHG│ (7)   │Battery │   │
+│  └──────────────────────┘    (5)   (6)      └───┘       └────────┘   │
 ├──────────────────────────────────────────────────────────────────────┤
-│                  ┌───────────┬───────────┬───────────┬───────────┐   │
-│                  │ F  MATH   │ 7  TRIG   │ 8  PROG   │ 9  ÷      │   │
-│  Business Card   │    [___]  │    [___]  │    [___]  │    [___]  │   │
-│                  ├───────────┼───────────┼───────────┼───────────┤   │
-│  RPN Calculator  │ E  ROT↑   │ 4  CONST  │ 5  MEM+   │ 6  ×      │   │
-│  with Watch      │    [___]  │    [___]  │    [___]  │    [___]  │   │
-│                  ├───────────┼───────────┼───────────┼───────────┤   │
-│                  │ ±  ROT↓   │ 1  RCL    │ 2  STO    │ 3  −      │   │
-│                  │    [___]  │    [___]  │    [___]  │    [___]  │   │
-│      (2)         ├───────────┼───────────┼───────────┼───────────┤   │
-│    Keyboard      │ C  AC     │ 0  LAST   │ .  X↔Y    │ ↑  +      │   │
-│                  │    [___]  │    [___]  │    [___]  │    [___]  │   │
-│                  └───────────┴───────────┴───────────┴───────────┘   │
+│                ┌───────────┬───────────┬───────────┬───────────┐     │
+│                │    MATH   │    TRIG   │    PROG   │    ÷      │     │
+│ Business Card  │ F  [___]  │ 7  [___]  │ 8  [___]  │ 9  [___]  │     │
+│                │    ROT↑   │    CONST  │    MEM+   │    ×      │     │
+│ RPN Calculator │ E  [___]  │ 4  [___]  │ 5  [___]  │ 6  [___]  │     │
+│ with Watch     │    ROT↓   │    RCL    │    STO    │    −      │ (2) │
+│                │ ±  [___]  │ 1  [___]  │ 2  [___]  │ 3  [___]  │     │
+│                │    AC     │    LAST   │    X↔Y    │    +      │     │
+│                │ C  [___]  │ 0  [___]  │ .  [___]  │ ↑  [___]  │     │
+│                └───────────┴───────────┴───────────┴───────────┘     │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -114,10 +110,11 @@ The device has the size and the proportions of a credit card. The drawing shows 
 | :---: | --- | --- |
 | 1 | Display | Shows numbers, menus, time and codes (refer to [8.2](#82-display)). |
 | 2 | Keyboard | 16 keys (refer to [6](#6-keyboard)). |
-| 3 | USB-C connector | Supplies power to charge the battery (refer to [4.1](#41-charge-the-battery)). |
+| 3 | USB-C connector | Connects the USB cable to charge the battery (refer to [4.1](#41-charge-the-battery)). |
 | 4 | Battery | Supplies power to the device. |
 | 5 | Microcontroller | Runs the firmware. |
 | 6 | Real-time clock | Keeps the time and the date. |
+| 7 | Charger | Charges the battery and controls the charge current. |
 | — | ICSP connector | Programs the microcontroller (refer to [14](#14-firmware-installation)). |
 | — | `POWER` jumper | Connects the battery to the circuit (refer to [4.5](#45-power-jumper-and-reset)). |
 
