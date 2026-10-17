@@ -103,7 +103,7 @@ u08  select;
 
 u16 cycles;
 u08 hidden[sizeof(HPVM::Display)];
-u08 lastOp = HPVM::OpCLR_;
+u08 lastOp = KEY_NOP; // nothing to repeat before the first menu operation
 
 void enterMenu(u08 type)
 {
@@ -128,14 +128,18 @@ void dropStack(u08 n)
 b08 getBCD(const HPVM::reg& r, u08& out, u08 min, u08 max)
 {
 	// positive integer 0..999: mantissa sign, exponent sign and
-	// exponent tens are zero, exponent units 0..2
+	// exponent tens are zero, exponent units 0..2, digits of the
+	// mantissa after the integer part are zero (no fraction)
 	if ((r[13] | r[2] | r[1]) == 0 && r[0] < 3)
 	{
+		u08 last = 12 - r[0]; // the lowest digit of the integer part
 		u16 value = 0;
-		for (u08 i = 0; i <= r[0]; ++i)
+		for (u08 i = 12; i > 2; --i)
 		{
-			value *= 16;
-			value += r[12 - i];
+			if (i >= last)
+				value = value * 16 + r[i];
+			else if (r[i])
+				return false;
 		}
 		if (value >= min && value <= max)
 		{

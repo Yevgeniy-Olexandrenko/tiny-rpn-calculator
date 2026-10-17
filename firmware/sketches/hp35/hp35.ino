@@ -15,7 +15,7 @@
 #include "totp.h"
 #include "code.h"
 
-// Reference compilation output (PCB_REVISION 14, with 15 the sketch uses 8156 bytes):
-// Sketch uses 8144 bytes (99%) of program storage space. Maximum is 8192 bytes.
+// Reference compilation output (PCB_REVISION 14, with 15 the sketch uses 8170 bytes):
+// Sketch uses 8156 bytes (99%) of program storage space. Maximum is 8192 bytes.
 // Global variables use 310 bytes (60%) of dynamic memory, leaving 202 bytes for local variables. Maximum is 512 bytes.
 // EEPROM data (hp35.ino.eep) uses 512 of 512 bytes, 126 of them is the TOTP keys area.
