@@ -142,12 +142,12 @@ The watch screen shows the battery level as 0 to 5 bars (refer to [7](#7-watch-m
 
 | Indicator | Battery voltage (approximate) | Action |
 | :--- | --- | --- |
-| `-----` | 4.04 V or more | — |
-| `---- ` | 3.92 V to 4.03 V | — |
-| `---  ` | 3.80 V to 3.91 V | — |
-| `--   ` | 3.68 V to 3.79 V | Charge the battery soon |
-| `-    ` | 3.56 V to 3.67 V | Charge the battery |
-| `     ` | less than 3.56 V | Charge the battery immediately |
+| <code>-----</code> | 4.04 V or more | — |
+| <code>----&nbsp;</code> | 3.92 V to 4.03 V | — |
+| <code>---&nbsp;&nbsp;</code> | 3.80 V to 3.91 V | — |
+| <code>--&nbsp;&nbsp;&nbsp;</code> | 3.68 V to 3.79 V | Charge the battery soon |
+| <code>-&nbsp;&nbsp;&nbsp;&nbsp;</code> | 3.56 V to 3.67 V | Charge the battery |
+| <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code> | less than 3.56 V | Charge the battery immediately |
 
 ### 4.3 Automatic power-off and power-on
 
@@ -274,7 +274,7 @@ The watch screen shows:
 | --- | --- |
 | Time | Hours, minutes, seconds. 24-hour format. |
 | Date | Month (3 letters), day, year (2 digits, 2000–2099). |
-| `---- ` | Battery level, 0 to 5 bars (refer to [4.2](#42-battery-indicator)). |
+| <code>----&nbsp;</code> | Battery level, 0 to 5 bars (refer to [4.2](#42-battery-indicator)). |
 | `HP-35` | Name of the firmware. |
 
 In watch mode, the display is always dim.
@@ -502,7 +502,7 @@ The clock keeps the **local time**. The TOTP function needs UTC time. The time z
 1. Enter the time zone: <kbd>2</kbd>.
 2. For a negative time zone, push <kbd>±</kbd>.
 3. Push <kbd>F</kbd> <kbd>8</kbd>, then <kbd>3</kbd> (ZONE).
-4. Make sure that the codes are the same as in your authenticator application (refer to [11.2](#112-show-the-codes)).
+4. Make sure that the TOTP screen shows the same codes as your authenticator application (refer to [11.2](#112-show-the-codes)).
 
 > [!IMPORTANT]
 > - The default time zone is **UTC+3**. After a reset, the device uses this value again (refer to [4.5](#45-power-jumper-and-reset)).
@@ -530,6 +530,8 @@ The device keeps the keys in a keys area of 126 bytes: 5 bytes for the header an
 You can use secrets of different lengths together. The `totp` tool tells you the number of bytes that your keys use, with the header. If the keys are too large for the area, the tool shows an error.
 
 ### 11.2 Show the codes
+
+The TOTP screen opens with the key that you selected last. After a reset (refer to [4.5](#45-power-jumper-and-reset)), it opens with the first key.
 
 1. Do one of these steps:
    - In watch mode, push <kbd>F</kbd>.
@@ -608,8 +610,7 @@ Calculate π × 2.5².
 | 5 | <kbd>4</kbd> <kbd>5</kbd> | <kbd>4</kbd> <kbd>5</kbd> | `45.` |
 | 6 | <kbd>F</kbd> <kbd>0</kbd> (LAST = COS) | <kbd>cos</kbd> | `.7071067814` |
 
-> [!NOTE]
-> The last digit of cos 60° and cos 45° is not exact. The original HP-35 gives the same results.
+The last digit of cos 60° and cos 45° is not exact. The original HP-35 gives the same results.
 
 </details>
 
@@ -682,6 +683,9 @@ Add 12.5, 7.25 and 30 in the memory. The HP-35 has no operation like <kbd>F</kbd
 > [!NOTE]
 > This section is for persons who build or update the device. Normal users do not need it.
 
+> [!CAUTION]
+> You must write the EEPROM file too. The firmware keeps the menus, the key tables and the TOTP keys in the EEPROM. If you write only the `.hex` file, the device does not operate correctly.
+
 <details>
 <summary><b>Procedure</b></summary>
 
@@ -727,9 +731,6 @@ Add 12.5, 7.25 and 30 in the memory. The HP-35 has no operation like <kbd>F</kbd
    ```
 10. Disconnect the programmer.
 11. Set the time, the date and the time zone (refer to [10](#10-set-the-time-the-date-and-the-time-zone)).
-
-> [!CAUTION]
-> You must write the EEPROM file too. The firmware keeps the menus, the key tables and the TOTP keys in the EEPROM. If you write only the `.hex` file, the device does not operate correctly.
 
 </details>
 
