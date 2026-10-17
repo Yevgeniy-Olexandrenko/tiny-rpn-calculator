@@ -1,0 +1,742 @@
+# Tiny RPN Calculator — HP-35 Firmware — User Manual
+
+> **Hardware:** PCB rev 1.5 &nbsp;·&nbsp; **Firmware:** `firmware/sketches/hp35` &nbsp;·&nbsp; **Language:** ASD-STE100 (Simplified Technical English), approximately
+
+<details>
+<summary><b>Contents</b></summary>
+
+1. [About this manual](#1-about-this-manual)
+2. [Safety](#2-safety)
+3. [Device description](#3-device-description)
+4. [Power and battery](#4-power-and-battery)
+5. [Operating modes](#5-operating-modes)
+6. [Keyboard](#6-keyboard)
+7. [Watch mode](#7-watch-mode)
+8. [Calculator mode](#8-calculator-mode)
+9. [Menus](#9-menus)
+10. [Set the time, the date and the time zone](#10-set-the-time-the-date-and-the-time-zone)
+11. [TOTP codes](#11-totp-codes)
+12. [Examples](#12-examples)
+13. [Troubleshooting](#13-troubleshooting)
+14. [Firmware installation](#14-firmware-installation)
+15. [Technical data](#15-technical-data)
+16. [Quick reference](#16-quick-reference)
+
+</details>
+
+---
+
+## 1. About this manual
+
+This manual tells you how to use the Tiny RPN Calculator with the HP-35 firmware on PCB rev 1.5.
+
+The firmware is an emulator. It runs the original ROM of the HP-35 calculator (1972) on a virtual copy of the HP CPU. Thus, the calculations and the results are the same as on the original HP-35.
+
+This manual does not tell you all about RPN and the HP-35 functions. For more data, read the original manual:
+
+- [HP-35 Operating Manual](hp35-om-en-remake.pdf)
+- [HP-35 firmware description](../firmware/firmware-calculator-hp35.md)
+
+The text uses these symbols:
+
+> [!NOTE]
+> Data that helps you to use the device.
+
+> [!TIP]
+> A faster or easier procedure.
+
+> [!IMPORTANT]
+> Data that you must know to get the correct result.
+
+> [!WARNING]
+> A risk of injury or damage to the device.
+
+In this manual, <kbd>F</kbd>&nbsp;<kbd>9</kbd> means: push the <kbd>F</kbd> key, release it, then push the <kbd>9</kbd> key.
+
+---
+
+## 2. Safety
+
+> [!WARNING]
+> The device has a lithium-polymer (LiPo) battery.
+> - Do not bend the PCB. A bent PCB can damage the battery.
+> - Do not puncture, crush or heat the battery.
+> - If the battery becomes swollen or hot, disconnect the USB cable immediately. Do not use the device again.
+> - Charge the battery only through the USB-C connector of the device.
+
+> [!WARNING]
+> The PCB has no case. The electronic parts are open.
+> - Keep the device away from water and metal objects. Metal objects can cause a short circuit.
+> - Do not touch the parts with wet hands.
+
+> [!CAUTION]
+> On PCB rev 1.5, the VCC line connects directly to the battery (there is no voltage regulator).
+> - Do not supply 5 V from the ICSP programmer when the battery is connected. Use a programmer that does not supply power, or set it to 3.3 V.
+> - Do not connect the ICSP programmer and the USB cable at the same time.
+
+---
+
+## 3. Device description
+
+The device has the size of a credit card. It has these primary parts:
+
+| Part | Type | Function |
+| --- | --- | --- |
+| Microcontroller | ATtiny85 | Runs the firmware |
+| Display | OLED, SSD1306, 128 × 32 pixels | Shows numbers, menus, time and codes |
+| Real-time clock | DS3231M | Keeps the time and the date |
+| Keyboard | 16 keys, 4 × 4 | Input |
+| Battery | LiPo, 3.7 V, with protection IC XB5358D0 | Supplies power |
+| Charger | MCP73832, USB-C connector | Charges the battery (15 mA) |
+| ICSP connector | 6 pins | Programs the microcontroller |
+| `POWER` jumper | Solder jumper | Connects the battery to the circuit |
+
+> [!NOTE]
+> The device has no ON/OFF switch. The firmware turns the device off automatically (refer to [4.3](#43-automatic-power-off)).
+
+---
+
+## 4. Power and battery
+
+### 4.1 Charge the battery
+
+1. Connect a USB-C cable to the device.
+2. Connect the other end of the cable to a USB power supply or a computer.
+3. The device starts and shows the watch screen.
+4. Make sure that the last bar of the battery indicator flashes. This shows that the battery charges.
+5. When the battery is full, the last bar stops flashing.
+6. Disconnect the USB cable.
+
+> [!NOTE]
+> - The charge current is approximately 15 mA. A full charge can take some hours.
+> - When you connect or disconnect the USB cable, the device starts and shows the watch screen.
+> - The battery indicator shows on the watch screen only (refer to [7](#7-watch-mode)).
+
+### 4.2 Battery indicator
+
+The watch screen shows the battery level as 0 to 5 bars.
+
+| Bars | Battery voltage (approximate) | Action |
+| :---: | --- | --- |
+| `=====` | 4.0 V or more | — |
+| `====` | 3.9 V | — |
+| `===` | 3.8 V | — |
+| `==` | 3.7 V | Charge the battery soon |
+| `=` | 3.6 V | Charge the battery |
+| *(none)* | less than 3.56 V | Charge the battery immediately |
+
+### 4.3 Automatic power-off
+
+The device saves energy with these two timeouts. Each key push starts the timeouts again.
+
+```mermaid
+flowchart LR
+    A["Key push"] -->|10 s, no key| B["Display becomes dim"]
+    B -->|20 s, no key| C["Device turns off"]
+    C -->|"Key push or USB connection"| D["Watch screen"]
+```
+
+| Time after the last key push | Result |
+| --- | --- |
+| 10 s | The display becomes dim (calculator mode only). |
+| 20 s | The device turns off (all modes). |
+
+To turn on the device, push a key. The device always starts in watch mode.
+
+> [!IMPORTANT]
+> - The key that turns on the device does not do an operation.
+> - When the device is off, the calculator keeps the stack (X, Y, Z, T) and the memory. When you go back to calculator mode, you can continue your calculation.
+
+### 4.4 Empty battery
+
+If the battery voltage is 3.5 V or less, the device does not turn on. This prevents a deep discharge of the battery.
+
+1. Connect the USB cable.
+2. Let the battery charge for some minutes.
+3. Push a key to turn on the device.
+
+### 4.5 POWER jumper and reset
+
+The `POWER` jumper connects the battery to the circuit. The real-time clock gets power from the same battery.
+
+> [!IMPORTANT]
+> If the power is fully removed (open `POWER` jumper, fully discharged battery or a new firmware), the firmware does a reset:
+> - The clock is set to the time when the firmware was compiled.
+> - The time zone is set to the default value (GMT+3).
+> - The calculator stack and memory are cleared.
+>
+> After a reset, set the time and the date again (refer to [10](#10-set-the-time-the-date-and-the-time-zone)).
+
+---
+
+## 5. Operating modes
+
+The firmware has three operating modes:
+
+| Mode | Display | Function |
+| --- | --- | --- |
+| **Watch** | Time, date, battery level | Shows the time. This is the start mode. |
+| **TOTP** | 6-digit code, seconds, key label | Shows one-time passwords for two-factor authentication. |
+| **Calculator** | Number in X, menus | HP-35 calculator. |
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Watch : key push / USB
+    Watch --> TOTP : F
+    Watch --> Calculator : other key
+    TOTP --> TOTP : EEX / CHS (select key)
+    TOTP --> Calculator : other key
+    Calculator --> TOTP : F 8, CHS, 1 (TOTP)
+    Calculator --> Watch : F 8, then TIME or DATE
+    Watch --> [*] : 20 s, no key
+    TOTP --> [*] : 20 s, no key
+    Calculator --> [*] : 20 s, no key
+```
+
+> [!NOTE]
+> If there are no TOTP keys in the device, <kbd>F</kbd> in watch mode opens calculator mode.
+
+---
+
+## 6. Keyboard
+
+### 6.1 Key layout
+
+Each key has two functions:
+- The **primary function** (large legend). Push the key.
+- The **shifted function** (small legend). Push <kbd>F</kbd>, then push the key.
+
+<table>
+  <tr>
+    <td align="center"><kbd>F</kbd><br><sub>MATH</sub></td>
+    <td align="center"><kbd>7</kbd><br><sub>TRIG</sub></td>
+    <td align="center"><kbd>8</kbd><br><sub>PROG</sub></td>
+    <td align="center"><kbd>9</kbd><br><sub>÷</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><kbd>EEX</kbd><br><sub>ROT↑</sub></td>
+    <td align="center"><kbd>4</kbd><br><sub>π</sub></td>
+    <td align="center"><kbd>5</kbd><br><sub>M+</sub></td>
+    <td align="center"><kbd>6</kbd><br><sub>×</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><kbd>CHS</kbd><br><sub>ROT↓</sub></td>
+    <td align="center"><kbd>1</kbd><br><sub>RCL</sub></td>
+    <td align="center"><kbd>2</kbd><br><sub>STO</sub></td>
+    <td align="center"><kbd>3</kbd><br><sub>−</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><kbd>CLX</kbd><br><sub>CLR</sub></td>
+    <td align="center"><kbd>0</kbd><br><sub>LAST</sub></td>
+    <td align="center"><kbd>.</kbd><br><sub>X↔Y</sub></td>
+    <td align="center"><kbd>ENTER↑</kbd><br><sub>+</sub></td>
+  </tr>
+</table>
+
+> [!NOTE]
+> The legends on your keyboard can be different. The positions of the functions are always as shown above.
+
+### 6.2 Primary functions
+
+| Key | HP-35 key | Function |
+| --- | --- | --- |
+| <kbd>0</kbd> … <kbd>9</kbd> | `0` … `9` | Enter a digit |
+| <kbd>.</kbd> | `.` | Enter the decimal point |
+| <kbd>ENTER↑</kbd> | `ENTER↑` | Copy X to Y and lift the stack |
+| <kbd>CLX</kbd> | `CLx` | Clear the X register |
+| <kbd>CHS</kbd> | `CHS` | Change the sign of the number or of the exponent |
+| <kbd>EEX</kbd> | `EEX` | Enter an exponent |
+| <kbd>F</kbd> | — | Select the shifted function of the next key |
+
+### 6.3 Shifted functions
+
+| Keys | HP-35 key | Function |
+| --- | --- | --- |
+| <kbd>F</kbd>&nbsp;<kbd>9</kbd> | `÷` | Y ÷ X |
+| <kbd>F</kbd>&nbsp;<kbd>6</kbd> | `×` | Y × X |
+| <kbd>F</kbd>&nbsp;<kbd>3</kbd> | `−` | Y − X |
+| <kbd>F</kbd>&nbsp;<kbd>ENTER↑</kbd> | `+` | Y + X |
+| <kbd>F</kbd>&nbsp;<kbd>.</kbd> | `x↔y` | Exchange X and Y |
+| <kbd>F</kbd>&nbsp;<kbd>CHS</kbd> | `R↓` | Roll the stack down |
+| <kbd>F</kbd>&nbsp;<kbd>EEX</kbd> | — | **Extension.** Roll the stack up |
+| <kbd>F</kbd>&nbsp;<kbd>CLX</kbd> | `CLR` | Clear the stack (X, Y, Z, T) |
+| <kbd>F</kbd>&nbsp;<kbd>2</kbd> | `STO` | Copy X to the memory |
+| <kbd>F</kbd>&nbsp;<kbd>1</kbd> | `RCL` | Copy the memory to X |
+| <kbd>F</kbd>&nbsp;<kbd>5</kbd> | — | **Extension.** Add X to the memory (M+) |
+| <kbd>F</kbd>&nbsp;<kbd>4</kbd> | `π` | Enter π |
+| <kbd>F</kbd>&nbsp;<kbd>0</kbd> | — | **Extension.** Do the last menu operation again (LAST) |
+| <kbd>F</kbd>&nbsp;<kbd>F</kbd> | — | Open the MATH menu |
+| <kbd>F</kbd>&nbsp;<kbd>7</kbd> | — | Open the TRIG menu |
+| <kbd>F</kbd>&nbsp;<kbd>8</kbd> | — | Open the PROG menu |
+
+> [!NOTE]
+> - **M+** keeps the value in X. The T register gets the new memory value. The old value of T is lost.
+> - **LAST** does nothing if you did not use a menu operation before.
+> - <kbd>F</kbd>&nbsp;<kbd>CLX</kbd> does not clear the memory. To clear the memory, push <kbd>CLX</kbd>&nbsp;<kbd>F</kbd>&nbsp;<kbd>2</kbd>.
+
+---
+
+## 7. Watch mode
+
+The watch screen shows:
+
+```
+┌────────────────────────────────────────────┐
+│  ▐█▌▐█▌ : ▐█▌▐█▌ : ▐█▌▐█▌    OCT 17/26      │
+│                               ====          │
+│  (hours) (minutes)(seconds)   HP-35         │
+└────────────────────────────────────────────┘
+```
+
+| Item | Description |
+| --- | --- |
+| Time | Hours, minutes, seconds. 24-hour format. |
+| Date | Month (3 letters), day, year (2 digits, 2000–2099). |
+| `====` | Battery level, 0 to 5 bars (refer to [4.2](#42-battery-indicator)). |
+| `HP-35` | Name of the firmware. |
+
+In watch mode, the display is always dim.
+
+| Key | Result |
+| --- | --- |
+| <kbd>F</kbd> | Opens TOTP mode (if the device has TOTP keys). |
+| Other keys | Open calculator mode. The key does not do an operation. |
+
+---
+
+## 8. Calculator mode
+
+### 8.1 RPN in short
+
+The calculator uses RPN (Reverse Polish Notation). You enter the numbers first, then the operation.
+
+The stack has four registers: **X**, **Y**, **Z** and **T**. The display shows X.
+
+| To calculate | Push |
+| --- | --- |
+| 3 + 4 | <kbd>3</kbd> <kbd>ENTER↑</kbd> <kbd>4</kbd> <kbd>F</kbd>&nbsp;<kbd>ENTER↑</kbd> |
+| (3 + 4) × 5 | <kbd>3</kbd> <kbd>ENTER↑</kbd> <kbd>4</kbd> <kbd>F</kbd>&nbsp;<kbd>ENTER↑</kbd> <kbd>5</kbd> <kbd>F</kbd>&nbsp;<kbd>6</kbd> |
+
+For more data about RPN, read the [HP-35 Operating Manual](hp35-om-en-remake.pdf).
+
+### 8.2 Display
+
+The display shows the number in X with large digits:
+
+```
+ -1.234567890   -12
+ └── mantissa ──┘ └ exponent (small digits)
+```
+
+- The mantissa has a sign and up to 10 digits.
+- The exponent has a sign and 2 digits.
+- The calculator shows large and small numbers in scientific notation automatically.
+
+### 8.3 Indicators
+
+Indicators show on the right side of the display:
+
+| Indicator | Meaning |
+| --- | --- |
+| **F** (box with "F") | The <kbd>F</kbd> key is active. The next key does its shifted function. |
+| **M** (box with "M") | The memory contains a value that is not zero. |
+
+### 8.4 Look at the Y register
+
+When you push <kbd>F</kbd>, the display changes:
+
+```
+┌──────────────────────────────┐
+│ Y:   12.5                 [F]│
+│ X:   3.                   [M]│
+└──────────────────────────────┘
+```
+
+- The top line shows **Y**.
+- The bottom line shows **X**.
+
+> [!TIP]
+> Push <kbd>F</kbd> to look at Y before a two-number operation. Then push the operation key.
+
+> [!NOTE]
+> You cannot cancel <kbd>F</kbd>. The next key always does its shifted function. If you pushed <kbd>F</kbd> by mistake, push <kbd>F</kbd>&nbsp;<kbd>F</kbd> (opens the MATH menu), then push <kbd>CLX</kbd> or another key to close the menu (refer to [9.1](#91-use-a-menu)). <kbd>CLX</kbd> in a menu does not clear X.
+
+### 8.5 Errors
+
+An incorrect operation (for example, 1 ÷ 0 or √ of a negative number) causes an error. The display flashes.
+
+To stop the error, push <kbd>CLX</kbd>.
+
+### 8.6 Angles
+
+The trigonometric functions use **degrees** only. This is the same as on the original HP-35.
+
+---
+
+## 9. Menus
+
+### 9.1 Use a menu
+
+A menu shows on the bottom line of the display. The top line shows X. A menu has one or two lines of three items.
+
+```
+┌──────────────────────────────┐
+│      1.5707963               │
+│ ▌ SIN ▐  ▌ COS ▐  ▌ TAN ▐    │
+└──────────────────────────────┘
+     [1]      [2]      [3]
+```
+
+| Key | Function |
+| --- | --- |
+| <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> | Do the left, the middle or the right item |
+| <kbd>EEX</kbd> | Show the previous line of the menu |
+| <kbd>CHS</kbd> | Show the next line of the menu |
+| <kbd>F</kbd> | Open the MATH menu |
+| <kbd>7</kbd> | Open the TRIG menu |
+| <kbd>8</kbd> | Open the PROG menu |
+| Other keys | Close the menu. No operation occurs. |
+
+> [!TIP]
+> To do the same menu operation again, push <kbd>F</kbd>&nbsp;<kbd>0</kbd> (LAST). You do not need to open the menu again.
+
+### 9.2 MATH menu — <kbd>F</kbd>&nbsp;<kbd>F</kbd>
+
+| Line | <kbd>1</kbd> | <kbd>2</kbd> | <kbd>3</kbd> |
+| :---: | --- | --- | --- |
+| 1 | `xʸ` — Y to the power X | `√x` — square root of X | `1/x` — reciprocal of X |
+| 2 | `LOG` — common logarithm of X | `LN` — natural logarithm of X | `eˣ` — e to the power X |
+
+> [!IMPORTANT]
+> `xʸ` uses the HP-35 order: enter the base first, then the power. For example, 2³: <kbd>2</kbd> <kbd>ENTER↑</kbd> <kbd>3</kbd>, then `xʸ`. The base must be positive.
+
+### 9.3 TRIG menu — <kbd>F</kbd>&nbsp;<kbd>7</kbd>
+
+| Line | <kbd>1</kbd> | <kbd>2</kbd> | <kbd>3</kbd> |
+| :---: | --- | --- | --- |
+| 1 | `SIN` — sine | `COS` — cosine | `TAN` — tangent |
+| 2 | `ASIN` — arc sine | `ACOS` — arc cosine | `ATAN` — arc tangent |
+
+### 9.4 PROG menu — <kbd>F</kbd>&nbsp;<kbd>8</kbd>
+
+| Line | <kbd>1</kbd> | <kbd>2</kbd> | <kbd>3</kbd> |
+| :---: | --- | --- | --- |
+| 1 | `TIME` — set the time | `DATE` — set the date | `ZONE` — set the time zone |
+| 2 | `TOTP` — show TOTP codes | — | — |
+
+---
+
+## 10. Set the time, the date and the time zone
+
+> [!IMPORTANT]
+> - Enter **positive whole numbers** only. Do not enter a decimal fraction or an exponent.
+> - If a value is not correct, the operation does not change the clock. The calculator shows an error and **clears the stack**. Push <kbd>CLX</kbd> and do the procedure again.
+> - If the values are correct, the operation removes them from the stack. Then the device shows the watch screen.
+
+### 10.1 Set the time
+
+| Register | Value | Range |
+| --- | --- | --- |
+| Z | Hours | 0 to 23 |
+| Y | Minutes | 0 to 59 |
+| X | Seconds | 0 to 59 |
+
+**Procedure** (example: 14:30:00):
+
+1. Enter the hours: <kbd>1</kbd> <kbd>4</kbd> <kbd>ENTER↑</kbd>.
+2. Enter the minutes: <kbd>3</kbd> <kbd>0</kbd> <kbd>ENTER↑</kbd>.
+3. Enter the seconds: <kbd>0</kbd>.
+4. Push <kbd>F</kbd>&nbsp;<kbd>8</kbd> to open the PROG menu.
+5. Push <kbd>1</kbd> (`TIME`) at the moment when the time is correct.
+6. Make sure that the watch screen shows the correct time.
+
+> [!TIP]
+> To set the time precisely, do steps 1 to 4 some seconds before the specified time. Push <kbd>1</kbd> at the correct second.
+
+### 10.2 Set the date
+
+| Register | Value | Range |
+| --- | --- | --- |
+| Z | Day | 1 to 31 (the firmware checks the number of days in the month and leap years) |
+| Y | Month | 1 to 12 |
+| X | Year | 0 to 99 (2000 to 2099) |
+
+**Procedure** (example: 17 October 2026):
+
+1. Enter the day: <kbd>1</kbd> <kbd>7</kbd> <kbd>ENTER↑</kbd>.
+2. Enter the month: <kbd>1</kbd> <kbd>0</kbd> <kbd>ENTER↑</kbd>.
+3. Enter the year: <kbd>2</kbd> <kbd>6</kbd>.
+4. Push <kbd>F</kbd>&nbsp;<kbd>8</kbd>, then <kbd>2</kbd> (`DATE`).
+5. Make sure that the watch screen shows the correct date.
+
+> [!NOTE]
+> Set the time first, then the date. The `DATE` operation does not change the time. The `TIME` operation does not change the date.
+
+### 10.3 Set the time zone
+
+The clock keeps the **local time**. The TOTP function needs UTC time. The time zone tells the firmware the difference between the local time and UTC.
+
+| Register | Value | Range |
+| --- | --- | --- |
+| X | Hours from UTC | −14 to +14 |
+
+**Procedure** (example: UTC+2):
+
+1. Enter the time zone: <kbd>2</kbd>.
+2. For a negative time zone, push <kbd>CHS</kbd>.
+3. Push <kbd>F</kbd>&nbsp;<kbd>8</kbd>, then <kbd>3</kbd> (`ZONE`).
+
+The device stays in calculator mode.
+
+> [!IMPORTANT]
+> - The default time zone is **UTC+3**. After a reset, the device uses this value again (refer to [4.5](#45-power-jumper-and-reset)).
+> - The time zone has full hours only.
+> - The time zone is not related to the watch screen. It changes only the TOTP codes.
+> - The device does not change to summer time automatically. When your local time changes, set the time and the time zone again.
+
+---
+
+## 11. TOTP codes
+
+### 11.1 Description
+
+TOTP (Time-based One-Time Password, RFC 6238) is a 6-digit code for two-factor authentication. Many web sites and applications use it, as an authenticator application on a phone does. A new code shows each 30 seconds.
+
+The device keeps up to 4 TOTP keys. Each key has a label of 1 to 4 characters.
+
+```
+┌──────────────────────────────┐
+│ 287 082                 17   │
+│                     ▌ TST1 ▐ │
+└──────────────────────────────┘
+  └ code ┘          └ seconds left
+                    └ key label
+```
+
+### 11.2 Show the codes
+
+1. Do one of these steps:
+   - In watch mode, push <kbd>F</kbd>.
+   - In calculator mode, push <kbd>F</kbd>&nbsp;<kbd>8</kbd>, then <kbd>CHS</kbd>, then <kbd>1</kbd> (`TOTP`).
+2. Read the label of the key. Make sure that it is the correct key.
+3. To show the next key, push <kbd>CHS</kbd>. To show the previous key, push <kbd>EEX</kbd>.
+4. Enter the code in the web site or the application.
+5. Push another key to go to calculator mode, or let the device turn off.
+
+> [!TIP]
+> If only some seconds are left, wait for the new code. Then you have more time to enter it.
+
+> [!IMPORTANT]
+> The codes are correct only if:
+> - The time is correct (±30 s).
+> - The date is correct.
+> - The time zone is correct.
+>
+> If a web site does not accept the code, examine the time, the date and the time zone first.
+
+### 11.3 Install your TOTP keys
+
+The TOTP keys are in the EEPROM of the microcontroller. To install your keys, you need a computer and an ICSP programmer.
+
+1. Get the secret of each key. The web site gives it as a Base32 text or as an `otpauth://` link (QR code) when you enable two-factor authentication.
+2. Write the keys in the file `firmware/sketches/hp35/data/totp.local.txt`. Use one line for each key: label, then secret.
+   ```text
+   # label  secret (Base32 or otpauth:// URI)
+   MAIL     JBSWY3DPEHPK3PXP
+   BANK     otpauth://totp/Bank:me?secret=KRSXG5CTMVRXEZLU&issuer=Bank
+   ```
+3. Run `firmware/tools/totp/totp_hp35.bat`. The tool writes the file `build/hp35.totp.eep`.
+4. Flash `hp35.ino.hex` and `build/hp35.totp.eep` to the device (refer to [14](#14-firmware-installation)).
+5. Set the time, the date and the time zone again.
+
+> [!WARNING]
+> - The TOTP secrets are not encrypted in the device. A person with an ICSP programmer can read them. Keep the device in a safe place.
+> - Do not put real secrets in `data/totp.txt`. This file is in the git repository. The file `totp.local.txt` is not in the repository.
+> - Keep a backup of your secrets or recovery codes in another place.
+
+> [!NOTE]
+> - Only HMAC-SHA1 keys with 6 digits and a 30-second period are supported. Most web sites use these settings.
+> - A label can contain the letters A–Z and the digits 0–9.
+> - The default firmware contains 4 test keys (`TST1` to `TST4`). They are not real keys.
+
+---
+
+## 12. Examples
+
+<details>
+<summary><b>Example 1 — Area of a circle with a radius of 2.5</b></summary>
+
+Calculate π × 2.5².
+
+| Step | Keys | Display (X) |
+| :---: | --- | --- |
+| 1 | <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> | `2.5` |
+| 2 | <kbd>ENTER↑</kbd> | `2.5` |
+| 3 | <kbd>F</kbd>&nbsp;<kbd>6</kbd> (×) | `6.25` |
+| 4 | <kbd>F</kbd>&nbsp;<kbd>4</kbd> (π) | `3.141592654` |
+| 5 | <kbd>F</kbd>&nbsp;<kbd>6</kbd> (×) | `19.63495408` |
+
+</details>
+
+<details>
+<summary><b>Example 2 — Sine of 30°, cosine of 60° (LAST)</b></summary>
+
+| Step | Keys | Display (X) |
+| :---: | --- | --- |
+| 1 | <kbd>3</kbd> <kbd>0</kbd> | `30` |
+| 2 | <kbd>F</kbd>&nbsp;<kbd>7</kbd>, then <kbd>1</kbd> (`SIN`) | `0.5` |
+| 3 | <kbd>6</kbd> <kbd>0</kbd> | `60` |
+| 4 | <kbd>F</kbd>&nbsp;<kbd>7</kbd>, then <kbd>2</kbd> (`COS`) | `0.5` |
+| 5 | <kbd>4</kbd> <kbd>5</kbd> | `45` |
+| 6 | <kbd>F</kbd>&nbsp;<kbd>0</kbd> (LAST = `COS`) | `0.7071067812` |
+
+</details>
+
+<details>
+<summary><b>Example 3 — Sum in the memory (M+)</b></summary>
+
+Add 12.5, 7.25 and 30 in the memory.
+
+| Step | Keys | Result |
+| :---: | --- | --- |
+| 1 | <kbd>CLX</kbd> <kbd>F</kbd>&nbsp;<kbd>2</kbd> (STO) | Memory = 0 |
+| 2 | <kbd>1</kbd> <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> <kbd>F</kbd>&nbsp;<kbd>5</kbd> (M+) | Memory = 12.5 |
+| 3 | <kbd>7</kbd> <kbd>.</kbd> <kbd>2</kbd> <kbd>5</kbd> <kbd>F</kbd>&nbsp;<kbd>5</kbd> (M+) | Memory = 19.75 |
+| 4 | <kbd>3</kbd> <kbd>0</kbd> <kbd>F</kbd>&nbsp;<kbd>5</kbd> (M+) | Memory = 49.75 |
+| 5 | <kbd>F</kbd>&nbsp;<kbd>1</kbd> (RCL) | X = `49.75` |
+
+</details>
+
+<details>
+<summary><b>Example 4 — Hypotenuse √(3² + 4²)</b></summary>
+
+| Step | Keys | Display (X) |
+| :---: | --- | --- |
+| 1 | <kbd>3</kbd> <kbd>ENTER↑</kbd> <kbd>F</kbd>&nbsp;<kbd>6</kbd> | `9` |
+| 2 | <kbd>4</kbd> <kbd>ENTER↑</kbd> <kbd>F</kbd>&nbsp;<kbd>6</kbd> | `16` |
+| 3 | <kbd>F</kbd>&nbsp;<kbd>ENTER↑</kbd> (+) | `25` |
+| 4 | <kbd>F</kbd>&nbsp;<kbd>F</kbd>, then <kbd>2</kbd> (`√x`) | `5` |
+
+</details>
+
+---
+
+## 13. Troubleshooting
+
+| Problem | Possible cause | Action |
+| --- | --- | --- |
+| The device does not turn on. | The battery is empty. | Charge the battery (refer to [4.1](#41-charge-the-battery)). |
+| | The `POWER` jumper is open. | Close the jumper. Then set the time and the date. |
+| The time or the date is not correct. | A reset occurred. | Set the time and the date (refer to [10](#10-set-the-time-the-date-and-the-time-zone)). |
+| `TIME`, `DATE` or `ZONE` shows an error. | A value is not in the range, or is not a whole number. | Push <kbd>CLX</kbd>. Do the procedure again with correct values. |
+| The web site does not accept the TOTP code. | The time, the date or the time zone is not correct. | Set the time, the date and the time zone again. |
+| | The key label is not correct. | Push <kbd>CHS</kbd> or <kbd>EEX</kbd> to select the correct key. |
+| <kbd>F</kbd> in watch mode opens calculator mode. | The device has no TOTP keys. | Install the TOTP keys (refer to [11.3](#113-install-your-totp-keys)). |
+| The display is dim. | 10 s passed after the last key push. | Push a key. |
+| The battery indicator does not flash during the charge. | The battery is full. | No action is necessary. |
+| | The USB cable or the power supply is defective. | Use a different cable or power supply. |
+| The display flashes. | An error occurred in a calculation. | Push <kbd>CLX</kbd>. |
+| A key does an incorrect function. | <kbd>F</kbd> is active (indicator F shows). | Look at the indicators before you push a key. |
+
+---
+
+## 14. Firmware installation
+
+> [!NOTE]
+> This section is for persons who build or update the device. Normal users do not need it.
+
+<details>
+<summary><b>Procedure</b></summary>
+
+**Tools and materials:**
+
+- [ ] Computer with Windows and Arduino IDE
+- [ ] ATTinyCore board package
+- [ ] ICSP programmer (for example, USBasp) and a 6-pin cable
+
+**Procedure:**
+
+1. Run `firmware/libraries/TinyRPNCalculator_Install.bat` as administrator.
+2. Open `firmware/sketches/hp35/hp35.ino` in the Arduino IDE.
+3. Set the PCB revision to 1.5:
+   ```cpp
+   #define  PCB_REVISION        15 // 14 - PCB rev 1.3/1.4, 15 - PCB rev 1.5
+   ```
+4. Set the board options:
+
+   | Option | Value |
+   | --- | --- |
+   | Board | ATtiny25/45/85 (No bootloader) |
+   | Chip | ATtiny85 |
+   | Clock | 16 MHz (PLL) |
+   | LTO | Enabled |
+   | millis()/micros() | Disabled |
+   | Save EEPROM | EEPROM retained |
+   | B.O.D. | Disabled |
+
+5. Select **Sketch → Export compiled binary**.
+6. Connect the ICSP programmer to the ICSP connector of the device. Make sure that the programmer does not supply 5 V (refer to [2](#2-safety)).
+7. Write the fuses: High `0xD7`, Low `0xF1`, Extended `0xFF`.
+8. Write **both** files:
+   - Flash: `build/.../hp35.ino.hex`
+   - EEPROM: `build/.../hp35.ino.eep` (or `build/hp35.totp.eep` with your TOTP keys)
+9. Disconnect the programmer.
+10. Set the time, the date and the time zone (refer to [10](#10-set-the-time-the-date-and-the-time-zone)).
+
+> [!CAUTION]
+> You must write the EEPROM file too. The firmware keeps the menus, the key tables and the TOTP keys in the EEPROM. If you write only the `.hex` file, the device does not operate correctly.
+
+> [!CAUTION]
+> Do not use the firmware compiled with `PCB_REVISION 14` on PCB rev 1.5. The display and the charge indicator do not operate correctly.
+
+</details>
+
+---
+
+## 15. Technical data
+
+| Parameter | Value |
+| --- | --- |
+| Microcontroller | ATtiny85, 16 MHz (internal PLL), 8 KB flash, 512 B RAM, 512 B EEPROM |
+| Display | OLED 128 × 32, SSD1306, I²C |
+| Real-time clock | DS3231M, I²C, temperature-compensated |
+| Keyboard | 16 keys on one analog input (resistor ladder) |
+| Power supply | LiPo battery, 3.5 V to 4.2 V, no voltage regulator |
+| Charger | MCP73832, 4.2 V, 15 mA, USB-C (5 V) |
+| Battery protection | XB5358D0 |
+| Calculator | HP-35 ROM, 10-digit mantissa, 2-digit exponent, angles in degrees |
+| Stack | 4 registers (X, Y, Z, T) and 1 memory register |
+| Dim timeout | 10 s |
+| Power-off timeout | 20 s |
+| TOTP | RFC 6238, HMAC-SHA1, 6 digits, 30 s, up to 4 keys |
+| Default time zone | UTC+3 |
+
+---
+
+## 16. Quick reference
+
+```text
+ ┌──────────┬──────────┬──────────┬──────────┐
+ │  F  MATH │  7  TRIG │  8  PROG │  9    ÷  │
+ ├──────────┼──────────┼──────────┼──────────┤
+ │ EEX ROT↑ │  4    π  │  5   M+  │  6    ×  │
+ ├──────────┼──────────┼──────────┼──────────┤
+ │ CHS ROT↓ │  1  RCL  │  2  STO  │  3    −  │
+ ├──────────┼──────────┼──────────┼──────────┤
+ │ CLX  CLR │  0  LAST │  .  X↔Y  │  ↑    +  │
+ └──────────┴──────────┴──────────┴──────────┘
+
+ MATH (F F):  xʸ   √x    1/x  │ LOG  LN    eˣ
+ TRIG (F 7):  SIN  COS   TAN  │ ASIN ACOS  ATAN
+ PROG (F 8):  TIME DATE  ZONE │ TOTP  —     —
+              [1]  [2]   [3]    EEX/CHS: line up/down
+
+ TIME:  Z=hours   Y=minutes  X=seconds
+ DATE:  Z=day     Y=month    X=year (00-99)
+ ZONE:  X=hours from UTC (-14..+14)
+
+ Watch:  F → TOTP, other key → calculator
+ TOTP:   EEX/CHS → previous/next key, other key → calculator
+ Timeouts: 10 s → dim, 20 s → off
+```
