@@ -85,26 +85,9 @@ In this manual, <kbd>F</kbd> <kbd>9</kbd> means: push the <kbd>F</kbd> key, rele
 
 The device has the size and the proportions of a credit card. The drawing shows the primary parts. The positions of the small parts are approximate. The drawing does not show the ICSP connector and the `POWER` jumper.
 
-```text
-+--------------------------------------------+-------+-----------------+
-|  +----------------------+              (3) | USB-C | +-----------+ o |
-|  |                      |  +-----+ +-----+ +-------+ |  Battery  |   |
-|  |   (1) OLED display   |  | MCU | | RTC |     +---+ |    (4)    |   |
-|  |                      |  | (5) | | (6) | (7) |CHG| |           |   |
-|  +----------------------+  +-----+ +-----+     +---+ +-----------+   |
-+----------------------------------------------------------------------+
-|                  +-----------+-----------+-----------+-----------+   |
-|                  |    MATH   |    TRIG   |    PROG   |    ÷      |   |
-| Business Card    | F  [___]  | 7  [___]  | 8  [___]  | 9  [___]  |   |
-|                  |    ROT^   |    CONST  |    MEM+   |    ×      |   |
-| RPN Calculator   | E  [___]  | 4  [___]  | 5  [___]  | 6  [___]  |   |
-| with Watch       |    ROTv   |    RCL    |    STO    |    -      |   |
-|                  | ±  [___]  | 1  [___]  | 2  [___]  | 3  [___]  |   |
-|                  |    AC     |    LAST   |    X<>Y   |    +      |   |
-|             (2)  | C  [___]  | 0  [___]  | .  [___]  | ^  [___]  |   |
-|                  +-----------+-----------+-----------+-----------+   |
-+----------------------------------------------------------------------+
-```
+<p align="center">
+  <img src="images/hp35-device.svg" alt="Tiny RPN Calculator: display (1), keyboard (2), USB-C connector (3), battery (4), microcontroller (5), real-time clock (6), charger (7)">
+</p>
 
 | No. | Part | Function |
 | :---: | --- | --- |
