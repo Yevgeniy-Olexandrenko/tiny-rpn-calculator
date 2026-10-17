@@ -180,21 +180,30 @@ sub render_totp {
     set_inverse(0);
 }
 
-# lit pixels as one path of rectangles: horizontal runs, equal runs of next rows merged
-sub pixels_path {
-    my (@rects, %open);
-    for my $y (0..31) {
+# lit pixels as one path of rectangles: runs along lines, equal runs of next
+# lines merged; done along rows and along columns, the shorter path is used
+sub merge_runs {
+    my ($lines, $len, $lit) = @_;                # $lit->(line, pos)
+    my (@rects, %open);                          # [line, pos, lines, length]
+    for my $l (0 .. $lines - 1) {
         my %next;
-        for (my $x = 0; $x < 128; ) {
-            if (!$px[$y][$x]) { $x++; next }
-            my $s = $x; $x++ while $x < 128 && $px[$y][$x];
-            my $key = "$s,$x";
-            if (exists $open{$key}) { $rects[$open{$key}][3]++; $next{$key} = $open{$key} }
-            else { push @rects, [$s, $y, $x - $s, 1]; $next{$key} = $#rects }
+        for (my $p = 0; $p < $len; ) {
+            if (!$lit->($l, $p)) { $p++; next }
+            my $s = $p; $p++ while $p < $len && $lit->($l, $p);
+            my $key = "$s,$p";
+            if (exists $open{$key}) { $rects[$open{$key}][2]++; $next{$key} = $open{$key} }
+            else { push @rects, [$l, $s, 1, $p - $s]; $next{$key} = $#rects }
         }
         %open = %next;
     }
-    return join '', map { sprintf 'M%d %dh%dv%dh-%dz', $_->[0], $_->[1], $_->[2], $_->[3], $_->[2] } @rects;
+    return @rects;
+}
+sub pixels_path {
+    my $rows = join '', map { sprintf 'M%d %dh%dv%dh-%dz', $_->[1], $_->[0], $_->[3], $_->[2], $_->[3] }
+        merge_runs(32, 128, sub { $px[$_[0]][$_[1]] });
+    my $cols = join '', map { sprintf 'M%d %dv%dh%dv-%dz', $_->[0], $_->[1], $_->[3], $_->[2], $_->[3] }
+        merge_runs(128, 32, sub { $px[$_[1]][$_[0]] });
+    return length $cols < length $rows ? $cols : $rows;
 }
 
 # ================================================================ styles
@@ -256,7 +265,8 @@ sub style {
 sub write_svg {
     my ($name, $title, $viewbox, $body) = @_;
     my (undef, undef, $w, $h) = split ' ', $viewbox;
-    my $svg = qq{<svg xmlns="http://www.w3.org/2000/svg" viewBox="$viewbox" width="$w" height="$h" font-family="Segoe UI, Helvetica, Arial, sans-serif">\n}
+    my $font = $body =~ /<text/ ? ' font-family="Segoe UI, Helvetica, Arial, sans-serif"' : '';
+    my $svg = qq{<svg xmlns="http://www.w3.org/2000/svg" viewBox="$viewbox" width="$w" height="$h"$font>\n}
             . "  <title>$title</title>\n" . style($body) . $body . "</svg>\n";
     my $out = "$FindBin::Bin/$name";
     open my $o, '>:encoding(UTF-8)', $out or die "$out: $!";
