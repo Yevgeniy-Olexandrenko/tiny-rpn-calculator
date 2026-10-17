@@ -1,12 +1,16 @@
 #include <string>
+#include <cctype>
 #include <sstream>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 #include <filesystem>
 
 const std::string k_iFileExt = ".lst";
 const std::string k_oFileExt = ".asm";
 
+// raw data row: "address:<tab>" and up to 16 bytes "xx " from the column 10,
+// the ASCII dump starts at the column 62 even in a row of one byte
 bool IsRawData(const std::string& line)
 {
 	if (line.size() >= 62)
@@ -22,29 +26,26 @@ bool IsRawData(const std::string& line)
 
 std::string ProcessString(const std::string& line)
 {
-	std::stringstream stream;
-	std::for_each(line.begin(), line.end(), [&](char ch)
-		{
-			if (ch == '\t')
-			{
-				auto p = int(stream.tellp());
-				auto t = (8 - (p % 8));
-				stream << std::string(t, ' ');
-			}
-			else
-				stream << ch;
-		}
-	);
-	return stream.str();
+	// tabs to spaces, tab stops every 8 columns
+	std::string out;
+	for (char ch : line)
+	{
+		if (ch == '\t')
+			out.append(8 - out.size() % 8, ' ');
+		else
+			out += ch;
+	}
+	return out;
 }
 
 bool Convert(const std::filesystem::path& inputPath, const std::filesystem::path& outputPath)
 {
+	// the output is not created when there is no input
 	std::ifstream input(inputPath);
+	if (!input) return false;
 	std::ofstream output(outputPath);
-	if (!input || !output) return false;
+	if (!output) return false;
 
-	bool isRawData = false;
 	bool isFuncDef = false;
 	bool isFuncLab = false;
 	bool isAsmCode = false;
@@ -63,7 +64,8 @@ bool Convert(const std::filesystem::path& inputPath, const std::filesystem::path
 		isFuncDef = (line.size() > 2 && line[line.size() - 2] == '>' && line[line.size() - 1] == ':');
 		isAsmCode = (line.size() > 9 && line[8] == ':' && line[9] == '\t');
 		isSection = (line.find("Disassembly of section") != std::string::npos);
-		isSpecial = (!line.empty() && (line.find("...") == 1 || line[0] == '.'));
+		// a label like ".do_clear_bss_start():" is a function label only
+		isSpecial = !isFuncLab && (!line.empty() && (line.find("...") == 1 || line[0] == '.'));
 
 		line = ProcessString(line);
 
@@ -101,7 +103,9 @@ int main(int argc, char* argv[])
 	std::filesystem::path oFilePath{ iFilePath };
 	oFilePath.replace_extension(k_oFileExt);
 
-	if (iFilePath.extension() != k_iFileExt)
+	std::string iFileExt = iFilePath.extension().string();
+	std::transform(iFileExt.begin(), iFileExt.end(), iFileExt.begin(), [](unsigned char c) { return char(std::tolower(c)); });
+	if (iFileExt != k_iFileExt)
 	{
 		std::cerr << "Unsupported file type:" << std::endl;
 		std::cerr << "Must be " << k_iFileExt << " instead of " << iFilePath.extension().string() << std::endl;

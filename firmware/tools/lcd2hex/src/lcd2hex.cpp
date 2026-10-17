@@ -1,7 +1,11 @@
 #include <vector>
+#include <string>
+#include <cctype>
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 #include <filesystem>
 #include "pugixml.hpp"
 
@@ -11,13 +15,50 @@ const std::string k_oFileExt = ".h";
 using Pixels = std::vector<bool>;
 using Font = std::vector<Pixels>;
 
+// pixel colors are 0xBBGGRR values: a dark color is a lit pixel
+bool IsPixelOn(long color)
+{
+    return ((color & 0xFF) + ((color >> 8) & 0xFF) + ((color >> 16) & 0xFF)) < 3 * 128;
+}
+
+// parses comma separated pixel colors, returns false on a malformed value
+bool ParsePixels(const char* text, Pixels& pixels)
+{
+    for (const char* p = text; *p;)
+    {
+        char* end;
+        long color = std::strtol(p, &end, 10);
+        if (end == p) return false;
+        pixels.push_back(IsPixelOn(color));
+        while (std::isspace((unsigned char)*end)) ++end;
+        if (*end == ',') ++end;
+        else if (*end) return false;
+        p = end;
+    }
+    return true;
+}
+
+std::string ToHex(int byte)
+{
+    const char hex[] = "0123456789ABCDEF";
+    std::string s = "0x";
+    s += hex[(byte >> 4) & 0x0F];
+    s += hex[byte & 0x0F];
+    return s;
+}
+
+bool Fail(const std::string& message)
+{
+    std::cerr << message << std::endl;
+    return false;
+}
+
 bool Convert(const std::filesystem::path& inputPath, const std::filesystem::path& outputPath)
 {
     // load lcd font
     pugi::xml_document doc;
-    pugi::xml_parse_result result = doc.load_file(inputPath.string().c_str());
-    std::ofstream output(outputPath);
-    if (!result || !output) return false;
+    pugi::xml_parse_result result = doc.load_file(inputPath.c_str());
+    if (!result) return Fail(std::string("XML error: ") + result.description());
 
     // parse lcd font
     auto nodeFont = doc.child("FONT");
@@ -28,38 +69,44 @@ bool Convert(const std::filesystem::path& inputPath, const std::filesystem::path
     auto fontName = nodeFont.child_value("FONTNAME");
     auto fontWidthPx = nodeFontSize.attribute("WIDTH").as_int();
     auto fontHeightPx = nodeFontSize.attribute("HEIGHT").as_int();
-    auto fontAsciiFrom = nodeRange.attribute("FROM").as_int();
-    auto fontAsciiTo = nodeRange.attribute("TO").as_int();
+    auto fontAsciiFrom = nodeRange.attribute("FROM").as_int(-1);
+    auto fontAsciiTo = nodeRange.attribute("TO").as_int(-1);
 
     std::cout << "Name  : " << fontName << '\n';
     std::cout << "Size  : " << fontWidthPx << 'x' << fontHeightPx << '\n';
     std::cout << "ASCII : " << fontAsciiFrom << '-' << fontAsciiTo << '\n';
-    
-    Font font;
-    font.resize(fontAsciiTo - fontAsciiFrom + 1);
+
+    // the font header stores sizes and codes as bytes
+    if (!*fontName) return Fail("Font name is missing");
+    if (fontWidthPx < 1 || fontWidthPx > 255 || fontHeightPx < 1 || fontHeightPx > 255 * 8)
+        return Fail("Font size must be 1..255 x 1..2040 pixels");
+    if (fontAsciiFrom < 0 || fontAsciiTo > 255 || fontAsciiFrom > fontAsciiTo)
+        return Fail("ASCII range must be within 0..255, FROM <= TO");
+
+    Font font(fontAsciiTo - fontAsciiFrom + 1);
+    const size_t pixelsPerChar = size_t(fontWidthPx) * fontHeightPx;
 
     for (pugi::xml_node nodeChar = nodeChars.child("CHAR"); nodeChar; nodeChar = nodeChar.next_sibling("CHAR"))
     {
-        auto charIndex = nodeChar.attribute("CODE").as_int() - fontAsciiFrom;
-        auto pixelsPtr = const_cast<char*>(nodeChar.attribute("PIXELS").value());
+        auto charCode = nodeChar.attribute("CODE").as_int(-1);
+        if (charCode < fontAsciiFrom || charCode > fontAsciiTo)
+            return Fail("Character code " + std::to_string(charCode) + " is out of the ASCII range");
 
-        bool bitVal = false;
-        while (true)
-        {
-            auto ch = *pixelsPtr++;
-            if (ch == ',' || ch == 0)
-            {
-                font[charIndex].push_back(bitVal);
-                if (font[charIndex].size() == (fontWidthPx * fontHeightPx)) break;
-            }
-            else if (ch >= '0' && ch <= '9')
-            {
-                bitVal = (ch == '0');
-            }
-        }
+        auto& pixels = font[charCode - fontAsciiFrom];
+        if (!pixels.empty())
+            return Fail("Character " + std::to_string(charCode) + " is defined twice");
+
+        if (!ParsePixels(nodeChar.attribute("PIXELS").value(), pixels) || pixels.size() != pixelsPerChar)
+            return Fail("Character " + std::to_string(charCode) + " must have " + std::to_string(pixelsPerChar) + " pixel values");
     }
 
-    // convert to hex font
+    for (size_t i = 0; i < font.size(); ++i)
+    {
+        if (font[i].empty())
+            return Fail("Character " + std::to_string(fontAsciiFrom + i) + " is missing");
+    }
+
+    // convert to hex font, pixels go column by column from the top
     int rowsOfBytes = int((fontHeightPx + 7) / 8);
     int bytesInRow = fontWidthPx;
 
@@ -96,45 +143,28 @@ bool Convert(const std::filesystem::path& inputPath, const std::filesystem::path
         fontBytes.push_back(charBytes);
     }
 
-    // generate hex font file
-    std::stringstream outputFontName;
-    std::stringstream outputFontBytesName;
-    outputFontName << fontName << fontWidthPx << 'x' << fontHeightPx;
-    outputFontBytesName << outputFontName.str() << "_bytes";
+    // generate hex font file in the format of the sketches' data.h
+    std::stringstream output;
+    std::string outputFontName = fontName + std::to_string(fontWidthPx) + 'x' + std::to_string(fontHeightPx);
+    std::string outputFontBytesName = outputFontName + "_bytes";
 
-    auto to_hex = [](const uint8_t& byte) -> std::string
-    {
-        const char hex[] = "0123456789ABCDEF";
-
-        std::stringstream ss;
-        ss << "0x";
-        ss << hex[(byte & 0xF0) >> 4];
-        ss << hex[(byte & 0x0F)];
-        return ss.str();
-    };
-
-    output << "const uint8_t " << outputFontBytesName.str() << "[] PROGMEM =" << std::endl;
+    output << "const u08 " << outputFontBytesName << "[] PROGMEM =" << std::endl;
     output << "{" << std::endl;
 
     int bytesPerLine = 0, bytesTotal = 0;
     int charCode = fontAsciiFrom;
     for (const auto& charBytes : fontBytes)
     {
-        output << "    ";
-        output << "// character '" << char(charCode) << "' (" << to_hex(charCode) << ")";
-        output << std::endl;
+        // a control character would break the comment line
+        output << "    // character ";
+        if (std::isprint(charCode)) output << "'" << char(charCode) << "' ";
+        output << "(" << ToHex(charCode) << ")" << std::endl;
 
-        for (const auto& bytesInRow : charBytes)
+        for (const auto& rowBytes : charBytes)
         {
-            for (uint8_t byte : bytesInRow)
+            for (uint8_t byte : rowBytes)
             {
-                if (bytesPerLine == 0)
-                {
-                    output << "    ";
-                }
-
-                output << to_hex(byte);
-                output << ", ";
+                output << (bytesPerLine == 0 ? "    " : " ") << ToHex(byte) << ",";
 
                 if (++bytesPerLine == fontWidthPx)
                 {
@@ -153,15 +183,20 @@ bool Convert(const std::filesystem::path& inputPath, const std::filesystem::path
     output << "};" << std::endl;
 
     output << std::endl;
-    output << "const Font " << outputFontName.str() << " PROGMEM =" << std::endl;
+    output << "const TXT::Font " << outputFontName << " PROGMEM =" << std::endl;
     output << "{" << std::endl;
-    output << "    .bytesInRow  = " << to_hex(bytesInRow) << "," << std::endl;
-    output << "    .rowsOfBytes = " << to_hex(rowsOfBytes) << "," << std::endl;
-    output << "    .asciiFirst  = " << to_hex(fontAsciiFrom) << "," << std::endl;
-    output << "    .asciiLast   = " << to_hex(fontAsciiTo) << "," << std::endl;
-    output << "    .bytes = " << outputFontBytesName.str() << " // " << bytesTotal << " bytes" << std::endl;
+    output << "    .bytesInRow  = " << ToHex(bytesInRow) << "," << std::endl;
+    output << "    .rowsOfBytes = " << ToHex(rowsOfBytes) << "," << std::endl;
+    output << "    .asciiFirst  = " << ToHex(fontAsciiFrom) << "," << std::endl;
+    output << "    .asciiLast   = " << ToHex(fontAsciiTo) << "," << std::endl;
+    output << "    .bytes = " << outputFontBytesName << " // " << bytesTotal << " bytes" << std::endl;
     output << "};" << std::endl;
-    output.close();
+
+    // the output file is written only when the whole font is converted
+    std::ofstream file(outputPath);
+    file << output.str();
+    file.close();
+    if (!file) return Fail("Can't write the output file");
     return true;
 }
 
@@ -179,7 +214,9 @@ int main(int argc, char* argv[])
     std::filesystem::path oFilePath{ iFilePath };
     oFilePath.replace_extension(k_oFileExt);
 
-    if (iFilePath.extension() != k_iFileExt)
+    std::string iFileExt = iFilePath.extension().string();
+    std::transform(iFileExt.begin(), iFileExt.end(), iFileExt.begin(), [](unsigned char c) { return char(std::tolower(c)); });
+    if (iFileExt != k_iFileExt)
     {
         std::cerr << "Unsupported file type:" << std::endl;
         std::cerr << "Must be " << k_iFileExt << " instead of " << iFilePath.extension().string() << std::endl;

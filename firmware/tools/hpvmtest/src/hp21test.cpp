@@ -305,6 +305,16 @@ int main(int argc, char** argv)
 	expect("latched key X", seg2str(HPVM::Display, sizeof(HPVM::Display)), " 2.");
 	expect("latched key Y", reg2str(HPVM::Y), "05000000000999");
 
+	// two keys pressed while the ROM is busy, the second one is shifted
+	keys("CLR 3 0");
+	HPVM::Operation(HPVM::OpSIN_);
+	for (int i = 0; i < 50; ++i) HPVM::Cycle();
+	HPVM::Operation(HPVM::OpNUM2);
+	HPVM::Operation(HPVM::OpSQRT);
+	run_to_idle();
+	expect("two keys X", seg2str(HPVM::Display, sizeof(HPVM::Display)), " 1.41");
+	expect("two keys Y", reg2str(HPVM::Y), "05000000000999");
+
 	// X register during digit entry (used by the sketch to read integers)
 	keys("CLR 1 2");
 	expect("entry 12 C", reg2str(HPVM::C), "01200000000001");

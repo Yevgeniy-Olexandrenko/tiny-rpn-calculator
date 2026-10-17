@@ -2,7 +2,8 @@
 // TOTP keys converter for the TinyRPNCalculator sketches.
 //
 // totp header <keys.txt> <area size> <totp.h>
-//     writes C header with the keys area for DATAMEM, built into the firmware
+//     writes C header with the keys area for DATAMEM, built into the firmware,
+//     private keys files (*.local.*) are refused, the header goes to git
 // totp eep <keys.txt> <input.eep> <output.eep>
 //     replaces the keys area in the EEPROM image of a compiled sketch, the area
 //     is found by its signature, its size stays the same
@@ -24,6 +25,7 @@
 #include <filesystem>
 
 // stubs for the library headers, TOTP.h is used to print current codes
+using b08 = bool;
 using u08 = uint8_t; using u16 = uint16_t; using u32 = uint32_t;
 using s08 = int8_t;  using s16 = int16_t;  using s32 = int32_t;
 #define PROGMEM
@@ -70,15 +72,22 @@ std::string ToLower(std::string s)
 	return s;
 }
 
-bool DecodeBase32(const std::string& text, std::vector<uint8_t>& out)
+bool DecodeBase32(const std::string& text, std::vector<uint8_t>& out, std::string& error, std::string& warning)
 {
-	// RFC 4648 alphabet, spaces and dashes between groups are allowed
+	// RFC 4648 alphabet, spaces and dashes between groups are allowed,
+	// optional '=' padding can only be at the end
 	uint32_t buffer = 0;
-	int bits = 0;
+	int bits = 0, chars = 0;
+	bool padding = false;
 	for (char ch : text)
 	{
-		if (ch == '=') break;
-		if (ch == ' ' || ch == '-') continue;
+		if (ch == ' ' || ch == '\t' || ch == '-') continue;
+		if (ch == '=') { padding = true; continue; }
+		if (padding)
+		{
+			error = "secret has chars after '=' padding";
+			return false;
+		}
 
 		ch = char(toupper((unsigned char)ch));
 		int value;
@@ -87,33 +96,62 @@ bool DecodeBase32(const std::string& text, std::vector<uint8_t>& out)
 		else if (ch >= '2' && ch <= '7')
 			value = ch - '2' + 26;
 		else
+		{
+			error = "secret is not valid Base32";
 			return false;
+		}
 
 		buffer = (buffer << 5) | value;
 		bits += 5;
+		chars++;
 		if (bits >= 8)
 		{
 			bits -= 8;
 			out.push_back(uint8_t(buffer >> bits));
 		}
 	}
+
+	// whole bytes take 0, 2, 4, 5 or 7 chars of the last group of 8,
+	// other lengths mean a char is lost or added by mistake
+	int tail = chars % 8;
+	if (tail == 1 || tail == 3 || tail == 6)
+	{
+		error = "secret length of " + std::to_string(chars) + " chars is not valid Base32";
+		return false;
+	}
+
+	// unused bits of the last char are zero in properly encoded secrets,
+	// some services leave them random, so it's only a warning
+	if (buffer & ((1u << bits) - 1))
+		warning = "unused bits of the secret are not zero, check the secret for typos";
 	return true;
 }
 
-std::string DecodePercent(const std::string& s)
+int HexDigit(char ch)
 {
-	std::string out;
+	if (ch >= '0' && ch <= '9') return ch - '0';
+	ch = char(toupper((unsigned char)ch));
+	if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+	return -1;
+}
+
+bool DecodePercent(const std::string& s, std::string& out)
+{
 	for (size_t i = 0; i < s.size(); ++i)
 	{
-		if (s[i] == '%' && i + 2 < s.size())
+		if (s[i] == '%')
 		{
-			out += char(std::stoi(s.substr(i + 1, 2), nullptr, 16));
+			if (i + 2 >= s.size()) return false;
+			int hi = HexDigit(s[i + 1]);
+			int lo = HexDigit(s[i + 2]);
+			if (hi < 0 || lo < 0) return false;
+			out += char(hi << 4 | lo);
 			i += 2;
 		}
 		else
 			out += s[i];
 	}
-	return out;
+	return true;
 }
 
 bool ParseUri(const std::string& uri, std::string& secret, std::string& error)
@@ -140,7 +178,12 @@ bool ParseUri(const std::string& uri, std::string& secret, std::string& error)
 		auto eq = param.find('=');
 		if (eq == std::string::npos) continue;
 		std::string name = ToLower(param.substr(0, eq));
-		std::string value = DecodePercent(param.substr(eq + 1));
+		std::string value;
+		if (!DecodePercent(param.substr(eq + 1), value))
+		{
+			error = "URI parameter " + name + " has invalid %XX encoding";
+			return false;
+		}
 
 		if (name == "secret")
 			secret = value;
@@ -156,7 +199,7 @@ bool ParseUri(const std::string& uri, std::string& secret, std::string& error)
 	return error.empty();
 }
 
-bool ParseLine(const std::string& line, Entry& entry, std::string& error)
+bool ParseLine(const std::string& line, Entry& entry, std::string& error, std::string& warning)
 {
 	auto space = line.find_first_of(" \t");
 	if (space == std::string::npos)
@@ -189,11 +232,7 @@ bool ParseLine(const std::string& line, Entry& entry, std::string& error)
 		std::string uri = secret;
 		if (!ParseUri(uri, secret, error)) return false;
 	}
-	if (!DecodeBase32(secret, entry.key))
-	{
-		error = "secret is not valid Base32";
-		return false;
-	}
+	if (!DecodeBase32(secret, entry.key, error, warning)) return false;
 	if (entry.key.empty() || entry.key.size() > TOTP::KEY_MAX)
 	{
 		error = "key must have 1.." + std::to_string(TOTP::KEY_MAX) +
@@ -219,11 +258,15 @@ bool ReadKeys(const std::filesystem::path& path, std::vector<Entry>& entries)
 		if (line.empty() || line[0] == '#') continue;
 
 		Entry entry;
-		std::string error;
-		if (!ParseLine(line, entry, error))
+		std::string error, warning;
+		if (!ParseLine(line, entry, error, warning))
 		{
 			std::cerr << path.filename().string() << "(" << number << "): " << error << std::endl;
 			return false;
+		}
+		if (!warning.empty())
+		{
+			std::cerr << path.filename().string() << "(" << number << "): warning: " << warning << std::endl;
 		}
 		entries.push_back(entry);
 	}
@@ -540,6 +583,14 @@ int main(int argc, char* argv[])
 	{
 		std::filesystem::path headerPath{ argv[4] };
 		size_t size = size_t(atoi(argv[3]));
+
+		// the header is committed to git, real secrets must stay in local files
+		if (keysPath.filename().string().find(".local.") != std::string::npos)
+		{
+			std::cerr << "Keys of " << keysPath.filename().string() << " are private, use eep mode for them" << std::endl;
+			std::cerr << "Conversion FAILED" << std::endl;
+			return -1;
+		}
 
 		std::vector<uint8_t> area;
 		if (!ReadKeys(keysPath, entries) ||
