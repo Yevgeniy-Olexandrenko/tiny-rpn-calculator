@@ -265,6 +265,10 @@ void executeOperation(u08 operation)
 			break;
 
 		case KEY_MADD:
+			// X + M -> M, X..Z are kept, T gets the new M; RCL lifts the
+			// stack only if the lift is enabled (it is not after ENTER, CLX
+			// or STO), thus ENTER pushes X first and RCL replaces the copy
+			HPVM::Operation(HPVM::OpPUSH);
 			HPVM::Operation(HPVM::OpRCL_);
 			HPVM::Operation(HPVM::OpSWAP);
 			HPVM::Operation(HPVM::OpSTO_);
