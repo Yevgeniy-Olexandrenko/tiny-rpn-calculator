@@ -6,11 +6,12 @@
 
 namespace HPVM
 {
-	constexpr u08 STATUS_BIT_KEY  = 0;
-	constexpr u08 STATUS_BIT_IDLE = 8;
+	// HP-35 idle state breakpoint: entry to the key waiting loop (octal 0305)
+	constexpr u16 BP_IDLE = 0x00C5;
 
-	// HP-35 idle state breakpoint
-	constexpr w16 BP_IDLE{ 0x00C5 };
+	// HP-35 ROM status bits
+	constexpr u08 STATUS_BIT_LIFT = 7; // stack lift is enabled
+	constexpr u08 STATUS_BIT_IDLE = 8; // required for idle state with BP_IDLE
 
 	// HP-35 key operation
 	enum
@@ -25,12 +26,12 @@ namespace HPVM
 		OpMUL_, OpNUM1, OpNUM2, OpNUM3,
 		OpDIV_, OpNUM0, OpDOT_, OpPI__,
 
-		// shifted by ARC key operations
+		// shifted operations, ARC key is the shift
 		FlSHFT = 0x80,
 		OpSHFT = OpARC_,
-		OpATAN = FlSHFT + OpTAN_,
+		OpASIN = FlSHFT + OpSIN_,
 		OpACOS = FlSHFT + OpCOS_,
-		OpASIN = FlSHFT + OpSIN_
+		OpATAN = FlSHFT + OpTAN_
 	};
 
 	// HP-35 key tokens (0 - 34)

@@ -6,27 +6,29 @@
 
 namespace HPVM
 {
-	// clock parameters
-	constexpr u08 CLOCK_RATE_KHZ      = 200;
-	constexpr u08 BIT_TIME_WIDTH_US   = 1000 / CLOCK_RATE_KHZ;
-	constexpr u08 BITS_PER_CYCLE      = 14 * 4;
-	constexpr u16 CYCLE_TIME_WIDTH_US = BITS_PER_CYCLE * BIT_TIME_WIDTH_US;
-	constexpr u16 CYCLES_PER_SEC      = 1000000 / CYCLE_TIME_WIDTH_US;
+	// clock parameters, one cycle is 14 digits of 4 bits
+	constexpr u08 CLOCK_RATE_KHZ = 200;
+	constexpr u08 BITS_PER_CYCLE = 14 * 4;
+	constexpr u16 CYCLES_PER_SEC = CLOCK_RATE_KHZ * 1000UL / BITS_PER_CYCLE;
+
+	// display render data: character codes (see DIGIT..DOT) of 15 positions
+	enum { DIGIT = 0x00, BLANK = 0x10, DASH = 0x11, DOT = 0x12 };
+	u08 Display[15];
 
 	// public interface
 	void Operation(u08 op);
 	void OpAndWait(u08 op);
+	void DisplayY(u08 (&disp)[sizeof(Display)]); // Y rendered as Display
 	b08 Idling(); // true if idling
 	b08 Cycle();  // true if display updated
 
-	// display render data
-	enum { DIGIT = 0x00, BLANK = 0x10, DASH = 0x11, DOT = 0x12 };
-	u08 Display[15];
+	// status bits driven by C&T hardware
+	constexpr u08 STATUS_BIT_KEY = 0;
 
 	// cpu defines
 	using bcd = u08;
 	using reg = bcd[14];
-	const u08 field_bounds[] DATAMEM = 
+	const u08 field_bounds[] DATAMEM =
 	{
 		0xFF, // P  : p..p
 		0xC3, // M  : 3..12
@@ -40,9 +42,9 @@ namespace HPVM
 	enum { ADD  = 0, SUB  = 1 };
 	enum { COPY = 0, SWAP = 1 };
 
-	// registers, stored contiguously in this order: stack registers
-	// C..F are moved and rotated by multi-register reg_move() calls,
-	// ZZ is always zero, TT holds the discarded result of a test
+	// registers, stored contiguously in this order: all are cleared together,
+	// stack registers C..F are moved and rotated by multi-register reg_move()
+	// calls, ZZ is always zero, TT holds the discarded result of a test
 	enum { rA, rB, rC, rD, rE, rF, rM, rZZ, rTT };
 	reg regs[9];
 	reg& A = regs[rA];
@@ -61,6 +63,7 @@ namespace HPVM
 	// arithmetic operations, 2 bytes each:
 	// hi: kind (7..6), sub/swap (5), result reg (4..1), carry in (0)
 	// lo: operand x reg (7..4), operand y reg (3..0)
+	// tests write the result to TT, the next GO TO checks the carry
 	enum { MATH = 0x00, MOVE = 0x40, SHL = 0x80, SHR = 0xC0 };
 	#define OP(kind, ci, sw, r, x, y) u16(((kind) | (sw) << 5 | (r) << 1 | (ci)) << 8 | (x) << 4 | (y))
 	const u16 math_ops[] DATAMEM =
@@ -70,13 +73,13 @@ namespace HPVM
 		OP(MATH, 0, SUB,  rTT, rA,  rC ), // 0x02 IF A >= C[f]
 		OP(MATH, 1, SUB,  rTT, rC,  rZZ), // 0x03 IF C[f] >= 1
 		OP(MOVE, 0, COPY, rC,  rB,  0  ), // 0x04 B -> C[f]
-		OP(MATH, 0, SUB,  rC,  rZZ, rC ), // 0x05 0 – C -> C[f]
+		OP(MATH, 0, SUB,  rC,  rZZ, rC ), // 0x05 0 - C -> C[f]
 		OP(MOVE, 0, COPY, rC,  rZZ, 0  ), // 0x06 0 -> C[f]
-		OP(MATH, 1, SUB,  rC,  rZZ, rC ), // 0x07 0 – C – 1 -> C[f]
+		OP(MATH, 1, SUB,  rC,  rZZ, rC ), // 0x07 0 - C - 1 -> C[f]
 		OP(SHL,  0, 0,    rA,  0,   0  ), // 0x08 SHIFT LEFT A[f]
 		OP(MOVE, 0, COPY, rB,  rA,  0  ), // 0x09 A -> B[f]
-		OP(MATH, 0, SUB,  rC,  rA,  rC ), // 0x0A A – C -> C[f]
-		OP(MATH, 1, SUB,  rC,  rC,  rZZ), // 0x0B C – 1 -> C[f]
+		OP(MATH, 0, SUB,  rC,  rA,  rC ), // 0x0A A - C -> C[f]
+		OP(MATH, 1, SUB,  rC,  rC,  rZZ), // 0x0B C - 1 -> C[f]
 		OP(MOVE, 0, COPY, rA,  rC,  0  ), // 0x0C C -> A[f]
 		OP(MATH, 0, SUB,  rTT, rZZ, rC ), // 0x0D IF C[f] = 0
 		OP(MATH, 0, ADD,  rC,  rA,  rC ), // 0x0E A + C -> C[f]
@@ -89,10 +92,10 @@ namespace HPVM
 		OP(MATH, 0, ADD,  rC,  rC,  rC ), // 0x15 C + C -> C[f]
 		OP(SHR,  0, 0,    rA,  0,   0  ), // 0x16 SHIFT RIGHT A[f]
 		OP(MOVE, 0, COPY, rA,  rZZ, 0  ), // 0x17 0 -> A[f]
-		OP(MATH, 0, SUB,  rA,  rA,  rB ), // 0x18 A – B -> A[f]
+		OP(MATH, 0, SUB,  rA,  rA,  rB ), // 0x18 A - B -> A[f]
 		OP(MOVE, 0, SWAP, rA,  rB,  0  ), // 0x19 A EXCHANGE B[f]
-		OP(MATH, 0, SUB,  rA,  rA,  rC ), // 0x1A A – C -> A[f]
-		OP(MATH, 1, SUB,  rA,  rA,  rZZ), // 0x1B A – 1 -> A[f]
+		OP(MATH, 0, SUB,  rA,  rA,  rC ), // 0x1A A - C -> A[f]
+		OP(MATH, 1, SUB,  rA,  rA,  rZZ), // 0x1B A - 1 -> A[f]
 		OP(MATH, 0, ADD,  rA,  rA,  rB ), // 0x1C A + B -> A[f]
 		OP(MOVE, 0, SWAP, rA,  rC,  0  ), // 0x1D A EXCHANGE C[f]
 		OP(MATH, 0, ADD,  rA,  rA,  rC ), // 0x1E A + C -> A[f]
@@ -105,7 +108,7 @@ namespace HPVM
 	u08 carry, p, ff, fl, s[12];
 	b08 disp_enable, bp_idle;
 
-	// basic math
+	// basic math, decimal only, digits are 4-bit wide
 	bcd alu(const bcd x, const bcd y, const u08 sub)
 	{
 		s08 res;
@@ -117,7 +120,7 @@ namespace HPVM
 		else
 		{
 			res = x + y + carry;
-			if (res > 9) { res -= 10; carry = 1; } else carry = 0;
+			if (res >= 10) { res -= 10; carry = 1; } else carry = 0;
 		}
 		return bcd(res);
 	}
@@ -142,9 +145,9 @@ namespace HPVM
 		r[ff] = 0;
 	}
 
-	void reg_move(reg x, reg y, const u08 f, const u08 l, const u08 swap)
+	void reg_move(reg x, reg y, const u08 first, const u08 last, const u08 swap)
 	{
-		for (u08 i = f; i <= l; ++i)
+		for (u08 i = first; i <= last; ++i)
 		{
 			bcd t = x[i]; x[i] = y[i];
 			if (swap) y[i] = t;
@@ -156,8 +159,16 @@ namespace HPVM
 		reg_move(x, y, ff, fl, swap);
 	}
 
-	// one-shot key event abstraction, unlike the original
-	// C&T, S0 is not reasserted while a key is held
+	// P register wraps around 15 <-> 0
+	void dec_p()
+	{
+		p = (p - 1) & 0x0F;
+	}
+
+	// one-shot key event abstraction: the key is delivered to the ROM
+	// at once, so a key pressed while the ROM is busy replaces the
+	// previous one; unlike the original C&T, S0 is not reasserted
+	// while a key is held, but stays set until the ROM clears it
 	void Operation(u08 op)
 	{
 		// handle shift key
@@ -179,6 +190,19 @@ namespace HPVM
 		do Cycle(); while (!Idling());
 	}
 
+	// renders Y the same way as Display, by x<>y twice (the model provides
+	// OpSWAP and STATUS_BIT_LIFT); x<>y ends the number entry and enables
+	// the stack lift, the lift is restored so that after ENTER or CLX the
+	// next operation still replaces X
+	void DisplayY(u08 (&disp)[sizeof(Display)])
+	{
+		u08 lift = s[STATUS_BIT_LIFT];
+		OpAndWait(OpSWAP);
+		memcpy(disp, Display, sizeof(Display));
+		OpAndWait(OpSWAP);
+		s[STATUS_BIT_LIFT] = lift;
+	}
+
 	b08 Idling()
 	{
 		return (bp_idle && s[STATUS_BIT_IDLE]);
@@ -187,7 +211,7 @@ namespace HPVM
 	b08 Cycle()
 	{
 		// handle idle state breakpoint
-		if (rom == BP_IDLE.msb && pc == BP_IDLE.lsb) bp_idle = 1;
+		if (rom == (BP_IDLE >> 8) && pc == u08(BP_IDLE)) bp_idle = 1;
 
 		// fetch and decode ROM
 		u16 addr_h  = (u16(rom) << 8 | pc);
@@ -204,6 +228,8 @@ namespace HPVM
 		pc++;
 
 		// Type 00: Misc Instructions
+		// op_code is decoded as a whole, or bits 7..4 hold n
+		// and bits 3..0 select the instruction of a group
 		if (op_type == 0x00)
 		{
 			switch(op_code)
@@ -213,9 +239,8 @@ namespace HPVM
 				case 0x34: // KEY -> ROM ADDRESS
 					pc = key_pc;
 					break;
-				case 0x07: // P – 1 -> P
-					p -= 0x01;
-					p &= 0x0F;
+				case 0x07: // P - 1 -> P
+					dec_p();
 					break;
 				case 0x0A: // DISPLAY TOGGLE
 					disp_enable = !disp_enable;
@@ -235,7 +260,7 @@ namespace HPVM
 					break;
 				case 0x8A: // DISPLAY OFF
 					if (disp_enable)
-					{ 
+					{
 						disp_enable = 0;
 						disp_update = 1;
 					}
@@ -256,8 +281,7 @@ namespace HPVM
 					for (u08 i = 0; i < sizeof(s); ++i) s[i] = 0;
 					break;
 				case 0x0F: // P + 1 -> P
-					p += 0x01; 
-					p &= 0x0F;
+					p = (p + 1) & 0x0F;
 					break;
 				default:
 					u08 nnnn = __builtin_avr_swap(op_code) & 0x0F; // >> 4
@@ -276,24 +300,23 @@ namespace HPVM
 							carry = s[nnnn];
 							break;
 						case 0x06: // n -> C
-							if (p < 14) C[p] = nnnn;
-							p -= 0x01;
-							p &= 0x0F;
+							if (p < sizeof(reg)) C[p] = nnnn;
+							dec_p();
 							break;
 						case 0x09: // 0 -> Sn
 							s[nnnn] = 0;
 							break;
-						case 0x0B: // IF p # n
+						case 0x0B: // IF P # n
 							carry = (p == nnnn);
 							break;
 					}
 			}
 		}
 
-		// Type 01: Branching Instructions
+		// Type 01: Subroutine Call
 		else if (op_type == 0x01)
 		{
-			// JSB addr
+			// JSB addr, within the current ROM
 			ret_pc = pc;
 			pc = op_code;
 		}
@@ -306,7 +329,7 @@ namespace HPVM
 			ff = fl & 0x0F;
 			fl = __builtin_avr_swap(fl) & 0x0F; // >> 4
 			if (ff == 0x0F) ff = p;
-			if (fl == 0x0F) fl = (p < 14 ? p : 13);
+			if (fl == 0x0F) fl = (p < sizeof(reg) ? p : sizeof(reg) - 1);
 
 			// decode and process operation from the table
 			const u08* opp = (const u08*)(math_ops + (op_code >> 3));
@@ -329,7 +352,7 @@ namespace HPVM
 		// Type 11: Branching Instructions
 		else // op_type == 0x03
 		{
-			// (THEN) GO TO addr
+			// (THEN) GO TO addr, within the current ROM, if no carry
 			if (!prev_carry)
 			{
 				pc = op_code;
@@ -339,9 +362,11 @@ namespace HPVM
 		// display update
 		if (disp_update)
 		{
-			Display[14] = BLANK;
+			// A/B digits 13..0: B digit 9 blanks the position, digits 13
+			// and 2 show the signs, B digit 2 adds the dot after the digit
+			Display[sizeof(Display) - 1] = BLANK;
 			u08* dp = Display;
-			for (u08 i = 14; i-- > 0;)
+			for (u08 i = sizeof(reg); i-- > 0;)
 			{
 				if (disp_enable)
 				{

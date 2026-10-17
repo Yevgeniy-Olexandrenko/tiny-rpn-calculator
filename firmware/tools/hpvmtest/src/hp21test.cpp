@@ -130,9 +130,9 @@ std::string keys(const char* seq, bool verbose = false)
 		HPVM::Operation(it->second);
 		if (!run_to_idle()) printf("  !!! no idle after '%s' (pc=%04X)\n", t.c_str(), HPVM::pc);
 		if (verbose)
-			printf("  %-6s [%s]  C=%s\n", t.c_str(), seg2str(HPVM::Display, 12).c_str(), reg2str(HPVM::C).c_str());
+			printf("  %-6s [%s]  C=%s\n", t.c_str(), seg2str(HPVM::Display, sizeof(HPVM::Display)).c_str(), reg2str(HPVM::C).c_str());
 	}
-	return seg2str(HPVM::Display, 12);
+	return seg2str(HPVM::Display, sizeof(HPVM::Display));
 }
 
 int fails = 0;
@@ -213,7 +213,7 @@ int main(int argc, char** argv)
 
 	// power on
 	if (!run_to_idle()) printf("!!! no idle after power on\n");
-	printf("power on: [%s] cycles=%ld f=%u\n", seg2str(HPVM::Display, 12).c_str(), total_cycles, HPVM::f);
+	printf("power on: [%s] cycles=%ld f=%u\n", seg2str(HPVM::Display, sizeof(HPVM::Display)).c_str(), total_cycles, HPVM::f);
 
 	check("entry",       "1 2 3 . 4 5",                 " 123.45");
 	check("enter add",   "CLR 2 ENTER 3 +",             " 5.00");
@@ -257,20 +257,25 @@ int main(int argc, char** argv)
 
 	// scripted sequences of the hp21 sketch
 	keys("CLR 1 ENTER 2 ENTER 3 ENTER 4 RDN RDN RDN"); // KEY_ROTU
-	expect("roll up X", seg2str(HPVM::Display, 12), " 1.00");
+	expect("roll up X", seg2str(HPVM::Display, sizeof(HPVM::Display)), " 1.00");
 	expect("roll up Y", reg2str(HPVM::Y), "04000000000000");
 	expect("roll up T", reg2str(HPVM::T), "02000000000000");
 	keys("CLR 1 ENTER 2 ENTER 3 ENTER 4 RDN"); // dropStackTop()
 	HPVM::reg_move(HPVM::T, HPVM::Z, 0, 13, HPVM::COPY);
-	expect("drop X", seg2str(HPVM::Display, 12), " 3.00");
+	expect("drop X", seg2str(HPVM::Display, sizeof(HPVM::Display)), " 3.00");
 	expect("drop Z", reg2str(HPVM::Z), "01000000000000");
 	expect("drop T", reg2str(HPVM::T), "01000000000000");
-	keys("CLR 1 2 ENTER 3 0 x<>y"); // KEY_FUNC
-	std::string hidden = seg2str(HPVM::Display, 12);
-	keys("x<>y");
-	expect("func hidden", hidden, " 12.00");
-	expect("func X", seg2str(HPVM::Display, 12), " 30.00");
-	check("x<>y ends entry", "4 +", " 34.00");
+	u08 hidden[sizeof(HPVM::Display)];
+	keys("CLR 1 2 ENTER 3 0"); // KEY_FUNC
+	HPVM::DisplayY(hidden);
+	expect("func hidden", seg2str(hidden, sizeof(hidden)), " 12.00");
+	expect("func X", seg2str(HPVM::Display, sizeof(HPVM::Display)), " 30.00");
+	check("func ends entry", "4 +", " 34.00");
+	keys("CLR 3 ENTER"); // KEY_FUNC keeps the stack lift disabled
+	HPVM::DisplayY(hidden);
+	keys("PI");
+	expect("func lift Y", reg2str(HPVM::Y), "03000000000000");
+	expect("func lift Z", reg2str(HPVM::Z), "00000000000000");
 
 	// low battery: F1 high keeps S5 clear, ROM lights all dots
 	HPVM::F1 = true; HPVM::s[HPVM::STATUS_BIT_F1] = 0;
@@ -290,7 +295,7 @@ int main(int argc, char** argv)
 	for (int i = 0; i < 50; ++i) HPVM::Cycle();
 	HPVM::Operation(HPVM::OpNUM2); // pressed while sin is being computed
 	run_to_idle();
-	expect("latched key X", seg2str(HPVM::Display, 12), " 2.");
+	expect("latched key X", seg2str(HPVM::Display, sizeof(HPVM::Display)), " 2.");
 	expect("latched key Y", reg2str(HPVM::Y), "05000000000999");
 
 	// X register during digit entry (used by the sketch to read integers)

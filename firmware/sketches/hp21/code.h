@@ -140,9 +140,7 @@ void executeOperation(u08 operation)
 			break;
 
 		case KEY_FUNC:
-			HPVM::OpAndWait(HPVM::OpSWAP);
-			memcpy(hidden, HPVM::Display, sizeof(hidden));
-			HPVM::OpAndWait(HPVM::OpSWAP);
+			HPVM::DisplayY(hidden);
 			isFunc = true;
 			break;
 
@@ -236,7 +234,7 @@ void renderCalcMode()
 	TXT::SetFont(digits7x16);
 
 	u08 flagsY = isMenu ? 0 : 2;
-	for (u08 i = 0; i < 14; ++i)
+	for (u08 i = 0; i < sizeof(HPVM::M1); ++i)
 	{
 		if (HPVM::M1[i])
 		{

@@ -6,25 +6,24 @@
 
 namespace HPVM
 {
-	// clock parameters
-	constexpr u08 CLOCK_RATE_KHZ      = 185;
-	constexpr u08 BIT_TIME_WIDTH_US   = 1000 / CLOCK_RATE_KHZ;
-	constexpr u08 BITS_PER_CYCLE      = 14 * 4;
-	constexpr u16 CYCLE_TIME_WIDTH_US = BITS_PER_CYCLE * 1000U / CLOCK_RATE_KHZ; // no bit time rounding
-	constexpr u16 CYCLES_PER_SEC      = 1000000 / CYCLE_TIME_WIDTH_US;
+	// clock parameters, one cycle is 14 digits of 4 bits
+	constexpr u08 CLOCK_RATE_KHZ = 185;
+	constexpr u08 BITS_PER_CYCLE = 14 * 4;
+	constexpr u16 CYCLES_PER_SEC = CLOCK_RATE_KHZ * 1000UL / BITS_PER_CYCLE;
+
+	// display render data: 7-segment patterns (see TXT::SEG_*) of 12 positions
+	u08 Display[12];
 
 	// public interface
 	void Operation(u08 op);
 	void OpAndWait(u08 op);
+	void DisplayY(u08 (&disp)[sizeof(Display)]); // Y rendered as Display
 	b08 Idling(); // true if idling
 	b08 Cycle();  // true if display updated
 
 	// external flag inputs, sampled every cycle
 	b08 F1; // false sets S5 (HP-21: battery is ok)
 	b08 F2; // true sets S3 (HP-21: RAD angle mode)
-
-	// display render data: 7-segment patterns (see TXT::SEG_*) of 12 positions
-	u08 Display[12];
 
 	// status bits driven by ACT hardware
 	constexpr u08 STATUS_BIT_F2  = 3;
@@ -49,8 +48,8 @@ namespace HPVM
 	enum { COPY = 0, SWAP = 1 };
 
 	// operands of the P set and P test instructions are encoded differently
-	const u08 p_set_map[] DATAMEM  = { 14, 4, 7, 8, 11, 2, 10, 12, 1, 3, 13, 6, 0, 9, 5, 14 };
-	const u08 p_test_map[] DATAMEM = { 4, 8, 12, 2, 9, 1, 6, 3, 1, 13, 5, 0, 11, 10, 7, 4 };
+	const u08 p_set_map[]  DATAMEM = { 0xE, 0x4, 0x7, 0x8, 0xB, 0x2, 0xA, 0xC, 0x1, 0x3, 0xD, 0x6, 0x0, 0x9, 0x5, 0xE };
+	const u08 p_test_map[] DATAMEM = { 0x4, 0x8, 0xC, 0x2, 0x9, 0x1, 0x6, 0x3, 0x1, 0xD, 0x5, 0x0, 0xB, 0xA, 0x7, 0x4 };
 
 	// registers, stored contiguously in this order: A..T are cleared together,
 	// stack registers C..T are moved and rotated by multi-register reg_move()
@@ -203,6 +202,19 @@ namespace HPVM
 		do Cycle(); while (!Idling());
 	}
 
+	// renders Y the same way as Display, by x<>y twice (the model provides
+	// OpSWAP and STATUS_BIT_LIFT); x<>y ends the number entry and enables
+	// the stack lift, the lift is restored so that after ENTER or CLX the
+	// next operation still replaces X
+	void DisplayY(u08 (&disp)[sizeof(Display)])
+	{
+		u08 lift = s[STATUS_BIT_LIFT];
+		OpAndWait(OpSWAP);
+		memcpy(disp, Display, sizeof(Display));
+		OpAndWait(OpSWAP);
+		s[STATUS_BIT_LIFT] = lift;
+	}
+
 	b08 Idling()
 	{
 		return (pc == BP_IDLE && !s[STATUS_BIT_KEY] && !key_hit);
@@ -348,7 +360,7 @@ namespace HPVM
 					then_goto = 1;
 					break;
 				case 0x06: // LOAD CONSTANT n
-					if (p < 14) C[p] = nnnn;
+					if (p < sizeof(reg)) C[p] = nnnn;
 					dec_p();
 					break;
 				case 0x07: // IF 0 = Sn
@@ -392,7 +404,7 @@ namespace HPVM
 			ff = fl & 0x0F;
 			fl = __builtin_avr_swap(fl) & 0x0F; // >> 4
 			if (ff == 0x0F) ff = p;
-			if (fl == 0x0F) fl = (p < 14 ? p : 13);
+			if (fl == 0x0F) fl = (p < sizeof(reg) ? p : sizeof(reg) - 1);
 
 			// decode and process operation from the table
 			const u08* opp = (const u08*)(math_ops + (op_code >> 3));
@@ -440,7 +452,7 @@ namespace HPVM
 			// A/B digits 13..2: B bit 1 selects a sign instead of
 			// the character from A, B bit 0 lights the dot
 			u08* dp = Display;
-			for (u08 i = 14; i-- > 2;)
+			for (u08 i = sizeof(reg); i-- > 2;)
 			{
 				u08 seg = TXT::SEG_SPACE;
 				if (disp_enable)

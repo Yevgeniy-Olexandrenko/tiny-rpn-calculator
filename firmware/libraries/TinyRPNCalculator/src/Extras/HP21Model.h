@@ -9,6 +9,9 @@ namespace HPVM
 	// HP-21 idle state breakpoint: the key waiting loop (octal 0376)
 	constexpr u16 BP_IDLE = 0x00FE;
 
+	// HP-21 ROM status bits
+	constexpr u08 STATUS_BIT_LIFT = 2; // stack lift is enabled
+
 	// HP-21 key operation
 	enum
 	{

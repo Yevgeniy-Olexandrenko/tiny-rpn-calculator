@@ -96,7 +96,7 @@ namespace SHA1
 			v.w[0] = t;
 		}
 
-		for (u08 i = 0; i < 5; ++i) state.w[i] += v.w[i];
+		for (u08 i = 0; i < HASH_SIZE / 4; ++i) state.w[i] += v.w[i];
 	}
 
 	void add_byte(u08 data)

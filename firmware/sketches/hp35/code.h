@@ -179,7 +179,7 @@ Menu menu;
 u08  select;
 
 u16 cycles;
-u08 hidden[15];
+u08 hidden[sizeof(HPVM::Display)];
 u08 lastOp = HPVM::OpCLR_;
 
 void enterMenu(u08 type)
@@ -234,9 +234,7 @@ void executeOperation(u08 operation)
 			break;
 
 		case KEY_FUNC:
-			HPVM::OpAndWait(HPVM::OpSWAP);
-			memcpy(hidden, HPVM::Display, 15);
-			HPVM::OpAndWait(HPVM::OpSWAP);
+			HPVM::DisplayY(hidden);
 			isFunc = true;
 			break;
 
@@ -317,7 +315,7 @@ void executeOperation(u08 operation)
 
 void renderCalcNumber(const u08 * numStr, u08 y)
 {
-	for (u08 i = 0, x = 0; i < 15; ++i, x += TXT::char_dx)
+	for (u08 i = 0, x = 0; i < sizeof(HPVM::Display); ++i, x += TXT::char_dx)
 	{
 		if (i == 12) TXT::SetFont(digits7x16);
 		u08 seg = TXT::NumToSeg(numStr[i]);
@@ -344,7 +342,7 @@ void renderCalcMode()
 	LCD::Clear();
 	TXT::SetFont(digits7x16);
 
-	for (u08 i = 0; i < 14; ++i)
+	for (u08 i = 0; i < sizeof(HPVM::M); ++i)
 	{
 		if (HPVM::M[i])
 		{
