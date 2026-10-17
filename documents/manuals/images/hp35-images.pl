@@ -239,6 +239,7 @@ my %class = (           # static properties, then property => theme color
     ext      => ['stroke-width: 1', fill => 'tint', stroke => 'badge'],
     exttx    => ['font-size: 12px; font-weight: 600; text-anchor: middle', fill => 'badge'],
     glass    => ['fill: #24292f; stroke: #57606a; stroke-width: 1.5'],
+    screen   => ['fill: #151b23; stroke: #3d444d; stroke-width: 1'],
     panel    => ['fill: #000000'],
     ledge    => ['fill: #57606a'],
     pixel    => ['fill: #ffffff'],
@@ -327,12 +328,12 @@ write_svg('hp35-keyboard-power-on.svg', 'Keys that turn on the device: the two b
         $grid_x[0] - 10, $grid_y[0] - 10, $grid_x[-1] - $grid_x[0] + 20, $grid_y[2] - $grid_y[0] + 9));
 
 # ================================================================ screens
-# 4 units per pixel on a black glass, notes on the right: [pixel row, text]
+# 4 units per pixel on a dark glass with the colors of a GitHub table (muted cell, border), notes on the right: [pixel row, text]
 sub screen_svg {
     my ($name, $title, @notes) = @_;
     my $pad = 16;
     my $w = 128 * 4 + 2 * $pad;
-    my $body = sprintf qq{  <rect class="glass" x="0" y="0" width="%d" height="%d" rx="8"/>\n}, $w, 32 * 4 + 2 * $pad;
+    my $body = sprintf qq{  <rect class="screen" x="0.5" y="0.5" width="%d" height="%d" rx="8"/>\n}, $w - 1, 32 * 4 + 2 * $pad - 1;
     $body .= sprintf qq{  <path class="pixel" transform="translate($pad $pad) scale(4)" d="%s"/>\n}, pixels_path();
     for (@notes) {
         my ($row, $text) = @$_;
@@ -348,8 +349,8 @@ render_rtc(%watch);
 my $device_screen = pixels_path();
 screen_svg('hp35-screen-watch.svg', 'Watch screen: 14:30:00, OCT 17/26, battery level, HP-35');
 
-render_calc(x => display(' 6.022140760 23'));
-screen_svg('hp35-screen-number.svg', 'Calculator screen: 6.022140760 x 10^23', [7.5, 'exponent']);
+render_calc(x => display(' 6.02214076  23'));
+screen_svg('hp35-screen-number.svg', 'Calculator screen: 6.02214076 x 10^23', [7.5, 'exponent']);
 
 render_calc(x => display(' 3.141592654   '), memory => 1);
 screen_svg('hp35-screen-memory.svg', 'Calculator screen: pi, with the S indicator');

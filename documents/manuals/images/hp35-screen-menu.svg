@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 748 164" width="748" height="164" font-family="Segoe UI, Helvetica, Arial, sans-serif">
   <title>Calculator screen with the TRIG menu</title>
   <style>
-    .glass    { fill: #24292f; stroke: #57606a; stroke-width: 1.5; }
     .note     { font-size: 22px; fill: #1f2328; }
     .pixel    { fill: #ffffff; }
+    .screen   { fill: #151b23; stroke: #3d444d; stroke-width: 1; }
     @media (prefers-color-scheme: dark) {
       .note     { fill: #e6edf3; }
     }
   </style>
-  <rect class="glass" x="0" y="0" width="544" height="160" rx="8"/>
+  <rect class="screen" x="0.5" y="0.5" width="543" height="159" rx="8"/>
   <path class="pixel" transform="translate(16 16) scale(4)" d="M9 1h5v1h-5zM17 1h5v1h-5zM14 2h1v5h-1zM16 2h1v5h-1zM22 2h1v5h-1zM9 7h5v1h-5zM14 8h1v5h-1zM16 8h1v5h-1zM22 8h1v5h-1zM26 11h3v2h-3zM9 13h5v1h-5zM17 13h5v1h-5zM0 16h36v2h-36zM46 16h36v2h-36zM92 16h36v2h-36zM0 18h6v6h-6zM11 18h1v2h-1zM17 18h1v2h-1zM22 18h14v2h-14zM46 18h6v12h-6zM57 18h1v2h-1zM63 18h1v6h-1zM69 18h13v2h-13zM92 18h6v2h-6zM103 18h1v2h-1zM109 18h1v12h-1zM114 18h14v2h-14zM7 20h7v2h-7zM15 20h3v8h-3zM19 20h3v10h-3zM23 20h13v10h-13zM53 20h5v8h-5zM59 20h3v8h-3zM65 20h17v2h-17zM92 20h8v10h-8zM101 20h3v10h-3zM105 20h3v4h-3zM111 20h3v10h-3zM115 20h13v10h-13zM11 22h3v6h-3zM69 22h13v8h-13zM0 24h10v4h-10zM63 24h5v4h-5zM105 26h3v4h-3zM0 28h6v2h-6zM11 28h1v2h-1zM17 28h1v2h-1zM57 28h1v2h-1zM63 28h1v2h-1zM0 30h36v2h-36zM46 30h36v2h-36zM92 30h36v2h-36z"/>
   <text class="note" x="558" y="54">← X</text>
   <text class="note" x="558" y="118">← menu</text>
