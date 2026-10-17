@@ -123,14 +123,14 @@ For the types of the parts, refer to [15](#15-technical-data).
 
 The watch screen shows the battery level as 0 to 5 bars (refer to [7](#7-watch-mode)).
 
-| Bars | Battery voltage (approximate) | Action |
+| Indicator | Battery voltage (approximate) | Action |
 | :--- | --- | --- |
-| `=====` | 4.05 V or more | — |
-| `====` | 3.92 V to 4.04 V | — |
-| `===` | 3.80 V to 3.91 V | — |
-| `==` | 3.68 V to 3.79 V | Charge the battery soon |
-| `=` | 3.56 V to 3.67 V | Charge the battery |
-| *(none)* | less than 3.56 V | Charge the battery immediately |
+| `-----` | 4.05 V or more | — |
+| `---- ` | 3.92 V to 4.04 V | — |
+| `---  ` | 3.80 V to 3.91 V | — |
+| `--   ` | 3.68 V to 3.79 V | Charge the battery soon |
+| `-    ` | 3.56 V to 3.67 V | Charge the battery |
+| `     ` | less than 3.56 V | Charge the battery immediately |
 
 ### 4.3 Automatic power-off and power-on
 
@@ -252,11 +252,11 @@ The watch screen shows:
 
 <img src="images/hp35-screen-watch.svg" alt="Watch screen: 14:30:00, OCT 17/26, battery level, HP-35">
 
-| Item | Description |
+| Element | Description |
 | --- | --- |
 | Time | Hours, minutes, seconds. 24-hour format. |
 | Date | Month (3 letters), day, year (2 digits, 2000–2099). |
-| `====` | Battery level, 0 to 5 bars (refer to [4.2](#42-battery-indicator)). |
+| `---- ` | Battery level, 0 to 5 bars (refer to [4.2](#42-battery-indicator)). |
 | `HP-35` | Name of the firmware. |
 
 In watch mode, the display is always dim.
