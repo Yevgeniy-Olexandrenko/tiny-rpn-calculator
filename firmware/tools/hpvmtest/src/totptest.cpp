@@ -193,7 +193,7 @@ int main()
 		snprintf(name, sizeof(name), "hp35 key %u", i);
 		bool ok = TOTP::ReadKey(totp_keys, i, key);
 		expect(name, ok ? std::string(key.label, 4) + " " + code(key, 59) : "none",
-			std::string("TST") + char('1' + i) + " 287082");
+			std::string("KEY") + char('1' + i) + " 287082");
 	}
 	expect("hp35 key 4", record(totp_keys, 4), "none");
 

@@ -494,7 +494,7 @@ The device stays in calculator mode.
 
 TOTP (Time-based One-Time Password, RFC 6238) is a 6-digit code for two-factor authentication. Many web sites and applications use it, as an authenticator application on a phone does. A new code shows each 30 seconds.
 
-<img src="images/hp35-screen-totp.svg" alt="TOTP screen: code 287 082, 17 seconds left, key label TST1">
+<img src="images/hp35-screen-totp.svg" alt="TOTP screen: code 287 082, 17 seconds left, key label KEY1">
 
 The device keeps the keys in a keys area of 121 bytes. Each key uses 5 bytes plus the length of its secret. Thus, the number of keys is related to the length of the secrets:
 
@@ -552,7 +552,7 @@ The TOTP keys are in the EEPROM of the microcontroller. To install your keys, yo
 > [!NOTE]
 > - Only HMAC-SHA1 keys with 6 digits and a 30-second period are supported. Most web sites use these settings.
 > - A label has 1 to 4 characters: the letters A–Z and the digits 0–9.
-> - The default firmware contains 4 test keys (`TST1` to `TST4`). They are not real keys.
+> - The default firmware contains 4 test keys (`KEY1` to `KEY4`). They are not real keys.
 
 ## 12. Examples
 

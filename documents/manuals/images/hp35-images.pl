@@ -357,8 +357,8 @@ screen_svg('hp35-screen-function.svg', 'Calculator screen with F active: Y on to
 render_calc(x => display(' 30.           '), menu => [ (menu_items('strMenuTrig'))[0..2] ]);
 screen_svg('hp35-screen-menu.svg', 'Calculator screen with the TRIG menu', [7.5, 'X'], [23.5, 'menu']);
 
-render_totp(code => 287082, left => 17, label => 'TST1');
-screen_svg('hp35-screen-totp.svg', 'TOTP screen: code 287 082, 17 seconds left, key TST1', [7.5, 'seconds left'], [23.5, 'key label']);
+render_totp(code => 287082, left => 17, label => 'KEY1');
+screen_svg('hp35-screen-totp.svg', 'TOTP screen: code 287 082, 17 seconds left, key KEY1', [7.5, 'seconds left'], [23.5, 'key label']);
 
 # ================================================================ device
 my $device = <<"SVG";
