@@ -30,10 +30,25 @@ This manual tells you how to use the Tiny RPN Calculator with the HP-35 firmware
 
 The firmware is an emulator. It runs the original ROM of the HP-35 calculator (1972) on a virtual copy of the HP CPU. Thus, the calculations and the results are the same as on the original HP-35.
 
-This manual does not tell you all about RPN and the HP-35 functions. For more data, read these documents:
+This manual does not tell you all about the HP-35 functions. For more data, read the [HP-35 Operating Manual](hp35-om-en-remake.pdf).
 
-- [HP-35 Operating Manual](hp35-om-en-remake.pdf)
-- [HP-35 firmware description](../firmware/firmware-calculator-hp35.md)
+### 1.1 The HP-35 calculator
+
+Hewlett-Packard introduced the HP-35 in 1972. It was the first pocket calculator with these features:
+
+- Transcendental functions: logarithms, exponent, trigonometric functions.
+- RPN (Reverse Polish Notation) with a stack of four registers (refer to [8.1](#81-rpn-and-the-stack)).
+
+At that time, most calculators, including large desktop models, had only the four arithmetic operations.
+
+The processor of the HP-35 is a serial processor. It operates on 56-bit numbers: 14 BCD digits. The display shows a 10-digit mantissa with its sign and a 2-digit exponent with its sign. If a number is too large or too small for the usual format, the calculator shows it in scientific notation automatically.
+
+The emulator of this device executes the original microcode of the HP-35 at the speed of the original calculator. It shows the numbers in the same format as the HP-35. It also adds some functions that make the calculator easier to use. The device also has a watch and a TOTP code generator.
+
+> [!TIP]
+> For photos and the history of the HP-35, refer to the [HP-35 page of the Museum of HP Calculators](https://www.hpmuseum.org/hp35.htm).
+
+### 1.2 Symbols
 
 The text uses these symbols:
 
@@ -48,6 +63,9 @@ The text uses these symbols:
 
 > [!WARNING]
 > A risk of injury or damage to the device.
+
+> [!CAUTION]
+> A risk of damage to the device or of incorrect operation.
 
 In this manual, <kbd>F</kbd> <kbd>9</kbd> means: push the <kbd>F</kbd> key, release it, then push the <kbd>9</kbd> key.
 
@@ -72,7 +90,15 @@ In this manual, <kbd>F</kbd> <kbd>9</kbd> means: push the <kbd>F</kbd> key, rele
 
 ## 3. Device description
 
-The device has the size of a credit card. It has these primary parts:
+The device has the size of a credit card.
+
+<p align="center">
+  <img src="images/hp35-device.jpg" width="600" alt="Tiny RPN Calculator: the display at the top left, the keyboard at the bottom">
+  <br>
+  <sub>The photo shows the device with PCB rev 1.4. The parts on PCB rev 1.5 are different (for example, the USB-C connector), but the display and the keyboard are the same.</sub>
+</p>
+
+The device has these primary parts:
 
 | Part | Type | Function |
 | --- | --- | --- |
@@ -204,6 +230,12 @@ Each key has two functions:
 - The **primary function** (large legend on the key). Push the key.
 - The **shifted function** (small legend above the key). Push <kbd>F</kbd>, then push the key.
 
+<p align="center">
+  <img src="images/hp35-keyboard.jpg" width="500" alt="Keyboard of the Tiny RPN Calculator with the primary and the shifted legends">
+</p>
+
+This manual shows the keys in the same layout:
+
 <table>
   <tr>
     <td align="center"><sub>MATH</sub><br><kbd>F</kbd></td>
@@ -297,16 +329,42 @@ In watch mode, the display is always dim.
 
 ## 8. Calculator mode
 
-### 8.1 RPN in short
+### 8.1 RPN and the stack
 
-The calculator uses RPN (Reverse Polish Notation). You enter the numbers first, then the operation.
+The calculator uses RPN (Reverse Polish Notation). You enter the numbers first, then the operation. Thus, you do not need parentheses and an `=` key.
 
-The stack has four registers: **X**, **Y**, **Z** and **T**. The display shows X.
+In the 1920s, Jan Łukasiewicz made a notation for logic that puts the operators before or after the operands. HP changed the postfix form of this notation for a calculator keyboard and added a stack for the operands. HP named the result RPN. With RPN, you push fewer keys, and you make fewer mistakes.
 
-| To calculate | Push |
-| --- | --- |
-| 3 + 4 | <kbd>3</kbd> <kbd>↑</kbd> <kbd>4</kbd> <kbd>F</kbd> <kbd>↑</kbd> |
-| (3 + 4) × 5 | <kbd>3</kbd> <kbd>↑</kbd> <kbd>4</kbd> <kbd>F</kbd> <kbd>↑</kbd> <kbd>5</kbd> <kbd>F</kbd> <kbd>6</kbd> |
+For example, the expression (4 + 5) × 6 in RPN is:
+
+```text
+4 5 + 6 ×      or      6 4 5 + ×
+```
+
+**The stack**
+
+The stack has four registers: **X**, **Y**, **Z** and **T**. The HP-35 stack operates with these rules:
+
+- The display shows only X.
+- <kbd>↑</kbd> copies X to Y. Y moves to Z, Z moves to T. The old value of T is lost.
+- An operation with two numbers (for example, +) uses Y and X. The result goes to X. Then Z moves to Y, and T copies to Z. T keeps its value.
+- A function with one number (for example, √x) uses only X. The result goes to X.
+- STO copies X to the memory. X does not change.
+- A new number after an operation lifts the stack automatically. For example, after <kbd>5</kbd> <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>1</kbd> (<kbd>LOG</kbd>) <kbd>1</kbd> <kbd>0</kbd>, Y contains log 5 and X contains 10.
+
+**Example:** (4 + 5) × 6. The table shows the stack after each step.
+
+| Keys | T | Z | Y | X (display) |
+| --- | :---: | :---: | :---: | :---: |
+| <kbd>4</kbd> | 0 | 0 | 0 | **4** |
+| <kbd>↑</kbd> | 0 | 0 | 4 | **4** |
+| <kbd>5</kbd> | 0 | 0 | 4 | **5** |
+| <kbd>F</kbd> <kbd>↑</kbd> (+) | 0 | 0 | 0 | **9** |
+| <kbd>6</kbd> | 0 | 0 | 9 | **6** |
+| <kbd>F</kbd> <kbd>6</kbd> (×) | 0 | 0 | 0 | **54** |
+
+> [!NOTE]
+> After <kbd>↑</kbd>, the next number replaces X. It does not lift the stack again.
 
 For more data about RPN, read the [HP-35 Operating Manual](hp35-om-en-remake.pdf).
 
@@ -412,10 +470,14 @@ A menu shows on the bottom line of the display. The top line shows X with small 
 
 ### 9.2 MATH menu: <kbd>F</kbd> <kbd>F</kbd>
 
-| Line | <kbd>1</kbd> | <kbd>2</kbd> | <kbd>3</kbd> |
-| :---: | --- | --- | --- |
-| 1 | <kbd>xʸ</kbd> X to the power Y | <kbd>√x</kbd> square root of X | <kbd>1/x</kbd> reciprocal of X |
-| 2 | <kbd>LOG</kbd> common logarithm of X | <kbd>LN</kbd> natural logarithm of X | <kbd>eˣ</kbd> e to the power X |
+| Keys in the menu | Item | Function |
+| --- | :---: | --- |
+| <kbd>1</kbd> | <kbd>xʸ</kbd> | X to the power Y |
+| <kbd>2</kbd> | <kbd>√x</kbd> | Square root of X |
+| <kbd>3</kbd> | <kbd>1/x</kbd> | Reciprocal of X |
+| <kbd>±</kbd> <kbd>1</kbd> | <kbd>LOG</kbd> | Common logarithm of X |
+| <kbd>±</kbd> <kbd>2</kbd> | <kbd>LN</kbd> | Natural logarithm of X |
+| <kbd>±</kbd> <kbd>3</kbd> | <kbd>eˣ</kbd> | e to the power X |
 
 > [!IMPORTANT]
 > <kbd>xʸ</kbd> calculates **X to the power Y**. This is the order of the original HP-35:
@@ -429,17 +491,23 @@ A menu shows on the bottom line of the display. The top line shows X with small 
 
 ### 9.3 TRIG menu: <kbd>F</kbd> <kbd>7</kbd>
 
-| Line | <kbd>1</kbd> | <kbd>2</kbd> | <kbd>3</kbd> |
-| :---: | --- | --- | --- |
-| 1 | <kbd>SIN</kbd> sine | <kbd>COS</kbd> cosine | <kbd>TAN</kbd> tangent |
-| 2 | <kbd>ASIN</kbd> arc sine | <kbd>ACOS</kbd> arc cosine | <kbd>ATAN</kbd> arc tangent |
+| Keys in the menu | Item | Function |
+| --- | :---: | --- |
+| <kbd>1</kbd> | <kbd>SIN</kbd> | Sine of X |
+| <kbd>2</kbd> | <kbd>COS</kbd> | Cosine of X |
+| <kbd>3</kbd> | <kbd>TAN</kbd> | Tangent of X |
+| <kbd>±</kbd> <kbd>1</kbd> | <kbd>ASIN</kbd> | Arc sine of X |
+| <kbd>±</kbd> <kbd>2</kbd> | <kbd>ACOS</kbd> | Arc cosine of X |
+| <kbd>±</kbd> <kbd>3</kbd> | <kbd>ATAN</kbd> | Arc tangent of X |
 
 ### 9.4 PROG menu: <kbd>F</kbd> <kbd>8</kbd>
 
-| Line | <kbd>1</kbd> | <kbd>2</kbd> | <kbd>3</kbd> |
-| :---: | --- | --- | --- |
-| 1 | <kbd>TIME</kbd> set the time | <kbd>DATE</kbd> set the date | <kbd>ZONE</kbd> set the time zone |
-| 2 | <kbd>TOTP</kbd> show TOTP codes | — | — |
+| Keys in the menu | Item | Function |
+| --- | :---: | --- |
+| <kbd>1</kbd> | <kbd>TIME</kbd> | Set the time (refer to [10.1](#101-set-the-time)) |
+| <kbd>2</kbd> | <kbd>DATE</kbd> | Set the date (refer to [10.2](#102-set-the-date)) |
+| <kbd>3</kbd> | <kbd>ZONE</kbd> | Set the time zone (refer to [10.3](#103-set-the-time-zone)) |
+| <kbd>±</kbd> <kbd>1</kbd> | <kbd>TOTP</kbd> | Show the TOTP codes (refer to [11](#11-totp-codes)) |
 
 ## 10. Set the time, the date and the time zone
 
@@ -747,6 +815,7 @@ Add 12.5, 7.25 and 30 in the memory.
 | Power-on keys | Two bottom rows of the keyboard |
 | TOTP | RFC 6238, HMAC-SHA1, 6 digits, 30 s, keys area of 121 bytes |
 | Default time zone | UTC+3 |
+| Schematic | [Tiny-RPN-Calculator-rev1.5_Schematic.pdf](../../hardware/pcb-rev1.5/Tiny-RPN-Calculator-rev1.5_Schematic.pdf) |
 
 ## 16. Quick reference
 
@@ -779,13 +848,18 @@ Add 12.5, 7.25 and 30 in the memory.
   </tr>
 </table>
 
-**Menus** (<kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> select an item, <kbd>E</kbd> <kbd>±</kbd> change the line)
+**Menus**
 
-| Menu | Line 1 | Line 2 |
-| --- | --- | --- |
-| MATH <kbd>F</kbd> <kbd>F</kbd> | <kbd>xʸ</kbd> <kbd>√x</kbd> <kbd>1/x</kbd> | <kbd>LOG</kbd> <kbd>LN</kbd> <kbd>eˣ</kbd> |
-| TRIG <kbd>F</kbd> <kbd>7</kbd> | <kbd>SIN</kbd> <kbd>COS</kbd> <kbd>TAN</kbd> | <kbd>ASIN</kbd> <kbd>ACOS</kbd> <kbd>ATAN</kbd> |
-| PROG <kbd>F</kbd> <kbd>8</kbd> | <kbd>TIME</kbd> <kbd>DATE</kbd> <kbd>ZONE</kbd> | <kbd>TOTP</kbd> |
+The top row shows the keys that open each menu. The left column shows the keys that select an item in the open menu. <kbd>±</kbd> shows line 2 of the menu, <kbd>E</kbd> shows line 1 again.
+
+| Keys in the menu | MATH<br><kbd>F</kbd> <kbd>F</kbd> | TRIG<br><kbd>F</kbd> <kbd>7</kbd> | PROG<br><kbd>F</kbd> <kbd>8</kbd> |
+| --- | :---: | :---: | :---: |
+| <kbd>1</kbd> | <kbd>xʸ</kbd> | <kbd>SIN</kbd> | <kbd>TIME</kbd> |
+| <kbd>2</kbd> | <kbd>√x</kbd> | <kbd>COS</kbd> | <kbd>DATE</kbd> |
+| <kbd>3</kbd> | <kbd>1/x</kbd> | <kbd>TAN</kbd> | <kbd>ZONE</kbd> |
+| <kbd>±</kbd> <kbd>1</kbd> | <kbd>LOG</kbd> | <kbd>ASIN</kbd> | <kbd>TOTP</kbd> |
+| <kbd>±</kbd> <kbd>2</kbd> | <kbd>LN</kbd> | <kbd>ACOS</kbd> | — |
+| <kbd>±</kbd> <kbd>3</kbd> | <kbd>eˣ</kbd> | <kbd>ATAN</kbd> | — |
 
 **Stack input for the operations**
 

@@ -13,7 +13,7 @@ Credit-card-sized RPN calculator with watch: ATtiny85 (8 KB flash, 512 B RAM, 51
   - `sketches/<model>/` — one Arduino sketch per calculator model (`hp35`; `hp21` is new, not yet tested on hardware).
   - `tools/` — Windows C++ helper tools (Visual Studio projects, prebuilt `.exe`): `lcd2hex` converts `.lcd` (XML font files) into C byte arrays; `lst2asm` turns the avr-gcc `.lst` listing into a cleaner `.asm` for inspecting generated code; `hpvmtest` is the desktop test of the HP VMs and TOTP (see below); `totp` converts TOTP keys (label + Base32 secret or `otpauth://` URI) into the keys area: `totp header` writes a sketch's `totp.h`, `totp eep` replaces the area in a compiled `.eep` (found by its signature) so personal keys need no rebuild. `totp/totp_hp35.bat` regenerates hp35's `totp.h` from the committed test keys `data/totp.txt` and, if `data/totp.local.txt` (git-ignored, real secrets) exists, writes `build/hp35.totp.eep` (also ignored) to flash instead of `hp35.ino.eep`.
 - `firmware.old/` — previous firmware generation (hp21, hp35, native calculator, tester, totp). Reference only; don't modify unless asked.
-- `hardware/` — PCB revisions (Gerbers, BOM, schematics). `datasheets/`, `documents/` — reference docs (several `documents/*.md` are still empty placeholders).
+- `hardware/` — PCB revisions (Gerbers, BOM, schematics). `datasheets/` — reference datasheets. `documents/` — docs: `manuals/` (user manual of the hp35 firmware for PCB rev 1.5, its images in `manuals/images/`, original HP manuals), `firmware/hp21-woodstock-architecture.md`, `howto-build/` (assembly steps, partly TODO).
 
 ## Build / flash
 
