@@ -191,7 +191,7 @@ To change the mode, use these keys:
 | Watch | Other keys | Calculator |
 | TOTP | <kbd>E</kbd> or <kbd>±</kbd> | TOTP (previous or next key) |
 | TOTP | Other keys | Calculator |
-| Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>±</kbd> <kbd>1</kbd> (TOTP) | TOTP |
+| Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>±</kbd> <kbd>1</kbd> (TOTP) or <kbd>3</kbd> (ZONE) | TOTP |
 | Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>1</kbd> (TIME) or <kbd>2</kbd> (DATE) | Watch |
 | All modes | No key for 20 s | Device is off |
 
@@ -433,7 +433,7 @@ A menu shows on the bottom line of the display. The top line shows X with small 
 > [!IMPORTANT]
 > - Enter **whole numbers** in the range of the table. Do not enter a decimal fraction or an exponent.
 > - If a value is not correct, the operation does not change the clock and the time zone. The calculator shows an error and **clears the stack** (X, Y, Z, T). The memory does not change. Push <kbd>C</kbd> and do the procedure again.
-> - If the values are correct, the operation removes them from the stack. After <kbd>TIME</kbd> and <kbd>DATE</kbd>, the device shows the watch screen. After <kbd>ZONE</kbd>, the device stays in calculator mode.
+> - If the values are correct, the operation removes them from the stack. After <kbd>TIME</kbd> and <kbd>DATE</kbd>, the device shows the watch screen. After <kbd>ZONE</kbd>, the device shows the TOTP codes. If there are no TOTP keys, the device stays in calculator mode.
 
 ### 10.1 Set the time
 
@@ -487,6 +487,7 @@ The clock keeps the **local time**. The TOTP function needs UTC time. The time z
 1. Enter the time zone: <kbd>2</kbd>.
 2. For a negative time zone, push <kbd>±</kbd>.
 3. Push <kbd>F</kbd> <kbd>8</kbd>, then <kbd>3</kbd> (ZONE).
+4. Make sure that the codes are the same as in your authenticator application (refer to [11.2](#112-show-the-codes)).
 
 > [!IMPORTANT]
 > - The default time zone is **UTC+3**. After a reset, the device uses this value again (refer to [4.5](#45-power-jumper-and-reset)).

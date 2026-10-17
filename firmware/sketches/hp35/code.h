@@ -326,7 +326,8 @@ void executeOperation(u08 operation)
 
 		case PROG_ZONE:
 		{
-			// signed integer, mantissa sign is 9 for negative numbers
+			// signed integer, mantissa sign is 9 for negative numbers;
+			// the zone matters only for TOTP, so its codes are shown next
 			u08 sign = HPVM::C[13];
 			u08 zone;
 			HPVM::C[13] = 0;
@@ -335,6 +336,7 @@ void executeOperation(u08 operation)
 				gmtZone = BCD::Decode(zone);
 				if (sign) gmtZone = -gmtZone;
 				dropStack(1);
+				enterTOTPMode();
 			}
 			else HPVM::Error();
 			break;
