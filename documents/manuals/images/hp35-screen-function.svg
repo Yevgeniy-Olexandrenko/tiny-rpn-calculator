@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 748 164" width="748" height="164" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Calculator screen with F active: Y on top, X below</title>
+  <style>
+    .glass    { fill: #24292f; stroke: #57606a; stroke-width: 1.5; }
+    .note     { font-size: 22px; fill: #1f2328; }
+    .pixel    { fill: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      .note     { fill: #e6edf3; }
+    }
+  </style>
+  <rect class="glass" x="0" y="0" width="544" height="160" rx="8"/>
+  <path class="pixel" transform="translate(16 16) scale(4)" d="M17 1h5v1h-5zM33 1h5v1h-5zM121 1h7v1h-7zM14 2h1v5h-1zM22 2h1v5h-1zM32 2h1v5h-1zM121 2h1v11h-1zM127 2h1v2h-1zM124 4h4v3h-4zM17 7h5v1h-5zM33 7h5v1h-5zM126 7h2v2h-2zM14 8h1v5h-1zM16 8h1v5h-1zM38 8h1v5h-1zM124 9h4v4h-4zM26 11h3v2h-3zM17 13h5v1h-5zM33 13h5v1h-5zM121 13h7v1h-7zM9 17h5v1h-5zM121 17h7v1h-7zM14 18h1v5h-1zM121 18h2v1h-2zM127 18h1v2h-1zM121 19h1v4h-1zM124 20h4v2h-4zM126 22h2v1h-2zM9 23h5v1h-5zM121 23h2v1h-2zM127 23h1v5h-1zM14 24h1v5h-1zM121 24h4v3h-4zM18 27h3v2h-3zM121 27h1v2h-1zM126 28h2v1h-2zM9 29h5v1h-5zM121 29h7v1h-7z"/>
+  <text class="note" x="558" y="54">← Y</text>
+  <text class="note" x="558" y="118">← X</text>
+</svg>

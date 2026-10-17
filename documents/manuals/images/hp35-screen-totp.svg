@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 748 164" width="748" height="164" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>TOTP screen: code 287 082, 17 seconds left, key TST1</title>
+  <style>
+    .glass    { fill: #24292f; stroke: #57606a; stroke-width: 1.5; }
+    .note     { font-size: 22px; fill: #1f2328; }
+    .pixel    { fill: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      .note     { fill: #e6edf3; }
+    }
+  </style>
+  <rect class="glass" x="0" y="0" width="544" height="160" rx="8"/>
+  <path class="pixel" transform="translate(16 16) scale(4)" d="M9 1h5v1h-5zM17 1h5v1h-5zM25 1h5v1h-5zM41 1h5v1h-5zM49 1h5v1h-5zM57 1h5v1h-5zM113 1h5v1h-5zM14 2h1v13h-1zM16 2h1v13h-1zM22 2h1v13h-1zM30 2h1v13h-1zM40 2h1v13h-1zM46 2h1v13h-1zM48 2h1v13h-1zM54 2h1v13h-1zM62 2h1v13h-1zM110 2h1v5h-1zM118 2h1v5h-1zM110 8h1v5h-1zM118 8h1v5h-1zM9 15h5v1h-5zM17 15h5v1h-5zM49 15h5v1h-5zM57 15h5v1h-5zM8 16h1v13h-1zM16 16h1v13h-1zM22 16h1v13h-1zM30 16h1v13h-1zM40 16h1v13h-1zM46 16h1v13h-1zM48 16h1v13h-1zM54 16h1v13h-1zM56 16h1v13h-1zM92 16h36v2h-36zM92 18h6v2h-6zM103 18h1v2h-1zM109 18h1v2h-1zM115 18h2v2h-2zM119 18h9v12h-9zM92 20h8v10h-8zM101 20h3v4h-3zM105 20h7v2h-7zM113 20h5v10h-5zM109 22h3v8h-3zM101 24h7v4h-7zM101 28h3v2h-3zM9 29h5v1h-5zM17 29h5v1h-5zM41 29h5v1h-5zM49 29h5v1h-5zM57 29h5v1h-5zM92 30h36v2h-36z"/>
+  <text class="note" x="558" y="54">← seconds left</text>
+  <text class="note" x="558" y="118">← key label</text>
+</svg>

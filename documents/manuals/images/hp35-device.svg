@@ -1,41 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 875 560" width="875" height="560" font-family="Segoe UI, Helvetica, Arial, sans-serif">
   <title>Tiny RPN Calculator: primary parts</title>
   <style>
-    .board, .overlay { fill: #ffffff; }
-    .board   { stroke-width: 2.5; }
-    .overlay, .hole { stroke-width: 2; }
-    .hole    { fill: none; }
-    .slot    { fill: none; stroke-width: 1.5; }
-    .board, .overlay, .hole, .slot { stroke: #57606a; }
-    .line    { fill: none; stroke: #1f2328; stroke-width: 1.5; }
-    .main, .shift, .title, .cap { fill: #1f2328; }
-    .main    { font-size: 52px; text-anchor: middle; }
-    .shift   { font-size: 26px; }
-    .title   { font-size: 46px; font-weight: 700; text-anchor: middle; }
-    .subtitle{ fill: #57606a; font-size: 27px; text-anchor: middle; }
-    .chip    { fill: #24292f; }
-    .pin     { fill: #8c959f; }
-    .chiptxt { fill: #ffffff; font-size: 14px; font-weight: 600; text-anchor: middle; }
-    .badge   { fill: #0969da; }
-    .badgetx { fill: #ffffff; font-size: 13px; font-weight: 700; text-anchor: middle; }
-    .glass   { fill: #24292f; stroke: #57606a; stroke-width: 1.5; }
-    .panel   { fill: #000000; }
-    .ledge   { fill: #57606a; }
-    .pixel   { fill: #ffffff; }
-    .ribbon  { fill: #d18b2c; }
-    .usb, .tab { fill: #d0d7de; stroke: #57606a; stroke-width: 1.5; }
-    .usbleg  { fill: #8c959f; }
-    .cell    { fill: #eaeef2; stroke: #d18b2c; stroke-width: 10; }
-    .label   { fill: #1f2328; font-size: 18px; font-weight: 600; text-anchor: middle; }
+    .badge    { fill: #0969da; }
+    .badgetx  { fill: #ffffff; font-size: 13px; font-weight: 700; text-anchor: middle; }
+    .board    { stroke-width: 2.5; fill: #ffffff; stroke: #57606a; }
+    .cap      { fill: #1f2328; }
+    .cell     { fill: #eaeef2; stroke: #d18b2c; stroke-width: 10; }
+    .chip     { fill: #24292f; }
+    .chiptxt  { fill: #ffffff; font-size: 14px; font-weight: 600; text-anchor: middle; }
+    .glass    { fill: #24292f; stroke: #57606a; stroke-width: 1.5; }
+    .hole     { fill: none; stroke-width: 2; stroke: #57606a; }
+    .label    { fill: #1f2328; font-size: 18px; font-weight: 600; text-anchor: middle; }
+    .ledge    { fill: #57606a; }
+    .line     { fill: none; stroke-width: 1.5; stroke: #1f2328; }
+    .main     { font-size: 52px; text-anchor: middle; fill: #1f2328; }
+    .overlay  { stroke-width: 2; fill: #ffffff; stroke: #57606a; }
+    .panel    { fill: #000000; }
+    .pin      { fill: #8c959f; }
+    .pixel    { fill: #ffffff; }
+    .ribbon   { fill: #d18b2c; }
+    .shift    { font-size: 26px; fill: #1f2328; }
+    .slot     { fill: none; stroke-width: 1.5; stroke: #57606a; }
+    .subtitle { font-size: 27px; text-anchor: middle; fill: #57606a; }
+    .tab      { fill: #d0d7de; stroke: #57606a; stroke-width: 1.5; }
+    .title    { font-size: 46px; font-weight: 700; text-anchor: middle; fill: #1f2328; }
+    .usb      { fill: #d0d7de; stroke: #57606a; stroke-width: 1.5; }
+    .usbleg   { fill: #8c959f; }
     @media (prefers-color-scheme: dark) {
-      .board, .overlay { fill: #0d1117; }
-      .board, .overlay, .hole, .slot { stroke: #8b949e; }
-      .line    { stroke: #e6edf3; }
-      .main, .shift, .title, .cap { fill: #e6edf3; }
-      .subtitle{ fill: #8b949e; }
-      .chip    { fill: #30363d; }
-      .pin     { fill: #6e7681; }
-      .badge   { fill: #2f81f7; }
+      .badge    { fill: #2f81f7; }
+      .board    { fill: #0d1117; stroke: #8b949e; }
+      .cap      { fill: #e6edf3; }
+      .chip     { fill: #30363d; }
+      .hole     { stroke: #8b949e; }
+      .line     { stroke: #e6edf3; }
+      .main     { fill: #e6edf3; }
+      .overlay  { fill: #0d1117; stroke: #8b949e; }
+      .pin      { fill: #6e7681; }
+      .shift    { fill: #e6edf3; }
+      .slot     { stroke: #8b949e; }
+      .subtitle { fill: #8b949e; }
+      .title    { fill: #e6edf3; }
     }
   </style>
   <defs>
@@ -100,7 +104,7 @@
   <text class="title" transform="rotate(-90 141 358)" x="141" y="358" textLength="330" lengthAdjust="spacingAndGlyphs">Business Card</text>
   <text class="subtitle" transform="rotate(-90 176 358)" x="176" y="358" textLength="330" lengthAdjust="spacingAndGlyphs">RPN Calculator with Watch</text>
 
-  <!-- (2) keyboard: main legend left of the key, shifted legend above it -->
+  <!-- (2) keyboard -->
   <path class="line" d="M215,200 H840 V520 H215 Z M375,200 V520 M535,200 V520 M695,200 V520 M215,280 H840 M215,360 H840 M215,440 H840"/>
   <use href="#key" x="295" y="250"/><text class="main" x="235" y="258">F</text><text class="shift" x="260" y="225">MATH</text>
   <use href="#key" x="455" y="250"/><text class="main" x="395" y="258">7</text><text class="shift" x="420" y="225">TRIG</text>

@@ -143,20 +143,7 @@ The device saves energy with two timeouts. Each key push starts the timeouts aga
 
 To turn on the device, push a key in one of the **two bottom rows**:
 
-<table>
-  <tr>
-    <td align="center"><kbd>±</kbd></td>
-    <td align="center"><kbd>1</kbd></td>
-    <td align="center"><kbd>2</kbd></td>
-    <td align="center"><kbd>3</kbd></td>
-  </tr>
-  <tr>
-    <td align="center"><kbd>C</kbd></td>
-    <td align="center"><kbd>0</kbd></td>
-    <td align="center"><kbd>.</kbd></td>
-    <td align="center"><kbd>↑</kbd></td>
-  </tr>
-</table>
+<img src="images/hp35-keyboard-power-on.svg" alt="Keyboard: the keys of the two bottom rows turn on the device (±, 1, 2, 3, C, 0, ., ↑)">
 
 The device always starts in watch mode.
 
@@ -219,32 +206,7 @@ Each key has two functions:
 - The **primary function** (large legend on the key). Push the key.
 - The **shifted function** (small legend above the key). Push <kbd>F</kbd>, then push the key.
 
-<table>
-  <tr>
-    <td align="center"><sub>MATH</sub><br><kbd>F</kbd></td>
-    <td align="center"><sub>TRIG</sub><br><kbd>7</kbd></td>
-    <td align="center"><sub>PROG</sub><br><kbd>8</kbd></td>
-    <td align="center"><sub>÷</sub><br><kbd>9</kbd></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>ROT↑</sub><br><kbd>E</kbd></td>
-    <td align="center"><sub>CONST</sub><br><kbd>4</kbd></td>
-    <td align="center"><sub>MEM+</sub><br><kbd>5</kbd></td>
-    <td align="center"><sub>×</sub><br><kbd>6</kbd></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>ROT↓</sub><br><kbd>±</kbd></td>
-    <td align="center"><sub>RCL</sub><br><kbd>1</kbd></td>
-    <td align="center"><sub>STO</sub><br><kbd>2</kbd></td>
-    <td align="center"><sub>−</sub><br><kbd>3</kbd></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>AC</sub><br><kbd>C</kbd></td>
-    <td align="center"><sub>LAST</sub><br><kbd>0</kbd></td>
-    <td align="center"><sub>X↔Y</sub><br><kbd>.</kbd></td>
-    <td align="center"><sub>+</sub><br><kbd>↑</kbd></td>
-  </tr>
-</table>
+<img src="images/hp35-keyboard.svg" alt="Keyboard, 4 x 4 keys. Rows of main legends: F 7 8 9, E 4 5 6, ± 1 2 3, C 0 . ↑. Rows of shifted legends: MATH TRIG PROG ÷, ROT↑ CONST MEM+ ×, ROT↓ RCL STO −, AC LAST X↔Y +">
 
 ### 6.2 Primary functions
 
@@ -288,13 +250,7 @@ Each key has two functions:
 
 The watch screen shows:
 
-```text
-+------------------------------------------------------+
-|            _   _     _   _          OCT 17/26        |
-|   | |_| .  _| | | . | | | |         ====             |
-|   |   | .  _| |_| . |_| |_|         HP-35            |
-+------------------------------------------------------+
-```
+<img src="images/hp35-screen-watch.svg" alt="Watch screen: 14:30:00, OCT 17/26, battery level, HP-35">
 
 | Item | Description |
 | --- | --- |
@@ -352,13 +308,7 @@ For more data about RPN, read the [HP-35 Operating Manual](hp35-om-en-remake.pdf
 
 The display shows the number in X with large digits. The exponent shows with small digits at the top right.
 
-```text
-+------------------------------------------------------+
-|      _     _   _   _           _   _   _   _   23    |  <- exponent
-|     |_    | |  _|  _|   | |_| | |   | |_  | |        |
-|     |_| . |_| |_  |_    |   | |_|   | |_| |_|        |
-+------------------------------------------------------+
-```
+<img src="images/hp35-screen-number.svg" alt="Calculator screen: 6.022140760, exponent 23">
 
 The example shows 6.022140760 × 10²³.
 
@@ -375,25 +325,13 @@ Indicators show on the right side of the display:
 | **F** (box with the letter F) | The <kbd>F</kbd> key is active. The next key does its shifted function. |
 | **S** (box with the letter S, from "Store") | The memory contains a value that is not zero. |
 
-```text
-+------------------------------------------------------+
-|      _                 _   _   _   _   _             |
-|      _|     | |_|   | |_  |_|  _| |_  |_  |_|        |
-|      _| .   |   |   |  _|  _| |_  |_|  _|   |   [S]  |
-+------------------------------------------------------+
-```
+<img src="images/hp35-screen-memory.svg" alt="Calculator screen: 3.141592654 and the S indicator">
 
 ### 8.4 Look at the Y register
 
 When you push <kbd>F</kbd>, the display changes:
 
-```text
-+------------------------------------------------------+
-|  12.5                                           [F]  |  <- Y
-|                                                      |
-|  3.                                             [S]  |  <- X
-+------------------------------------------------------+
-```
+<img src="images/hp35-screen-function.svg" alt="Calculator screen with F active: Y (12.5) on the top line, X (3.) on the bottom line, F and S indicators">
 
 - The top line shows **Y**.
 - The bottom line shows **X**.
@@ -426,14 +364,7 @@ The trigonometric functions use **degrees** only. This is the same as on the ori
 
 A menu shows on the bottom line of the display. The top line shows X with small digits. A menu has one or two lines of three items.
 
-```text
-+------------------------------------------------------+
-|  30.                                                 |  <- X
-|                                                      |
-| [ SIN  ]        [ COS  ]        [ TAN  ]             |  <- menu
-+------------------------------------------------------+
-      1                2               3
-```
+<img src="images/hp35-screen-menu.svg" alt="Calculator screen with a menu: X (30.) on the top line, the items SIN, COS and TAN on the bottom line">
 
 | Key | Function |
 | --- | --- |
@@ -563,13 +494,7 @@ The device stays in calculator mode.
 
 TOTP (Time-based One-Time Password, RFC 6238) is a 6-digit code for two-factor authentication. Many web sites and applications use it, as an authenticator application on a phone does. A new code shows each 30 seconds.
 
-```text
-+------------------------------------------------------+
-|      _   _   _       _   _   _              17       |  <- seconds left
-|      _| |_|   |     | | |_|  _|                      |
-|     |_  |_|   |     |_| |_| |_          [ TST1 ]     |  <- key label
-+------------------------------------------------------+
-```
+<img src="images/hp35-screen-totp.svg" alt="TOTP screen: code 287 082, 17 seconds left, key label TST1">
 
 The device keeps the keys in a keys area of 121 bytes. Each key uses 5 bytes plus the length of its secret. Thus, the number of keys is related to the length of the secrets:
 
@@ -790,32 +715,7 @@ Add 12.5, 7.25 and 30 in the memory.
 
 **Keyboard**
 
-<table>
-  <tr>
-    <td align="center"><sub>MATH</sub><br><kbd>F</kbd></td>
-    <td align="center"><sub>TRIG</sub><br><kbd>7</kbd></td>
-    <td align="center"><sub>PROG</sub><br><kbd>8</kbd></td>
-    <td align="center"><sub>÷</sub><br><kbd>9</kbd></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>ROT↑</sub><br><kbd>E</kbd></td>
-    <td align="center"><sub>CONST</sub><br><kbd>4</kbd></td>
-    <td align="center"><sub>MEM+</sub><br><kbd>5</kbd></td>
-    <td align="center"><sub>×</sub><br><kbd>6</kbd></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>ROT↓</sub><br><kbd>±</kbd></td>
-    <td align="center"><sub>RCL</sub><br><kbd>1</kbd></td>
-    <td align="center"><sub>STO</sub><br><kbd>2</kbd></td>
-    <td align="center"><sub>−</sub><br><kbd>3</kbd></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>AC</sub><br><kbd>C</kbd></td>
-    <td align="center"><sub>LAST</sub><br><kbd>0</kbd></td>
-    <td align="center"><sub>X↔Y</sub><br><kbd>.</kbd></td>
-    <td align="center"><sub>+</sub><br><kbd>↑</kbd></td>
-  </tr>
-</table>
+<img src="images/hp35-keyboard.svg" alt="Keyboard, 4 x 4 keys. Rows of main legends: F 7 8 9, E 4 5 6, ± 1 2 3, C 0 . ↑. Rows of shifted legends: MATH TRIG PROG ÷, ROT↑ CONST MEM+ ×, ROT↓ RCL STO −, AC LAST X↔Y +">
 
 **Menus**
 

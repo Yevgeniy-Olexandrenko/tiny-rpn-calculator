@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 748 164" width="748" height="164" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Calculator screen: pi, with the S indicator</title>
+  <style>
+    .glass    { fill: #24292f; stroke: #57606a; stroke-width: 1.5; }
+    .pixel    { fill: #ffffff; }
+  </style>
+  <rect class="glass" x="0" y="0" width="544" height="160" rx="8"/>
+  <path class="pixel" transform="translate(16 16) scale(4)" d="M9 1h5v1h-5zM49 1h5v1h-5zM57 1h5v1h-5zM65 1h5v1h-5zM73 1h5v1h-5zM81 1h5v1h-5zM14 2h1v13h-1zM30 2h1v13h-1zM32 2h1v13h-1zM38 2h1v13h-1zM46 2h1v13h-1zM48 2h1v13h-1zM56 2h1v13h-1zM62 2h1v13h-1zM70 2h1v13h-1zM72 2h1v13h-1zM80 2h1v13h-1zM88 2h1v13h-1zM94 2h1v13h-1zM9 15h5v1h-5zM33 15h5v1h-5zM49 15h5v1h-5zM57 15h5v1h-5zM65 15h5v1h-5zM73 15h5v1h-5zM81 15h5v1h-5zM89 15h5v1h-5zM14 16h1v13h-1zM30 16h1v13h-1zM38 16h1v13h-1zM46 16h1v13h-1zM54 16h1v13h-1zM62 16h1v13h-1zM64 16h1v13h-1zM72 16h1v13h-1zM78 16h1v13h-1zM86 16h1v13h-1zM94 16h1v13h-1zM121 17h7v1h-7zM121 18h2v1h-2zM127 18h1v2h-1zM121 19h1v4h-1zM124 20h4v2h-4zM126 22h2v1h-2zM121 23h2v1h-2zM127 23h1v5h-1zM121 24h4v3h-4zM18 26h3v3h-3zM121 27h1v2h-1zM126 28h2v1h-2zM9 29h5v1h-5zM49 29h5v1h-5zM57 29h5v1h-5zM65 29h5v1h-5zM73 29h5v1h-5zM81 29h5v1h-5zM121 29h7v1h-7z"/>
+</svg>

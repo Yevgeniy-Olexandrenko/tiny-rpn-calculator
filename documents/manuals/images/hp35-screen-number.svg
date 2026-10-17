@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 748 164" width="748" height="164" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Calculator screen: 6.022140760 x 10^23</title>
+  <style>
+    .glass    { fill: #24292f; stroke: #57606a; stroke-width: 1.5; }
+    .note     { font-size: 22px; fill: #1f2328; }
+    .pixel    { fill: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      .note     { fill: #e6edf3; }
+    }
+  </style>
+  <rect class="glass" x="0" y="0" width="544" height="160" rx="8"/>
+  <path class="pixel" transform="translate(16 16) scale(4)" d="M9 1h5v1h-5zM25 1h5v1h-5zM33 1h5v1h-5zM41 1h5v1h-5zM65 1h5v1h-5zM73 1h5v1h-5zM81 1h5v1h-5zM89 1h5v1h-5zM105 1h5v1h-5zM113 1h5v1h-5zM8 2h1v13h-1zM24 2h1v13h-1zM30 2h1v13h-1zM38 2h1v13h-1zM46 2h1v13h-1zM54 2h1v13h-1zM56 2h1v13h-1zM62 2h1v13h-1zM64 2h1v13h-1zM70 2h1v13h-1zM78 2h1v13h-1zM80 2h1v13h-1zM88 2h1v13h-1zM94 2h1v13h-1zM110 2h1v5h-1zM118 2h1v5h-1zM105 7h5v1h-5zM113 7h5v1h-5zM104 8h1v5h-1zM118 8h1v5h-1zM105 13h5v1h-5zM113 13h5v1h-5zM9 15h5v1h-5zM33 15h5v1h-5zM41 15h5v1h-5zM57 15h5v1h-5zM81 15h5v1h-5zM8 16h1v13h-1zM14 16h1v13h-1zM24 16h1v13h-1zM30 16h1v13h-1zM32 16h1v13h-1zM40 16h1v13h-1zM54 16h1v13h-1zM62 16h1v13h-1zM64 16h1v13h-1zM70 16h1v13h-1zM78 16h1v13h-1zM80 16h1v13h-1zM86 16h1v13h-1zM88 16h1v13h-1zM94 16h1v13h-1zM18 26h3v3h-3zM9 29h5v1h-5zM25 29h5v1h-5zM33 29h5v1h-5zM41 29h5v1h-5zM65 29h5v1h-5zM81 29h5v1h-5zM89 29h5v1h-5z"/>
+  <text class="note" x="558" y="54">← exponent</text>
+</svg>

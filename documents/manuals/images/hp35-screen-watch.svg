@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 748 164" width="748" height="164" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Watch screen: 14:30:00, OCT 17/26, battery level, HP-35</title>
+  <style>
+    .glass    { fill: #24292f; stroke: #57606a; stroke-width: 1.5; }
+    .pixel    { fill: #ffffff; }
+  </style>
+  <rect class="glass" x="0" y="0" width="544" height="160" rx="8"/>
+  <path class="pixel" transform="translate(16 16) scale(4)" d="M25 1h5v1h-5zM33 1h5v1h-5zM49 1h5v1h-5zM57 1h5v1h-5zM72 1h5v1h-5zM78 1h5v1h-5zM84 1h5v1h-5zM98 1h2v1h-2zM103 1h5v1h-5zM115 1h5v1h-5zM121 1h5v1h-5zM6 2h1v13h-1zM8 2h1v13h-1zM14 2h1v13h-1zM30 2h1v13h-1zM32 2h1v13h-1zM38 2h1v13h-1zM48 2h1v13h-1zM54 2h1v13h-1zM56 2h1v13h-1zM62 2h1v13h-1zM72 2h1v4h-1zM76 2h1v4h-1zM78 2h1v4h-1zM86 2h1v5h-1zM99 2h1v5h-1zM103 2h1v1h-1zM107 2h1v5h-1zM113 2h1v1h-1zM119 2h1v2h-1zM121 2h1v1h-1zM112 3h1v1h-1zM121 3h5v1h-5zM111 4h1v1h-1zM115 4h5v1h-5zM121 4h1v2h-1zM125 4h1v2h-1zM110 5h1v1h-1zM115 5h1v1h-1zM72 6h5v1h-5zM78 6h5v1h-5zM109 6h1v1h-1zM115 6h5v1h-5zM121 6h5v1h-5zM18 8h3v3h-3zM42 8h3v3h-3zM72 11h10v1h-10zM83 11h10v1h-10zM94 11h10v1h-10zM105 11h10v1h-10zM9 15h5v1h-5zM25 15h5v1h-5zM6 16h1v13h-1zM14 16h1v13h-1zM30 16h1v13h-1zM32 16h1v13h-1zM38 16h1v13h-1zM48 16h1v13h-1zM54 16h1v13h-1zM56 16h1v13h-1zM62 16h1v13h-1zM72 17h2v2h-2zM80 17h2v2h-2zM83 17h10v1h-10zM105 17h10v1h-10zM116 17h10v1h-10zM83 18h2v2h-2zM91 18h2v2h-2zM113 18h2v1h-2zM116 18h2v1h-2zM72 19h10v1h-10zM94 19h10v1h-10zM107 19h8v1h-8zM116 19h10v1h-10zM18 20h3v3h-3zM42 20h3v3h-3zM72 20h2v3h-2zM80 20h2v3h-2zM83 20h10v1h-10zM113 20h2v2h-2zM124 20h2v2h-2zM83 21h2v2h-2zM105 22h10v1h-10zM116 22h10v1h-10zM25 29h5v1h-5zM33 29h5v1h-5zM49 29h5v1h-5zM57 29h5v1h-5z"/>
+</svg>
