@@ -24,15 +24,13 @@
 
 </details>
 
----
-
 ## 1. About this manual
 
 This manual tells you how to use the Tiny RPN Calculator with the HP-35 firmware on PCB rev 1.5.
 
 The firmware is an emulator. It runs the original ROM of the HP-35 calculator (1972) on a virtual copy of the HP CPU. Thus, the calculations and the results are the same as on the original HP-35.
 
-This manual does not tell you all about RPN and the HP-35 functions. For more data, read the original manual:
+This manual does not tell you all about RPN and the HP-35 functions. For more data, read these documents:
 
 - [HP-35 Operating Manual](hp35-om-en-remake.pdf)
 - [HP-35 firmware description](../firmware/firmware-calculator-hp35.md)
@@ -51,14 +49,12 @@ The text uses these symbols:
 > [!WARNING]
 > A risk of injury or damage to the device.
 
-In this manual, <kbd>F</kbd>&nbsp;<kbd>9</kbd> means: push the <kbd>F</kbd> key, release it, then push the <kbd>9</kbd> key.
-
----
+In this manual, <kbd>F</kbd> <kbd>9</kbd> means: push the <kbd>F</kbd> key, release it, then push the <kbd>9</kbd> key.
 
 ## 2. Safety
 
 > [!WARNING]
-> The device has a lithium-polymer (LiPo) battery.
+> The device has a rechargeable lithium battery.
 > - Do not bend the PCB. A bent PCB can damage the battery.
 > - Do not puncture, crush or heat the battery.
 > - If the battery becomes swollen or hot, disconnect the USB cable immediately. Do not use the device again.
@@ -70,11 +66,9 @@ In this manual, <kbd>F</kbd>&nbsp;<kbd>9</kbd> means: push the <kbd>F</kbd> key,
 > - Do not touch the parts with wet hands.
 
 > [!CAUTION]
-> On PCB rev 1.5, the VCC line connects directly to the battery (there is no voltage regulator).
+> On PCB rev 1.5, the VCC line connects directly to the battery. There is no voltage regulator.
 > - Do not supply 5 V from the ICSP programmer when the battery is connected. Use a programmer that does not supply power, or set it to 3.3 V.
 > - Do not connect the ICSP programmer and the USB cable at the same time.
-
----
 
 ## 3. Device description
 
@@ -86,15 +80,13 @@ The device has the size of a credit card. It has these primary parts:
 | Display | OLED, SSD1306, 128 × 32 pixels | Shows numbers, menus, time and codes |
 | Real-time clock | DS3231M | Keeps the time and the date |
 | Keyboard | 16 keys, 4 × 4 | Input |
-| Battery | LiPo, 3.7 V, with protection IC XB5358D0 | Supplies power |
+| Battery | Rechargeable lithium battery, with protection IC XB5358D0 | Supplies power |
 | Charger | MCP73832, USB-C connector | Charges the battery (15 mA) |
 | ICSP connector | 6 pins | Programs the microcontroller |
 | `POWER` jumper | Solder jumper | Connects the battery to the circuit |
 
 > [!NOTE]
-> The device has no ON/OFF switch. The firmware turns the device off automatically (refer to [4.3](#43-automatic-power-off)).
-
----
+> The device has no ON/OFF switch. The firmware turns the device off automatically (refer to [4.3](#43-automatic-power-off-and-power-on)).
 
 ## 4. Power and battery
 
@@ -118,32 +110,43 @@ The watch screen shows the battery level as 0 to 5 bars.
 
 | Bars | Battery voltage (approximate) | Action |
 | :---: | --- | --- |
-| `=====` | 4.0 V or more | — |
-| `====` | 3.9 V | — |
-| `===` | 3.8 V | — |
-| `==` | 3.7 V | Charge the battery soon |
-| `=` | 3.6 V | Charge the battery |
+| `=====` | 4.05 V or more | — |
+| `====` | 3.92 V to 4.04 V | — |
+| `===` | 3.80 V to 3.91 V | — |
+| `==` | 3.68 V to 3.79 V | Charge the battery soon |
+| `=` | 3.56 V to 3.67 V | Charge the battery |
 | *(none)* | less than 3.56 V | Charge the battery immediately |
 
-### 4.3 Automatic power-off
+### 4.3 Automatic power-off and power-on
 
-The device saves energy with these two timeouts. Each key push starts the timeouts again.
-
-```mermaid
-flowchart LR
-    A["Key push"] -->|10 s, no key| B["Display becomes dim"]
-    B -->|20 s, no key| C["Device turns off"]
-    C -->|"Key push or USB connection"| D["Watch screen"]
-```
+The device saves energy with two timeouts. Each key push starts the timeouts again.
 
 | Time after the last key push | Result |
 | --- | --- |
 | 10 s | The display becomes dim (calculator mode only). |
 | 20 s | The device turns off (all modes). |
 
-To turn on the device, push a key. The device always starts in watch mode.
+To turn on the device, push a key in one of the **two bottom rows**:
+
+<table>
+  <tr>
+    <td align="center"><kbd>±</kbd></td>
+    <td align="center"><kbd>1</kbd></td>
+    <td align="center"><kbd>2</kbd></td>
+    <td align="center"><kbd>3</kbd></td>
+  </tr>
+  <tr>
+    <td align="center"><kbd>C</kbd></td>
+    <td align="center"><kbd>0</kbd></td>
+    <td align="center"><kbd>.</kbd></td>
+    <td align="center"><kbd>↑</kbd></td>
+  </tr>
+</table>
+
+The device always starts in watch mode.
 
 > [!IMPORTANT]
+> - The keys in the two top rows (<kbd>F</kbd> <kbd>7</kbd> <kbd>8</kbd> <kbd>9</kbd> and <kbd>E</kbd> <kbd>4</kbd> <kbd>5</kbd> <kbd>6</kbd>) do not turn on the device. The voltage from these keys is too low to start the microcontroller.
 > - The key that turns on the device does not do an operation.
 > - When the device is off, the calculator keeps the stack (X, Y, Z, T) and the memory. When you go back to calculator mode, you can continue your calculation.
 
@@ -153,7 +156,7 @@ If the battery voltage is 3.5 V or less, the device does not turn on. This preve
 
 1. Connect the USB cable.
 2. Let the battery charge for some minutes.
-3. Push a key to turn on the device.
+3. Push a key in one of the two bottom rows to turn on the device.
 
 ### 4.5 POWER jumper and reset
 
@@ -162,12 +165,10 @@ The `POWER` jumper connects the battery to the circuit. The real-time clock gets
 > [!IMPORTANT]
 > If the power is fully removed (open `POWER` jumper, fully discharged battery or a new firmware), the firmware does a reset:
 > - The clock is set to the time when the firmware was compiled.
-> - The time zone is set to the default value (GMT+3).
+> - The time zone is set to the default value (UTC+3).
 > - The calculator stack and memory are cleared.
 >
 > After a reset, set the time and the date again (refer to [10](#10-set-the-time-the-date-and-the-time-zone)).
-
----
 
 ## 5. Operating modes
 
@@ -179,114 +180,105 @@ The firmware has three operating modes:
 | **TOTP** | 6-digit code, seconds, key label | Shows one-time passwords for two-factor authentication. |
 | **Calculator** | Number in X, menus | HP-35 calculator. |
 
-```mermaid
-stateDiagram-v2
-    direction LR
-    [*] --> Watch : key push / USB
-    Watch --> TOTP : F
-    Watch --> Calculator : other key
-    TOTP --> TOTP : EEX / CHS (select key)
-    TOTP --> Calculator : other key
-    Calculator --> TOTP : F 8, CHS, 1 (TOTP)
-    Calculator --> Watch : F 8, then TIME or DATE
-    Watch --> [*] : 20 s, no key
-    TOTP --> [*] : 20 s, no key
-    Calculator --> [*] : 20 s, no key
-```
+To change the mode, use these keys:
+
+| Current mode | Keys | New mode |
+| --- | --- | --- |
+| Device is off | A key in the two bottom rows, or USB connection | Watch |
+| Watch | <kbd>F</kbd> | TOTP |
+| Watch | Other keys | Calculator |
+| TOTP | <kbd>E</kbd> or <kbd>±</kbd> | TOTP (previous or next key) |
+| TOTP | Other keys | Calculator |
+| Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>±</kbd> <kbd>1</kbd> (<kbd>TOTP</kbd>) | TOTP |
+| Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>1</kbd> (<kbd>TIME</kbd>) or <kbd>2</kbd> (<kbd>DATE</kbd>) | Watch |
+| All modes | No key for 20 s | Device is off |
 
 > [!NOTE]
 > If there are no TOTP keys in the device, <kbd>F</kbd> in watch mode opens calculator mode.
-
----
 
 ## 6. Keyboard
 
 ### 6.1 Key layout
 
 Each key has two functions:
-- The **primary function** (large legend). Push the key.
-- The **shifted function** (small legend). Push <kbd>F</kbd>, then push the key.
+- The **primary function** (large legend on the key). Push the key.
+- The **shifted function** (small legend above the key). Push <kbd>F</kbd>, then push the key.
 
 <table>
   <tr>
-    <td align="center"><kbd>F</kbd><br><sub>MATH</sub></td>
-    <td align="center"><kbd>7</kbd><br><sub>TRIG</sub></td>
-    <td align="center"><kbd>8</kbd><br><sub>PROG</sub></td>
-    <td align="center"><kbd>9</kbd><br><sub>÷</sub></td>
+    <td align="center"><sub>MATH</sub><br><kbd>F</kbd></td>
+    <td align="center"><sub>TRIG</sub><br><kbd>7</kbd></td>
+    <td align="center"><sub>PROG</sub><br><kbd>8</kbd></td>
+    <td align="center"><sub>÷</sub><br><kbd>9</kbd></td>
   </tr>
   <tr>
-    <td align="center"><kbd>EEX</kbd><br><sub>ROT↑</sub></td>
-    <td align="center"><kbd>4</kbd><br><sub>π</sub></td>
-    <td align="center"><kbd>5</kbd><br><sub>M+</sub></td>
-    <td align="center"><kbd>6</kbd><br><sub>×</sub></td>
+    <td align="center"><sub>ROT↑</sub><br><kbd>E</kbd></td>
+    <td align="center"><sub>CONST</sub><br><kbd>4</kbd></td>
+    <td align="center"><sub>MEM+</sub><br><kbd>5</kbd></td>
+    <td align="center"><sub>×</sub><br><kbd>6</kbd></td>
   </tr>
   <tr>
-    <td align="center"><kbd>CHS</kbd><br><sub>ROT↓</sub></td>
-    <td align="center"><kbd>1</kbd><br><sub>RCL</sub></td>
-    <td align="center"><kbd>2</kbd><br><sub>STO</sub></td>
-    <td align="center"><kbd>3</kbd><br><sub>−</sub></td>
+    <td align="center"><sub>ROT↓</sub><br><kbd>±</kbd></td>
+    <td align="center"><sub>RCL</sub><br><kbd>1</kbd></td>
+    <td align="center"><sub>STO</sub><br><kbd>2</kbd></td>
+    <td align="center"><sub>−</sub><br><kbd>3</kbd></td>
   </tr>
   <tr>
-    <td align="center"><kbd>CLX</kbd><br><sub>CLR</sub></td>
-    <td align="center"><kbd>0</kbd><br><sub>LAST</sub></td>
-    <td align="center"><kbd>.</kbd><br><sub>X↔Y</sub></td>
-    <td align="center"><kbd>ENTER↑</kbd><br><sub>+</sub></td>
+    <td align="center"><sub>AC</sub><br><kbd>C</kbd></td>
+    <td align="center"><sub>LAST</sub><br><kbd>0</kbd></td>
+    <td align="center"><sub>X↔Y</sub><br><kbd>.</kbd></td>
+    <td align="center"><sub>+</sub><br><kbd>↑</kbd></td>
   </tr>
 </table>
-
-> [!NOTE]
-> The legends on your keyboard can be different. The positions of the functions are always as shown above.
 
 ### 6.2 Primary functions
 
 | Key | HP-35 key | Function |
 | --- | --- | --- |
-| <kbd>0</kbd> … <kbd>9</kbd> | `0` … `9` | Enter a digit |
-| <kbd>.</kbd> | `.` | Enter the decimal point |
-| <kbd>ENTER↑</kbd> | `ENTER↑` | Copy X to Y and lift the stack |
-| <kbd>CLX</kbd> | `CLx` | Clear the X register |
-| <kbd>CHS</kbd> | `CHS` | Change the sign of the number or of the exponent |
-| <kbd>EEX</kbd> | `EEX` | Enter an exponent |
+| <kbd>0</kbd> … <kbd>9</kbd> | <kbd>0</kbd> … <kbd>9</kbd> | Enter a digit |
+| <kbd>.</kbd> | <kbd>.</kbd> | Enter the decimal point |
+| <kbd>↑</kbd> | <kbd>ENTER↑</kbd> | Copy X to Y and lift the stack |
+| <kbd>C</kbd> | <kbd>CLx</kbd> | Clear the X register |
+| <kbd>±</kbd> | <kbd>CHS</kbd> | Change the sign of the number or of the exponent |
+| <kbd>E</kbd> | <kbd>EEX</kbd> | Enter an exponent |
 | <kbd>F</kbd> | — | Select the shifted function of the next key |
 
 ### 6.3 Shifted functions
 
-| Keys | HP-35 key | Function |
-| --- | --- | --- |
-| <kbd>F</kbd>&nbsp;<kbd>9</kbd> | `÷` | Y ÷ X |
-| <kbd>F</kbd>&nbsp;<kbd>6</kbd> | `×` | Y × X |
-| <kbd>F</kbd>&nbsp;<kbd>3</kbd> | `−` | Y − X |
-| <kbd>F</kbd>&nbsp;<kbd>ENTER↑</kbd> | `+` | Y + X |
-| <kbd>F</kbd>&nbsp;<kbd>.</kbd> | `x↔y` | Exchange X and Y |
-| <kbd>F</kbd>&nbsp;<kbd>CHS</kbd> | `R↓` | Roll the stack down |
-| <kbd>F</kbd>&nbsp;<kbd>EEX</kbd> | — | **Extension.** Roll the stack up |
-| <kbd>F</kbd>&nbsp;<kbd>CLX</kbd> | `CLR` | Clear the stack (X, Y, Z, T) |
-| <kbd>F</kbd>&nbsp;<kbd>2</kbd> | `STO` | Copy X to the memory |
-| <kbd>F</kbd>&nbsp;<kbd>1</kbd> | `RCL` | Copy the memory to X |
-| <kbd>F</kbd>&nbsp;<kbd>5</kbd> | — | **Extension.** Add X to the memory (M+) |
-| <kbd>F</kbd>&nbsp;<kbd>4</kbd> | `π` | Enter π |
-| <kbd>F</kbd>&nbsp;<kbd>0</kbd> | — | **Extension.** Do the last menu operation again (LAST) |
-| <kbd>F</kbd>&nbsp;<kbd>F</kbd> | — | Open the MATH menu |
-| <kbd>F</kbd>&nbsp;<kbd>7</kbd> | — | Open the TRIG menu |
-| <kbd>F</kbd>&nbsp;<kbd>8</kbd> | — | Open the PROG menu |
+| Keys | Legend | HP-35 key | Function |
+| --- | --- | --- | --- |
+| <kbd>F</kbd> <kbd>9</kbd> | ÷ | <kbd>÷</kbd> | Y ÷ X |
+| <kbd>F</kbd> <kbd>6</kbd> | × | <kbd>×</kbd> | Y × X |
+| <kbd>F</kbd> <kbd>3</kbd> | − | <kbd>−</kbd> | Y − X |
+| <kbd>F</kbd> <kbd>↑</kbd> | + | <kbd>+</kbd> | Y + X |
+| <kbd>F</kbd> <kbd>.</kbd> | X↔Y | <kbd>x↔y</kbd> | Exchange X and Y |
+| <kbd>F</kbd> <kbd>±</kbd> | ROT↓ | <kbd>R↓</kbd> | Roll the stack down |
+| <kbd>F</kbd> <kbd>E</kbd> | ROT↑ | — | **Extension.** Roll the stack up |
+| <kbd>F</kbd> <kbd>C</kbd> | AC | <kbd>CLR</kbd> | Clear the stack (X, Y, Z, T) |
+| <kbd>F</kbd> <kbd>2</kbd> | STO | <kbd>STO</kbd> | Copy X to the memory |
+| <kbd>F</kbd> <kbd>1</kbd> | RCL | <kbd>RCL</kbd> | Copy the memory to X |
+| <kbd>F</kbd> <kbd>5</kbd> | MEM+ | — | **Extension.** Add X to the memory |
+| <kbd>F</kbd> <kbd>4</kbd> | CONST | <kbd>π</kbd> | Enter π |
+| <kbd>F</kbd> <kbd>0</kbd> | LAST | — | **Extension.** Do the last menu operation again |
+| <kbd>F</kbd> <kbd>F</kbd> | MATH | — | Open the MATH menu |
+| <kbd>F</kbd> <kbd>7</kbd> | TRIG | — | Open the TRIG menu |
+| <kbd>F</kbd> <kbd>8</kbd> | PROG | — | Open the PROG menu |
 
 > [!NOTE]
-> - **M+** keeps the value in X. The T register gets the new memory value. The old value of T is lost.
-> - **LAST** does nothing if you did not use a menu operation before.
-> - <kbd>F</kbd>&nbsp;<kbd>CLX</kbd> does not clear the memory. To clear the memory, push <kbd>CLX</kbd>&nbsp;<kbd>F</kbd>&nbsp;<kbd>2</kbd>.
-
----
+> - **MEM+** keeps the value in X. The T register gets the new memory value. The old value of T is lost.
+> - **LAST** repeats only an operation that you selected in a menu (MATH, TRIG or PROG). It does not repeat the operations of the keyboard, for example <kbd>F</kbd> <kbd>↑</kbd> (+). If you did not use a menu operation before, LAST does nothing.
+> - <kbd>F</kbd> <kbd>C</kbd> (AC) does not clear the memory. To clear the memory, push <kbd>C</kbd> <kbd>F</kbd> <kbd>2</kbd> (STO).
 
 ## 7. Watch mode
 
 The watch screen shows:
 
-```
-┌────────────────────────────────────────────┐
-│  ▐█▌▐█▌ : ▐█▌▐█▌ : ▐█▌▐█▌    OCT 17/26      │
-│                               ====          │
-│  (hours) (minutes)(seconds)   HP-35         │
-└────────────────────────────────────────────┘
+```text
+┌──────────────────────────────────────────────────────┐
+│            _   _     _   _          OCT 17/26        │
+│   | |_| .  _| | | . | | | |         ====             │
+│   |   | .  _| |_| . |_| |_|         HP-35            │
+└──────────────────────────────────────────────────────┘
 ```
 
 | Item | Description |
@@ -303,8 +295,6 @@ In watch mode, the display is always dim.
 | <kbd>F</kbd> | Opens TOTP mode (if the device has TOTP keys). |
 | Other keys | Open calculator mode. The key does not do an operation. |
 
----
-
 ## 8. Calculator mode
 
 ### 8.1 RPN in short
@@ -315,19 +305,24 @@ The stack has four registers: **X**, **Y**, **Z** and **T**. The display shows X
 
 | To calculate | Push |
 | --- | --- |
-| 3 + 4 | <kbd>3</kbd> <kbd>ENTER↑</kbd> <kbd>4</kbd> <kbd>F</kbd>&nbsp;<kbd>ENTER↑</kbd> |
-| (3 + 4) × 5 | <kbd>3</kbd> <kbd>ENTER↑</kbd> <kbd>4</kbd> <kbd>F</kbd>&nbsp;<kbd>ENTER↑</kbd> <kbd>5</kbd> <kbd>F</kbd>&nbsp;<kbd>6</kbd> |
+| 3 + 4 | <kbd>3</kbd> <kbd>↑</kbd> <kbd>4</kbd> <kbd>F</kbd> <kbd>↑</kbd> |
+| (3 + 4) × 5 | <kbd>3</kbd> <kbd>↑</kbd> <kbd>4</kbd> <kbd>F</kbd> <kbd>↑</kbd> <kbd>5</kbd> <kbd>F</kbd> <kbd>6</kbd> |
 
 For more data about RPN, read the [HP-35 Operating Manual](hp35-om-en-remake.pdf).
 
 ### 8.2 Display
 
-The display shows the number in X with large digits:
+The display shows the number in X with large digits. The exponent shows with small digits at the top right.
 
+```text
+┌──────────────────────────────────────────────────────┐
+│      _     _   _   _           _   _   _   _   23    │  <- exponent
+│     |_    | |  _|  _|   | |_| | |   | |_  | |        │
+│     |_| . |_| |_  |_    |   | |_|   | |_| |_|        │
+└──────────────────────────────────────────────────────┘
 ```
- -1.234567890   -12
- └── mantissa ──┘ └ exponent (small digits)
-```
+
+The example shows 6.022140760 × 10²³.
 
 - The mantissa has a sign and up to 10 digits.
 - The exponent has a sign and 2 digits.
@@ -339,99 +334,118 @@ Indicators show on the right side of the display:
 
 | Indicator | Meaning |
 | --- | --- |
-| **F** (box with "F") | The <kbd>F</kbd> key is active. The next key does its shifted function. |
-| **M** (box with "M") | The memory contains a value that is not zero. |
+| **F** (box with the letter F) | The <kbd>F</kbd> key is active. The next key does its shifted function. |
+| **S** (box with the letter S, from "Store") | The memory contains a value that is not zero. |
+
+```text
+┌──────────────────────────────────────────────────────┐
+│      _                 _   _   _   _   _             │
+│      _|     | |_|   | |_  |_|  _| |_  |_  |_|        │
+│      _| .   |   |   |  _|  _| |_  |_|  _|   |   [S]  │
+└──────────────────────────────────────────────────────┘
+```
 
 ### 8.4 Look at the Y register
 
 When you push <kbd>F</kbd>, the display changes:
 
-```
-┌──────────────────────────────┐
-│ Y:   12.5                 [F]│
-│ X:   3.                   [M]│
-└──────────────────────────────┘
+```text
+┌──────────────────────────────────────────────────────┐
+│  12.5                                           [F]  │  <- Y
+│                                                      │
+│  3.                                             [S]  │  <- X
+└──────────────────────────────────────────────────────┘
 ```
 
 - The top line shows **Y**.
 - The bottom line shows **X**.
+- The digits are small.
 
 > [!TIP]
 > Push <kbd>F</kbd> to look at Y before a two-number operation. Then push the operation key.
 
 > [!NOTE]
-> You cannot cancel <kbd>F</kbd>. The next key always does its shifted function. If you pushed <kbd>F</kbd> by mistake, push <kbd>F</kbd>&nbsp;<kbd>F</kbd> (opens the MATH menu), then push <kbd>CLX</kbd> or another key to close the menu (refer to [9.1](#91-use-a-menu)). <kbd>CLX</kbd> in a menu does not clear X.
+> You cannot cancel <kbd>F</kbd>. The next key always does its shifted function. If you pushed <kbd>F</kbd> by mistake, push <kbd>F</kbd> again (this opens the MATH menu). Then push <kbd>C</kbd> to close the menu. In a menu, <kbd>C</kbd> does not clear X (refer to [9.1](#91-use-a-menu)).
 
 ### 8.5 Errors
 
-An incorrect operation (for example, 1 ÷ 0 or √ of a negative number) causes an error. The display flashes.
+These operations are not possible:
 
-To stop the error, push <kbd>CLX</kbd>.
+- Division by zero.
+- Square root of a negative number.
+- <kbd>LN</kbd>, <kbd>LOG</kbd> or <kbd>xʸ</kbd> when X is zero or negative.
+- <kbd>ASIN</kbd> or <kbd>ACOS</kbd> when X is more than 1 or less than −1.
+
+If you try one of these operations, a flashing zero shows. To stop the error, push <kbd>C</kbd>.
 
 ### 8.6 Angles
 
 The trigonometric functions use **degrees** only. This is the same as on the original HP-35.
 
----
-
 ## 9. Menus
 
 ### 9.1 Use a menu
 
-A menu shows on the bottom line of the display. The top line shows X. A menu has one or two lines of three items.
+A menu shows on the bottom line of the display. The top line shows X with small digits. A menu has one or two lines of three items.
 
-```
-┌──────────────────────────────┐
-│      1.5707963               │
-│ ▌ SIN ▐  ▌ COS ▐  ▌ TAN ▐    │
-└──────────────────────────────┘
-     [1]      [2]      [3]
+```text
+┌──────────────────────────────────────────────────────┐
+│  30.                                                 │  <- X
+│                                                      │
+│ [ SIN  ]        [ COS  ]        [ TAN  ]             │  <- menu
+└──────────────────────────────────────────────────────┘
+      1                2               3
 ```
 
 | Key | Function |
 | --- | --- |
 | <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> | Do the left, the middle or the right item |
-| <kbd>EEX</kbd> | Show the previous line of the menu |
-| <kbd>CHS</kbd> | Show the next line of the menu |
+| <kbd>E</kbd> | Show the previous line of the menu |
+| <kbd>±</kbd> | Show the next line of the menu |
 | <kbd>F</kbd> | Open the MATH menu |
 | <kbd>7</kbd> | Open the TRIG menu |
 | <kbd>8</kbd> | Open the PROG menu |
 | Other keys | Close the menu. No operation occurs. |
 
 > [!TIP]
-> To do the same menu operation again, push <kbd>F</kbd>&nbsp;<kbd>0</kbd> (LAST). You do not need to open the menu again.
+> To do the same menu operation again, push <kbd>F</kbd> <kbd>0</kbd> (LAST). You do not need to open the menu again.
 
-### 9.2 MATH menu — <kbd>F</kbd>&nbsp;<kbd>F</kbd>
+### 9.2 MATH menu: <kbd>F</kbd> <kbd>F</kbd>
 
 | Line | <kbd>1</kbd> | <kbd>2</kbd> | <kbd>3</kbd> |
 | :---: | --- | --- | --- |
-| 1 | `xʸ` — Y to the power X | `√x` — square root of X | `1/x` — reciprocal of X |
-| 2 | `LOG` — common logarithm of X | `LN` — natural logarithm of X | `eˣ` — e to the power X |
+| 1 | <kbd>xʸ</kbd> X to the power Y | <kbd>√x</kbd> square root of X | <kbd>1/x</kbd> reciprocal of X |
+| 2 | <kbd>LOG</kbd> common logarithm of X | <kbd>LN</kbd> natural logarithm of X | <kbd>eˣ</kbd> e to the power X |
 
 > [!IMPORTANT]
-> `xʸ` uses the HP-35 order: enter the base first, then the power. For example, 2³: <kbd>2</kbd> <kbd>ENTER↑</kbd> <kbd>3</kbd>, then `xʸ`. The base must be positive.
+> <kbd>xʸ</kbd> calculates **X to the power Y**. This is the order of the original HP-35:
+> 1. Enter the power. Push <kbd>↑</kbd> to move it to Y.
+> 2. Enter the number. It stays in X.
+> 3. Do <kbd>xʸ</kbd>.
+>
+> For example, 2⁷ = 128: push <kbd>7</kbd> <kbd>↑</kbd> <kbd>2</kbd>, then <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (<kbd>xʸ</kbd>).
+>
+> The number in X must be more than zero. The power in Y can be any number. The result is not always exact in the last digit, because the HP-35 uses logarithms for this calculation.
 
-### 9.3 TRIG menu — <kbd>F</kbd>&nbsp;<kbd>7</kbd>
+### 9.3 TRIG menu: <kbd>F</kbd> <kbd>7</kbd>
 
 | Line | <kbd>1</kbd> | <kbd>2</kbd> | <kbd>3</kbd> |
 | :---: | --- | --- | --- |
-| 1 | `SIN` — sine | `COS` — cosine | `TAN` — tangent |
-| 2 | `ASIN` — arc sine | `ACOS` — arc cosine | `ATAN` — arc tangent |
+| 1 | <kbd>SIN</kbd> sine | <kbd>COS</kbd> cosine | <kbd>TAN</kbd> tangent |
+| 2 | <kbd>ASIN</kbd> arc sine | <kbd>ACOS</kbd> arc cosine | <kbd>ATAN</kbd> arc tangent |
 
-### 9.4 PROG menu — <kbd>F</kbd>&nbsp;<kbd>8</kbd>
+### 9.4 PROG menu: <kbd>F</kbd> <kbd>8</kbd>
 
 | Line | <kbd>1</kbd> | <kbd>2</kbd> | <kbd>3</kbd> |
 | :---: | --- | --- | --- |
-| 1 | `TIME` — set the time | `DATE` — set the date | `ZONE` — set the time zone |
-| 2 | `TOTP` — show TOTP codes | — | — |
-
----
+| 1 | <kbd>TIME</kbd> set the time | <kbd>DATE</kbd> set the date | <kbd>ZONE</kbd> set the time zone |
+| 2 | <kbd>TOTP</kbd> show TOTP codes | — | — |
 
 ## 10. Set the time, the date and the time zone
 
 > [!IMPORTANT]
 > - Enter **positive whole numbers** only. Do not enter a decimal fraction or an exponent.
-> - If a value is not correct, the operation does not change the clock. The calculator shows an error and **clears the stack**. Push <kbd>CLX</kbd> and do the procedure again.
+> - If a value is not correct, the operation does not change the clock. The calculator shows an error and **clears the stack**. Push <kbd>C</kbd> and do the procedure again.
 > - If the values are correct, the operation removes them from the stack. Then the device shows the watch screen.
 
 ### 10.1 Set the time
@@ -444,11 +458,11 @@ A menu shows on the bottom line of the display. The top line shows X. A menu has
 
 **Procedure** (example: 14:30:00):
 
-1. Enter the hours: <kbd>1</kbd> <kbd>4</kbd> <kbd>ENTER↑</kbd>.
-2. Enter the minutes: <kbd>3</kbd> <kbd>0</kbd> <kbd>ENTER↑</kbd>.
+1. Enter the hours: <kbd>1</kbd> <kbd>4</kbd> <kbd>↑</kbd>.
+2. Enter the minutes: <kbd>3</kbd> <kbd>0</kbd> <kbd>↑</kbd>.
 3. Enter the seconds: <kbd>0</kbd>.
-4. Push <kbd>F</kbd>&nbsp;<kbd>8</kbd> to open the PROG menu.
-5. Push <kbd>1</kbd> (`TIME`) at the moment when the time is correct.
+4. Push <kbd>F</kbd> <kbd>8</kbd> to open the PROG menu.
+5. Push <kbd>1</kbd> (<kbd>TIME</kbd>) at the moment when the time is correct.
 6. Make sure that the watch screen shows the correct time.
 
 > [!TIP]
@@ -464,14 +478,14 @@ A menu shows on the bottom line of the display. The top line shows X. A menu has
 
 **Procedure** (example: 17 October 2026):
 
-1. Enter the day: <kbd>1</kbd> <kbd>7</kbd> <kbd>ENTER↑</kbd>.
-2. Enter the month: <kbd>1</kbd> <kbd>0</kbd> <kbd>ENTER↑</kbd>.
+1. Enter the day: <kbd>1</kbd> <kbd>7</kbd> <kbd>↑</kbd>.
+2. Enter the month: <kbd>1</kbd> <kbd>0</kbd> <kbd>↑</kbd>.
 3. Enter the year: <kbd>2</kbd> <kbd>6</kbd>.
-4. Push <kbd>F</kbd>&nbsp;<kbd>8</kbd>, then <kbd>2</kbd> (`DATE`).
+4. Push <kbd>F</kbd> <kbd>8</kbd>, then <kbd>2</kbd> (<kbd>DATE</kbd>).
 5. Make sure that the watch screen shows the correct date.
 
 > [!NOTE]
-> Set the time first, then the date. The `DATE` operation does not change the time. The `TIME` operation does not change the date.
+> The <kbd>DATE</kbd> operation does not change the time. The <kbd>TIME</kbd> operation does not change the date.
 
 ### 10.3 Set the time zone
 
@@ -484,18 +498,16 @@ The clock keeps the **local time**. The TOTP function needs UTC time. The time z
 **Procedure** (example: UTC+2):
 
 1. Enter the time zone: <kbd>2</kbd>.
-2. For a negative time zone, push <kbd>CHS</kbd>.
-3. Push <kbd>F</kbd>&nbsp;<kbd>8</kbd>, then <kbd>3</kbd> (`ZONE`).
+2. For a negative time zone, push <kbd>±</kbd>.
+3. Push <kbd>F</kbd> <kbd>8</kbd>, then <kbd>3</kbd> (<kbd>ZONE</kbd>).
 
 The device stays in calculator mode.
 
 > [!IMPORTANT]
 > - The default time zone is **UTC+3**. After a reset, the device uses this value again (refer to [4.5](#45-power-jumper-and-reset)).
 > - The time zone has full hours only.
-> - The time zone is not related to the watch screen. It changes only the TOTP codes.
+> - The time zone does not change the watch screen. It changes only the TOTP codes.
 > - The device does not change to summer time automatically. When your local time changes, set the time and the time zone again.
-
----
 
 ## 11. TOTP codes
 
@@ -503,24 +515,34 @@ The device stays in calculator mode.
 
 TOTP (Time-based One-Time Password, RFC 6238) is a 6-digit code for two-factor authentication. Many web sites and applications use it, as an authenticator application on a phone does. A new code shows each 30 seconds.
 
-The device keeps up to 4 TOTP keys. Each key has a label of 1 to 4 characters.
+```text
+┌──────────────────────────────────────────────────────┐
+│      _   _   _       _   _   _              17       │  <- seconds left
+│      _| |_|   |     | | |_|  _|                      │
+│     |_  |_|   |     |_| |_| |_          [ TST1 ]     │  <- key label
+└──────────────────────────────────────────────────────┘
+```
 
-```
-┌──────────────────────────────┐
-│ 287 082                 17   │
-│                     ▌ TST1 ▐ │
-└──────────────────────────────┘
-  └ code ┘          └ seconds left
-                    └ key label
-```
+Each key has a label of 1 to 4 characters.
+
+The device keeps the keys in a keys area of 121 bytes. Each key uses 5 bytes plus the length of its secret. Thus, the number of keys is related to the length of the secrets:
+
+| Secret (Base32 characters) | Secret (bytes) | Bytes for each key | Maximum number of keys |
+| :---: | :---: | :---: | :---: |
+| 16 | 10 | 15 | 8 |
+| 26 | 16 | 21 | 5 |
+| 32 | 20 | 25 | 4 |
+| 52 | 32 | 37 | 3 |
+
+You can use secrets of different lengths together. The `totp` tool tells you the number of bytes that your keys use. If the keys are too large for the area, the tool shows an error.
 
 ### 11.2 Show the codes
 
 1. Do one of these steps:
    - In watch mode, push <kbd>F</kbd>.
-   - In calculator mode, push <kbd>F</kbd>&nbsp;<kbd>8</kbd>, then <kbd>CHS</kbd>, then <kbd>1</kbd> (`TOTP`).
+   - In calculator mode, push <kbd>F</kbd> <kbd>8</kbd>, then <kbd>±</kbd>, then <kbd>1</kbd> (<kbd>TOTP</kbd>).
 2. Read the label of the key. Make sure that it is the correct key.
-3. To show the next key, push <kbd>CHS</kbd>. To show the previous key, push <kbd>EEX</kbd>.
+3. To show the next key, push <kbd>±</kbd>. To show the previous key, push <kbd>E</kbd>.
 4. Enter the code in the web site or the application.
 5. Push another key to go to calculator mode, or let the device turn off.
 
@@ -546,9 +568,10 @@ The TOTP keys are in the EEPROM of the microcontroller. To install your keys, yo
    MAIL     JBSWY3DPEHPK3PXP
    BANK     otpauth://totp/Bank:me?secret=KRSXG5CTMVRXEZLU&issuer=Bank
    ```
-3. Run `firmware/tools/totp/totp_hp35.bat`. The tool writes the file `build/hp35.totp.eep`.
-4. Flash `hp35.ino.hex` and `build/hp35.totp.eep` to the device (refer to [14](#14-firmware-installation)).
-5. Set the time, the date and the time zone again.
+3. Compile the firmware (refer to [14](#14-firmware-installation), steps 1 to 5). This makes the file `hp35.ino.eep`.
+4. Run `firmware/tools/totp/totp_hp35.bat`. The tool writes the file `firmware/sketches/hp35/build/hp35.totp.eep`.
+5. Flash `hp35.ino.hex` and `hp35.totp.eep` to the device (refer to [14](#14-firmware-installation)).
+6. Set the time, the date and the time zone again.
 
 > [!WARNING]
 > - The TOTP secrets are not encrypted in the device. A person with an ICSP programmer can read them. Keep the device in a safe place.
@@ -560,86 +583,100 @@ The TOTP keys are in the EEPROM of the microcontroller. To install your keys, yo
 > - A label can contain the letters A–Z and the digits 0–9.
 > - The default firmware contains 4 test keys (`TST1` to `TST4`). They are not real keys.
 
----
-
 ## 12. Examples
 
 <details>
-<summary><b>Example 1 — Area of a circle with a radius of 2.5</b></summary>
+<summary><b>Example 1: Area of a circle with a radius of 2.5</b></summary>
 
 Calculate π × 2.5².
 
 | Step | Keys | Display (X) |
 | :---: | --- | --- |
 | 1 | <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> | `2.5` |
-| 2 | <kbd>ENTER↑</kbd> | `2.5` |
-| 3 | <kbd>F</kbd>&nbsp;<kbd>6</kbd> (×) | `6.25` |
-| 4 | <kbd>F</kbd>&nbsp;<kbd>4</kbd> (π) | `3.141592654` |
-| 5 | <kbd>F</kbd>&nbsp;<kbd>6</kbd> (×) | `19.63495408` |
+| 2 | <kbd>↑</kbd> | `2.5` |
+| 3 | <kbd>F</kbd> <kbd>6</kbd> (×) | `6.25` |
+| 4 | <kbd>F</kbd> <kbd>4</kbd> (CONST) | `3.141592654` |
+| 5 | <kbd>F</kbd> <kbd>6</kbd> (×) | `19.63495408` |
 
 </details>
 
 <details>
-<summary><b>Example 2 — Sine of 30°, cosine of 60° (LAST)</b></summary>
+<summary><b>Example 2: Sine of 30°, cosine of 60° and 45° (LAST)</b></summary>
 
 | Step | Keys | Display (X) |
 | :---: | --- | --- |
 | 1 | <kbd>3</kbd> <kbd>0</kbd> | `30` |
-| 2 | <kbd>F</kbd>&nbsp;<kbd>7</kbd>, then <kbd>1</kbd> (`SIN`) | `0.5` |
+| 2 | <kbd>F</kbd> <kbd>7</kbd> <kbd>1</kbd> (<kbd>SIN</kbd>) | `0.5` |
 | 3 | <kbd>6</kbd> <kbd>0</kbd> | `60` |
-| 4 | <kbd>F</kbd>&nbsp;<kbd>7</kbd>, then <kbd>2</kbd> (`COS`) | `0.5` |
+| 4 | <kbd>F</kbd> <kbd>7</kbd> <kbd>2</kbd> (<kbd>COS</kbd>) | `0.5` |
 | 5 | <kbd>4</kbd> <kbd>5</kbd> | `45` |
-| 6 | <kbd>F</kbd>&nbsp;<kbd>0</kbd> (LAST = `COS`) | `0.7071067812` |
+| 6 | <kbd>F</kbd> <kbd>0</kbd> (LAST = <kbd>COS</kbd>) | `0.7071067812` |
 
 </details>
 
 <details>
-<summary><b>Example 3 — Sum in the memory (M+)</b></summary>
+<summary><b>Example 3: Powers with xʸ</b></summary>
+
+Calculate 2⁷ and 8^(2/3).
+
+| Step | Keys | Display (X) | Comment |
+| :---: | --- | --- | --- |
+| 1 | <kbd>7</kbd> <kbd>↑</kbd> | `7` | The power goes to Y |
+| 2 | <kbd>2</kbd> | `2` | The number is in X |
+| 3 | <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (<kbd>xʸ</kbd>) | `128` | 2⁷ |
+| 4 | <kbd>2</kbd> <kbd>↑</kbd> <kbd>3</kbd> <kbd>F</kbd> <kbd>9</kbd> (÷) | `0.6666666667` | The power 2/3 |
+| 5 | <kbd>↑</kbd> | `0.6666666667` | The power goes to Y |
+| 6 | <kbd>8</kbd> | `8` | The number is in X |
+| 7 | <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (<kbd>xʸ</kbd>) | `3.999999999` | 8^(2/3) = 4. The HP-35 uses logarithms, thus the last digit is not exact. This example is from the HP-35 Operating Manual. |
+
+</details>
+
+<details>
+<summary><b>Example 4: Sum in the memory (MEM+)</b></summary>
 
 Add 12.5, 7.25 and 30 in the memory.
 
 | Step | Keys | Result |
 | :---: | --- | --- |
-| 1 | <kbd>CLX</kbd> <kbd>F</kbd>&nbsp;<kbd>2</kbd> (STO) | Memory = 0 |
-| 2 | <kbd>1</kbd> <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> <kbd>F</kbd>&nbsp;<kbd>5</kbd> (M+) | Memory = 12.5 |
-| 3 | <kbd>7</kbd> <kbd>.</kbd> <kbd>2</kbd> <kbd>5</kbd> <kbd>F</kbd>&nbsp;<kbd>5</kbd> (M+) | Memory = 19.75 |
-| 4 | <kbd>3</kbd> <kbd>0</kbd> <kbd>F</kbd>&nbsp;<kbd>5</kbd> (M+) | Memory = 49.75 |
-| 5 | <kbd>F</kbd>&nbsp;<kbd>1</kbd> (RCL) | X = `49.75` |
+| 1 | <kbd>C</kbd> <kbd>F</kbd> <kbd>2</kbd> (STO) | Memory = 0 |
+| 2 | <kbd>1</kbd> <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> <kbd>F</kbd> <kbd>5</kbd> (MEM+) | Memory = 12.5 |
+| 3 | <kbd>7</kbd> <kbd>.</kbd> <kbd>2</kbd> <kbd>5</kbd> <kbd>F</kbd> <kbd>5</kbd> (MEM+) | Memory = 19.75 |
+| 4 | <kbd>3</kbd> <kbd>0</kbd> <kbd>F</kbd> <kbd>5</kbd> (MEM+) | Memory = 49.75 |
+| 5 | <kbd>F</kbd> <kbd>1</kbd> (RCL) | X = `49.75` |
 
 </details>
 
 <details>
-<summary><b>Example 4 — Hypotenuse √(3² + 4²)</b></summary>
+<summary><b>Example 5: Hypotenuse √(3² + 4²)</b></summary>
 
 | Step | Keys | Display (X) |
 | :---: | --- | --- |
-| 1 | <kbd>3</kbd> <kbd>ENTER↑</kbd> <kbd>F</kbd>&nbsp;<kbd>6</kbd> | `9` |
-| 2 | <kbd>4</kbd> <kbd>ENTER↑</kbd> <kbd>F</kbd>&nbsp;<kbd>6</kbd> | `16` |
-| 3 | <kbd>F</kbd>&nbsp;<kbd>ENTER↑</kbd> (+) | `25` |
-| 4 | <kbd>F</kbd>&nbsp;<kbd>F</kbd>, then <kbd>2</kbd> (`√x`) | `5` |
+| 1 | <kbd>3</kbd> <kbd>↑</kbd> <kbd>F</kbd> <kbd>6</kbd> (×) | `9` |
+| 2 | <kbd>4</kbd> <kbd>↑</kbd> <kbd>F</kbd> <kbd>6</kbd> (×) | `16` |
+| 3 | <kbd>F</kbd> <kbd>↑</kbd> (+) | `25` |
+| 4 | <kbd>F</kbd> <kbd>F</kbd> <kbd>2</kbd> (<kbd>√x</kbd>) | `5` |
 
 </details>
-
----
 
 ## 13. Troubleshooting
 
 | Problem | Possible cause | Action |
 | --- | --- | --- |
-| The device does not turn on. | The battery is empty. | Charge the battery (refer to [4.1](#41-charge-the-battery)). |
+| The device does not turn on. | You pushed a key in the two top rows. | Push a key in the two bottom rows (refer to [4.3](#43-automatic-power-off-and-power-on)). |
+| | The battery is empty. | Charge the battery (refer to [4.1](#41-charge-the-battery)). |
 | | The `POWER` jumper is open. | Close the jumper. Then set the time and the date. |
 | The time or the date is not correct. | A reset occurred. | Set the time and the date (refer to [10](#10-set-the-time-the-date-and-the-time-zone)). |
-| `TIME`, `DATE` or `ZONE` shows an error. | A value is not in the range, or is not a whole number. | Push <kbd>CLX</kbd>. Do the procedure again with correct values. |
+| <kbd>TIME</kbd>, <kbd>DATE</kbd> or <kbd>ZONE</kbd> shows an error. | A value is not in the range, or is not a whole number. | Push <kbd>C</kbd>. Do the procedure again with correct values. |
 | The web site does not accept the TOTP code. | The time, the date or the time zone is not correct. | Set the time, the date and the time zone again. |
-| | The key label is not correct. | Push <kbd>CHS</kbd> or <kbd>EEX</kbd> to select the correct key. |
+| | The key label is not correct. | Push <kbd>±</kbd> or <kbd>E</kbd> to select the correct key. |
 | <kbd>F</kbd> in watch mode opens calculator mode. | The device has no TOTP keys. | Install the TOTP keys (refer to [11.3](#113-install-your-totp-keys)). |
 | The display is dim. | 10 s passed after the last key push. | Push a key. |
 | The battery indicator does not flash during the charge. | The battery is full. | No action is necessary. |
 | | The USB cable or the power supply is defective. | Use a different cable or power supply. |
-| The display flashes. | An error occurred in a calculation. | Push <kbd>CLX</kbd>. |
+| A zero flashes on the display. | An error occurred in a calculation. | Push <kbd>C</kbd>. |
+| <kbd>xʸ</kbd> gives an incorrect result. | The power and the number are in the wrong registers. | Enter the power first, then the number (refer to [9.2](#92-math-menu-f-f)). |
+| <kbd>F</kbd> <kbd>0</kbd> (LAST) does not repeat an arithmetic operation. | LAST repeats only menu operations. | Push the arithmetic keys again. |
 | A key does an incorrect function. | <kbd>F</kbd> is active (indicator F shows). | Look at the indicators before you push a key. |
-
----
 
 ## 14. Firmware installation
 
@@ -675,12 +712,12 @@ Add 12.5, 7.25 and 30 in the memory.
    | Save EEPROM | EEPROM retained |
    | B.O.D. | Disabled |
 
-5. Select **Sketch → Export compiled binary**.
+5. Select **Sketch → Export compiled binary**. The files go to `firmware/sketches/hp35/build/`.
 6. Connect the ICSP programmer to the ICSP connector of the device. Make sure that the programmer does not supply 5 V (refer to [2](#2-safety)).
 7. Write the fuses: High `0xD7`, Low `0xF1`, Extended `0xFF`.
 8. Write **both** files:
-   - Flash: `build/.../hp35.ino.hex`
-   - EEPROM: `build/.../hp35.ino.eep` (or `build/hp35.totp.eep` with your TOTP keys)
+   - Flash: `hp35.ino.hex`
+   - EEPROM: `hp35.ino.eep`, or `hp35.totp.eep` with your TOTP keys (refer to [11.3](#113-install-your-totp-keys))
 9. Disconnect the programmer.
 10. Set the time, the date and the time zone (refer to [10](#10-set-the-time-the-date-and-the-time-zone)).
 
@@ -692,8 +729,6 @@ Add 12.5, 7.25 and 30 in the memory.
 
 </details>
 
----
-
 ## 15. Technical data
 
 | Parameter | Value |
@@ -702,41 +737,72 @@ Add 12.5, 7.25 and 30 in the memory.
 | Display | OLED 128 × 32, SSD1306, I²C |
 | Real-time clock | DS3231M, I²C, temperature-compensated |
 | Keyboard | 16 keys on one analog input (resistor ladder) |
-| Power supply | LiPo battery, 3.5 V to 4.2 V, no voltage regulator |
+| Power supply | Rechargeable lithium battery, 3.5 V to 4.2 V, no voltage regulator |
 | Charger | MCP73832, 4.2 V, 15 mA, USB-C (5 V) |
 | Battery protection | XB5358D0 |
 | Calculator | HP-35 ROM, 10-digit mantissa, 2-digit exponent, angles in degrees |
 | Stack | 4 registers (X, Y, Z, T) and 1 memory register |
 | Dim timeout | 10 s |
 | Power-off timeout | 20 s |
-| TOTP | RFC 6238, HMAC-SHA1, 6 digits, 30 s, up to 4 keys |
+| Power-on keys | Two bottom rows of the keyboard |
+| TOTP | RFC 6238, HMAC-SHA1, 6 digits, 30 s, keys area of 121 bytes |
 | Default time zone | UTC+3 |
-
----
 
 ## 16. Quick reference
 
-```text
- ┌──────────┬──────────┬──────────┬──────────┐
- │  F  MATH │  7  TRIG │  8  PROG │  9    ÷  │
- ├──────────┼──────────┼──────────┼──────────┤
- │ EEX ROT↑ │  4    π  │  5   M+  │  6    ×  │
- ├──────────┼──────────┼──────────┼──────────┤
- │ CHS ROT↓ │  1  RCL  │  2  STO  │  3    −  │
- ├──────────┼──────────┼──────────┼──────────┤
- │ CLX  CLR │  0  LAST │  .  X↔Y  │  ↑    +  │
- └──────────┴──────────┴──────────┴──────────┘
+**Keyboard**
 
- MATH (F F):  xʸ   √x    1/x  │ LOG  LN    eˣ
- TRIG (F 7):  SIN  COS   TAN  │ ASIN ACOS  ATAN
- PROG (F 8):  TIME DATE  ZONE │ TOTP  —     —
-              [1]  [2]   [3]    EEX/CHS: line up/down
+<table>
+  <tr>
+    <td align="center"><sub>MATH</sub><br><kbd>F</kbd></td>
+    <td align="center"><sub>TRIG</sub><br><kbd>7</kbd></td>
+    <td align="center"><sub>PROG</sub><br><kbd>8</kbd></td>
+    <td align="center"><sub>÷</sub><br><kbd>9</kbd></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>ROT↑</sub><br><kbd>E</kbd></td>
+    <td align="center"><sub>CONST</sub><br><kbd>4</kbd></td>
+    <td align="center"><sub>MEM+</sub><br><kbd>5</kbd></td>
+    <td align="center"><sub>×</sub><br><kbd>6</kbd></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>ROT↓</sub><br><kbd>±</kbd></td>
+    <td align="center"><sub>RCL</sub><br><kbd>1</kbd></td>
+    <td align="center"><sub>STO</sub><br><kbd>2</kbd></td>
+    <td align="center"><sub>−</sub><br><kbd>3</kbd></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>AC</sub><br><kbd>C</kbd></td>
+    <td align="center"><sub>LAST</sub><br><kbd>0</kbd></td>
+    <td align="center"><sub>X↔Y</sub><br><kbd>.</kbd></td>
+    <td align="center"><sub>+</sub><br><kbd>↑</kbd></td>
+  </tr>
+</table>
 
- TIME:  Z=hours   Y=minutes  X=seconds
- DATE:  Z=day     Y=month    X=year (00-99)
- ZONE:  X=hours from UTC (-14..+14)
+**Menus** (<kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> select an item, <kbd>E</kbd> <kbd>±</kbd> change the line)
 
- Watch:  F → TOTP, other key → calculator
- TOTP:   EEX/CHS → previous/next key, other key → calculator
- Timeouts: 10 s → dim, 20 s → off
-```
+| Menu | Line 1 | Line 2 |
+| --- | --- | --- |
+| MATH <kbd>F</kbd> <kbd>F</kbd> | <kbd>xʸ</kbd> <kbd>√x</kbd> <kbd>1/x</kbd> | <kbd>LOG</kbd> <kbd>LN</kbd> <kbd>eˣ</kbd> |
+| TRIG <kbd>F</kbd> <kbd>7</kbd> | <kbd>SIN</kbd> <kbd>COS</kbd> <kbd>TAN</kbd> | <kbd>ASIN</kbd> <kbd>ACOS</kbd> <kbd>ATAN</kbd> |
+| PROG <kbd>F</kbd> <kbd>8</kbd> | <kbd>TIME</kbd> <kbd>DATE</kbd> <kbd>ZONE</kbd> | <kbd>TOTP</kbd> |
+
+**Stack input for the operations**
+
+| Operation | Z | Y | X |
+| --- | --- | --- | --- |
+| <kbd>TIME</kbd> | Hours (0–23) | Minutes (0–59) | Seconds (0–59) |
+| <kbd>DATE</kbd> | Day (1–31) | Month (1–12) | Year (0–99) |
+| <kbd>ZONE</kbd> | — | — | Hours from UTC (−14 to +14) |
+| <kbd>xʸ</kbd> | — | Power | Number (more than 0) |
+
+**Modes and power**
+
+| Item | Keys or time |
+| --- | --- |
+| Turn on | A key in the two bottom rows |
+| Watch → TOTP | <kbd>F</kbd> |
+| Watch or TOTP → Calculator | Other keys |
+| TOTP: previous / next key | <kbd>E</kbd> / <kbd>±</kbd> |
+| Display becomes dim | 10 s |
+| Device turns off | 20 s |
