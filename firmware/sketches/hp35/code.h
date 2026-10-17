@@ -10,6 +10,19 @@ u08 mode;
 u08 newKey;
 u08 oldkey;
 
+// slow modes (RTC, TOTP) redraw every 512 ms only, so the mcu sleeps
+// most of the time, while the keys are still read every frame
+u08 slowPhase; // TMR::Millis / 512 at the last redraw, 0xFF forces one
+
+NOINLINE
+b08 slowRedraw()
+{
+	u08 phase = u08(TMR::Millis >> 9);
+	if (phase == slowPhase) return false;
+	slowPhase = phase;
+	return true;
+}
+
 // -----------------------------------------------------------------------------
 // RTC mode
 // -----------------------------------------------------------------------------
@@ -52,8 +65,11 @@ void renderRTCMode()
 b08 updateRTCMode()
 {
 	if (newKey != KBD::NONE) return false;
-	RTC::ReadTimeDate();
-	renderRTCMode();
+	if (slowRedraw())
+	{
+		RTC::ReadTimeDate();
+		renderRTCMode();
+	}
 	return true;
 }
 
@@ -64,11 +80,13 @@ void enterRTCMode()
 	LCD::TurnOn();
 	TMR::Start(TMR::TIMEOUT_64MS);
 
-	oldkey = KBD::Read();
-	mode   = MODE_RTC;
+	oldkey    = KBD::Read();
+	slowPhase = 0xFF;
+	mode      = MODE_RTC;
 }
 
-NOINLINE void setupAndEnterRTCMode()
+NOINLINE
+void setupAndEnterRTCMode()
 {
 	RTC::WriteTimeDate();
 	enterRTCMode();
@@ -80,20 +98,17 @@ NOINLINE void setupAndEnterRTCMode()
 
 u08 totpIndex;
 u08 totpCount;
-u32 totpCounter;
-u32 totpCode;
 
 // RTC keeps local time, RAM survives sleeping and any reset
 // rewrites RTC with the build time anyway, so no need to store
 s08 gmtZone = TOTP_GMT_ZONE;
 
-void renderTOTPMode(const TOTP::Key& key, u08 left)
+void renderTOTPMode(const TOTP::Key& key, u32 code, u08 left)
 {
 	LCD::Clear();
 
 	// code as two groups of three digits
 	TXT::SetFont(digits7x32);
-	u32 code = totpCode;
 	for (u08 i = 6; i-- > 0;)
 	{
 		u08 x = TOTP_POS_CODE + (i < 3 ? i : i + 1) * TOTP_CHAR_W;
@@ -136,22 +151,20 @@ b08 updateTOTPMode()
 				if (++totpIndex == totpCount) totpIndex = 0;
 				break;
 		}
-		totpCounter = 0;
+		slowPhase = 0xFF;
 	}
 
-	TOTP::Key key;
-	TOTP::ReadKey(totp_keys, totpIndex, key);
-
-	// recompute the code when its time step or the key changes
-	RTC::ReadTimeDate();
-	u32 time = RTC::GetTimestamp(gmtZone);
-	u32 counter = time / TOTP::PERIOD;
-	if (counter != totpCounter)
+	// the code changes every 30 s and the seconds left every second
+	if (slowRedraw())
 	{
-		totpCounter = counter;
-		totpCode = TOTP::GetCode(key, counter);
+		TOTP::Key key;
+		TOTP::ReadKey(totp_keys, totpIndex, key);
+
+		RTC::ReadTimeDate();
+		u32 time = RTC::GetTimestamp(gmtZone);
+		u32 code = TOTP::GetCode(key, time / TOTP::PERIOD);
+		renderTOTPMode(key, code, TOTP::PERIOD - u08(time % TOTP::PERIOD));
 	}
-	renderTOTPMode(key, TOTP::PERIOD - u08(time - counter * TOTP::PERIOD));
 	return true;
 }
 
@@ -163,7 +176,7 @@ void enterTOTPMode()
 	if (totpCount)
 	{
 		if (totpIndex >= totpCount) totpIndex = 0;
-		totpCounter = 0;
+		slowPhase = 0xFF;
 		mode = MODE_TOTP;
 	}
 }

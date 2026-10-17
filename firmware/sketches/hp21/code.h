@@ -10,6 +10,18 @@ u08 mode;
 u08 newKey;
 u08 oldkey;
 
+// slow mode (RTC) redraws every 512 ms only, so the mcu sleeps
+// most of the time, while the keys are still read every frame
+u08 slowPhase; // TMR::Millis / 512 at the last redraw, 0xFF forces one
+
+b08 slowRedraw()
+{
+	u08 phase = u08(TMR::Millis >> 9);
+	if (phase == slowPhase) return false;
+	slowPhase = phase;
+	return true;
+}
+
 // -----------------------------------------------------------------------------
 // RTC mode
 // -----------------------------------------------------------------------------
@@ -52,8 +64,11 @@ void renderRTCMode()
 b08 updateRTCMode()
 {
 	if (newKey != KBD::NONE) return false;
-	RTC::ReadTimeDate();
-	renderRTCMode();
+	if (slowRedraw())
+	{
+		RTC::ReadTimeDate();
+		renderRTCMode();
+	}
 	return true;
 }
 
@@ -64,11 +79,13 @@ void enterRTCMode()
 	LCD::TurnOn();
 	TMR::Start(TMR::TIMEOUT_64MS);
 
-	oldkey = KBD::Read();
-	mode   = MODE_RTC;
+	oldkey    = KBD::Read();
+	slowPhase = 0xFF;
+	mode      = MODE_RTC;
 }
 
-NOINLINE void setupAndEnterRTCMode()
+NOINLINE
+void setupAndEnterRTCMode()
 {
 	RTC::WriteTimeDate();
 	enterRTCMode();
