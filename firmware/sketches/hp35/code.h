@@ -255,19 +255,19 @@ void executeOperation(u08 operation)
 			break;
 
 		case KEY_ROTU:
-			HPVM::OpAndWait(HPVM::OpROT_);
-			HPVM::OpAndWait(HPVM::OpROT_);
+			HPVM::Operation(HPVM::OpROT_);
+			HPVM::Operation(HPVM::OpROT_);
 			HPVM::Operation(HPVM::OpROT_);
 			break;
 
 		case KEY_MADD:
-			HPVM::OpAndWait(HPVM::OpRCL_);
-			HPVM::OpAndWait(HPVM::OpSWAP);
-			HPVM::OpAndWait(HPVM::OpSTO_);
-			HPVM::OpAndWait(HPVM::OpADD_);
-			HPVM::OpAndWait(HPVM::OpRCL_);
-			HPVM::OpAndWait(HPVM::OpSWAP);
-			HPVM::OpAndWait(HPVM::OpSTO_);
+			HPVM::Operation(HPVM::OpRCL_);
+			HPVM::Operation(HPVM::OpSWAP);
+			HPVM::Operation(HPVM::OpSTO_);
+			HPVM::Operation(HPVM::OpADD_);
+			HPVM::Operation(HPVM::OpRCL_);
+			HPVM::Operation(HPVM::OpSWAP);
+			HPVM::Operation(HPVM::OpSTO_);
 			HPVM::Operation(HPVM::OpROT_);
 			break;
 

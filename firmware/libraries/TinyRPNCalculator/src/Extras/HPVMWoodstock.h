@@ -15,8 +15,8 @@ namespace HPVM
 	u08 Display[12];
 
 	// public interface
-	void Operation(u08 op);
-	void OpAndWait(u08 op);
+	void Operation(u08 op); // key press, the previous one is finished first
+	void OpAndWait(u08 op); // key press and wait for its result
 	void DisplayY(u08 (&disp)[sizeof(Display)]); // Y rendered as Display
 	void Error(); // clears the stack, shows the error
 	b08 Idling(); // true if idling
@@ -178,21 +178,29 @@ namespace HPVM
 		p = (p ? p - 1 : 13);
 	}
 
-	// one-shot key event abstraction: the key is latched and delivered
-	// to the ROM in its idle loop, so it is not lost while the ROM is busy;
-	// unlike the original ACT, S15 is not reasserted while a key is held,
-	// but stays set until the ROM clears it, that is enough for the ROM
-	// to dispatch the same key again (HP-21 does it on number entry)
+	// runs the ROM until it waits for a key
+	void wait_idle()
+	{
+		while (!Idling()) Cycle();
+	}
+
+	// one-shot key event abstraction: the key is latched and delivered to
+	// the ROM in its idle loop, a key pressed while the ROM is busy waits
+	// until the previous one is done, so no key is lost; unlike the original
+	// ACT, S15 is not reasserted while a key is held, but stays set until
+	// the ROM clears it, that is enough for the ROM to dispatch the same
+	// key again (HP-21 does it on number entry)
 	void Operation(u08 op)
 	{
-		// handle shift key
+		// handle shift key as a separate key press
 		if (op & FlSHFT)
 		{
-			OpAndWait(OpSHFT);
+			Operation(OpSHFT);
 			op ^= FlSHFT;
 		}
 
-		// handle operation key
+		// finish the previous key and handle operation key
+		wait_idle();
 		key_new = MEM::DataRead(key_tokens + op);
 		key_hit = true;
 	}
@@ -200,7 +208,7 @@ namespace HPVM
 	void OpAndWait(u08 op)
 	{
 		Operation(op);
-		do Cycle(); while (!Idling());
+		wait_idle();
 	}
 
 	// renders Y the same way as Display, by x<>y twice (the model provides

@@ -13,6 +13,6 @@
 #include "data.h"
 #include "code.h"
 
-// Reference compilation output (PCB_REVISION 14, with 15 the sketch uses 6504 bytes):
-// Sketch uses 6490 bytes (79%) of program storage space. Maximum is 8192 bytes.
-// Global variables use 238 bytes (46%) of dynamic memory, leaving 274 bytes for local variables. Maximum is 512 bytes.
+// Reference compilation output (PCB_REVISION 14, with 15 the sketch uses 6702 bytes):
+// Sketch uses 6690 bytes (81%) of program storage space. Maximum is 8192 bytes.
+// Global variables use 239 bytes (46%) of dynamic memory, leaving 273 bytes for local variables. Maximum is 512 bytes.

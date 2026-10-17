@@ -16,8 +16,8 @@ namespace HPVM
 	u08 Display[15];
 
 	// public interface
-	void Operation(u08 op);
-	void OpAndWait(u08 op);
+	void Operation(u08 op); // key press, the previous one is finished first
+	void OpAndWait(u08 op); // key press and wait for its result
 	void DisplayY(u08 (&disp)[sizeof(Display)]); // Y rendered as Display
 	void Error(); // clears the stack, shows the error
 	b08 Idling(); // true if idling
@@ -166,20 +166,27 @@ namespace HPVM
 		p = (p - 1) & 0x0F;
 	}
 
-	// one-shot key event abstraction: the key is delivered to the ROM
-	// at once, so a key pressed while the ROM is busy replaces the
-	// previous one; unlike the original C&T, S0 is not reasserted
-	// while a key is held, but stays set until the ROM clears it
+	// runs the ROM until it waits for a key
+	void wait_idle()
+	{
+		while (!Idling()) Cycle();
+	}
+
+	// one-shot key event abstraction: the ROM takes the key in its idle
+	// loop, a key pressed while the ROM is busy waits until the previous
+	// one is done, so no key is lost; unlike the original C&T, S0 is not
+	// reasserted while a key is held, but stays set until the ROM clears it
 	void Operation(u08 op)
 	{
-		// handle shift key
+		// handle shift key as a separate key press
 		if (op & FlSHFT)
 		{
-			OpAndWait(OpSHFT);
+			Operation(OpSHFT);
 			op ^= FlSHFT;
 		}
 
-		// handle operation key
+		// finish the previous key and handle operation key
+		wait_idle();
 		key_pc = MEM::DataRead(key_tokens + op);
 		s[STATUS_BIT_KEY] = 1;
 		bp_idle = 0;
@@ -188,7 +195,7 @@ namespace HPVM
 	void OpAndWait(u08 op)
 	{
 		Operation(op);
-		do Cycle(); while (!Idling());
+		wait_idle();
 	}
 
 	// renders Y the same way as Display, by x<>y twice (the model provides

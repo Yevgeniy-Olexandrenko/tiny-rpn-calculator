@@ -165,8 +165,8 @@ void executeOperation(u08 operation)
 			break;
 
 		case KEY_ROTU:
-			HPVM::OpAndWait(HPVM::OpROT_);
-			HPVM::OpAndWait(HPVM::OpROT_);
+			HPVM::Operation(HPVM::OpROT_);
+			HPVM::Operation(HPVM::OpROT_);
 			HPVM::Operation(HPVM::OpROT_);
 			break;
 
