@@ -2,6 +2,10 @@
 // SSD1306 128x32 Display on I2C Bus
 // -----------------------------------------------------------------------------
 
+#if PCB_REVISION >= 15
+#define LCD_RES PB1
+#endif
+
 namespace LCD
 {
 	constexpr u08 I2C_ADDR = 0x3C;
@@ -41,6 +45,13 @@ namespace LCD
 
 	void Init()
 	{
+	#if PCB_REVISION >= 15
+		// Pulse RES# low for at least 3 us to reset the controller
+		set_bit(DDRB,  LCD_RES);
+		clr_bit(PORTB, LCD_RES);
+		__builtin_avr_delay_cycles(F_CPU / 250000UL); // 4 us
+		set_bit(PORTB, LCD_RES);
+	#endif
 		start_command();
 		for (u08 i = 0; i < sizeof(init_data); ++i)
 			I2C::Write(MEM::DataRead(init_data + i));
@@ -53,7 +64,7 @@ namespace LCD
 	}
 
 	void TurnOff()
-	{ 
+	{
 		command(0xAE);
 	}
 

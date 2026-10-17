@@ -2,8 +2,15 @@
 
 // -----------------------------------------------------------------------------
 // PCB Rev 1.x
-// Fuses: High - 0xD7, Low - 0xF1, Ext - 0xFF 
+// Fuses: High - 0xD7, Low - 0xF1, Ext - 0xFF
 // -----------------------------------------------------------------------------
+
+// PCB revision the firmware is built for, may be defined in the sketch:
+// 14 - PCB rev 1.3/1.4 (default)
+// 15 - PCB rev 1.5: display reset on PB1, charging status on PB3
+#ifndef PCB_REVISION
+#define PCB_REVISION 14
+#endif
 
 // Supported hardware and software modules:
 // MEM - Static data storage access
@@ -14,9 +21,10 @@
 // TXT - Display text using custom fonts
 // RTC - DS3231M Real Time Clock control
 // KBD - One Pin Analog 16-Key Keyboard reading
-// PWR - MPU Power management (Idle + Power down)
+// PWR - MPU Power management (Idle + Power down + Charging status)
 // TMR - WDT-based Timer for main loop sync in time
 // FNT - A Set of Predefined Fonts
+// SYS - System initialization and power down
 
 // -----------------------------------------------------------------------------
 // Includes and Helping Defines
@@ -97,26 +105,4 @@ class __DataStringHelper;
 #include "TinyRPNCalculator/PWR.h"
 #include "TinyRPNCalculator/TMR.h"
 #include "TinyRPNCalculator/FNT.h"
-
-// -----------------------------------------------------------------------------
-// System Manipulation
-// -----------------------------------------------------------------------------
-
-namespace SYS
-{
-	void Init()
-	{
-		ADC::Init();
-		I2C::Init();
-		LCD::Init();
-		KBD::Init();
-		sei();
-	}
-
-	void Down()
-	{
-		TMR::Stop();
-		LCD::TurnOff();
-		PWR::Down();
-	}
-}
+#include "TinyRPNCalculator/SYS.h"

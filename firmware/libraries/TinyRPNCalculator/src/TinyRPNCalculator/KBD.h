@@ -101,9 +101,7 @@ namespace KBD
 	{
 		clr_bit(DDRB,  KBD_PIN); // select pin as input
 		clr_bit(PORTB, KBD_PIN); // disable pull-up resistor
-		set_bit(PCMSK, KBD_PIN); // select pin as interrupt source
-		GIFR = _BV(PCIF);        // clear pending pin-change interrupt
-		set_bit(GIMSK, PCIE);    // enable pin-change interrupt
+		set_bit(PCMSK, KBD_PIN); // select pin as wake-up source
 		key = NONE;
 	}
 
@@ -123,7 +121,4 @@ namespace KBD
 		key = MEM::DataRead(code_lut + i);
 		return key;
 	}
-
-	// just interrupt sleeping
-	EMPTY_INTERRUPT(PCINT0_vect);
 }

@@ -2,16 +2,24 @@
 // Power Management
 // -----------------------------------------------------------------------------
 
+#if PCB_REVISION >= 15
+#define PWR_CHRG PB3
+#endif
+
 namespace PWR
 {
+	const u16 BAT_MAX      = 4200; // mV
 	const u16 BAT_FULL     = 4100; // mV
 	const u16 BAT_EMPTY    = 3500; // mV
 	const u08 UNIT_VOLTAGE = 20;   // mV
 
+	static_assert(BAT_MAX   % UNIT_VOLTAGE == 0, "BAT_MAX   must match voltage resolution");
 	static_assert(BAT_FULL  % UNIT_VOLTAGE == 0, "BAT_FULL  must match voltage resolution");
 	static_assert(BAT_EMPTY % UNIT_VOLTAGE == 0, "BAT_EMPTY must match voltage resolution");
+	static_assert(BAT_MAX  >= BAT_FULL,          "Invalid battery voltage range");
 	static_assert(BAT_FULL  > BAT_EMPTY,         "Invalid battery voltage range");
 
+	const u16 BAT_MAX_UNITS   = BAT_MAX   / UNIT_VOLTAGE;
 	const u16 BAT_FULL_UNITS  = BAT_FULL  / UNIT_VOLTAGE;
 	const u16 BAT_EMPTY_UNITS = BAT_EMPTY / UNIT_VOLTAGE;
 
@@ -56,6 +64,30 @@ namespace PWR
 		if (voltage >= BAT_FULL_UNITS ) return 100;
 		return ((voltage - BAT_EMPTY_UNITS) * 100U / (BAT_FULL_UNITS - BAT_EMPTY_UNITS));
 	}
+
+#if PCB_REVISION >= 15
+	void Init()
+	{
+		// Charger status output is open-drain: pulled low while charging,
+		// released when charge is complete or there is no USB power.
+		clr_bit(DDRB,  PWR_CHRG); // select pin as input
+		set_bit(PORTB, PWR_CHRG); // enable pull-up resistor
+		set_bit(PCMSK, PWR_CHRG); // select pin as wake-up source
+	}
+
+	b08 Charging()
+	{
+		return isb_clr(PINB, PWR_CHRG);
+	}
+#else
+	b08 Charging()
+	{
+		// No charger status on these PCBs. VCC above the maximal battery
+		// voltage means external power (e.g. ISP programmer), so treat it
+		// as charging for debugging.
+		return (voltageUnits() > BAT_MAX_UNITS);
+	}
+#endif
 
 	void Idle()
 	{
