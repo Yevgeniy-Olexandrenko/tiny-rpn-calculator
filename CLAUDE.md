@@ -50,3 +50,14 @@ Other extras: `BuildTime.h` (compile time for RTC init), `SHA1.h` (namespace `SH
 Adding a new model means: a model header in `Extras/`, the matching CPU header, and a new sketch folder modeled on `hp35` (`hp21` is the Woodstock example).
 
 For the HP-21 / Woodstock CPU work, read `documents/firmware/hp21-woodstock-architecture.md` first (written in Russian). It is the reference for registers, status bits, instruction encoding, keyboard/idle loop, display, differences from the HP-35 Classic CPU, and the facts confirmed by running `HPVMWoodstock.h` on the ROM (section 11). It is based on Nonpareil sources, and its "unverified" section lists the open questions.
+
+## Documentation
+
+User manuals (`documents/manuals/*.md`, e.g. `hp35-rev1.5-user-manual.md`) are GitHub markdown written to these rules:
+
+- Language: about 80% ASD-STE100 (Simplified Technical English): short sentences, active voice, one action per procedure step.
+- Short `#` title with no metadata line under it. No Mermaid or other graphs (use tables), no `---` rules between sections; GitHub alerts (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`), `<details>` and tables are fine.
+- Every key is a `<kbd>`: physical keys, HP keys and menu items alike. Use the legends printed on the keyboard (`F`, `E`, `±`, `C`, `↑`; shifted `MATH`, `CONST`, `MEM+`, `AC`, `X↔Y`...); the keyboard layout is an HTML table with the shifted legend (`<sub>`) above the key.
+- State each fact once and cross-reference it ("refer to 4.3"); the technical data section holds only hardware specs. Check behavior in the firmware code (and the original HP manual for ROM behavior) before describing it.
+- Mention only PCB rev 1.5 and later: earlier revisions are going to be removed from the project.
+- ASCII drawings go in `text` code blocks with box-drawing frames and only ASCII or WGL4 characters inside (block elements like `▐█▌` break alignment). GitHub renders a code line about 2.5 times higher than a character is wide (72 × 18 chars give the credit card ratio). Generate drawings with a script so every line has the exact width.
