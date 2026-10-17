@@ -34,7 +34,7 @@ This manual tells you how to use the Tiny RPN Calculator (PCB rev 1.5) with the 
 
 Hewlett-Packard introduced the HP-35 in 1972. It was the first pocket calculator with transcendental functions (logarithms, exponent, trigonometric functions) and with RPN (refer to [8.1](#81-rpn-and-the-stack)). At that time, most calculators, including large desktop models, had only the four arithmetic operations.
 
-The firmware is an emulator. It runs the original ROM of the HP-35 on a virtual copy of the HP CPU, at the speed of the original calculator. Thus, the calculations, the results and the display format are the same as on the HP-35. The firmware also adds some functions that make the calculator easier to use. This manual marks them as **Extension**.
+The firmware is an emulator. It runs the original ROM of the HP-35 on a virtual copy of the HP CPU, at the speed of the original calculator. Thus, the calculations, the results and the display format are the same as on the HP-35. The firmware also adds some functions that make the calculator easier to use. This manual marks them with this label: <img src="images/hp35-extension.svg" alt="Extension" align="absmiddle">
 
 For more data, refer to:
 
@@ -83,7 +83,7 @@ In this manual, <kbd>F</kbd> <kbd>9</kbd> means: push the <kbd>F</kbd> key, rele
 
 ## 3. Device description
 
-The device has the size and the proportions of a credit card. The drawing shows the primary parts. The positions of the small parts are approximate. The drawing does not show the ICSP connector and the `POWER` jumper.
+The device has the size and the proportions of a credit card. The drawing shows the primary parts. The positions of the small parts are approximate. The drawing does not show the ICSP connector and the POWER jumper.
 
 <img src="images/hp35-device.svg" alt="Tiny RPN Calculator: display (1), keyboard (2), USB-C connector (3), battery (4), microcontroller (5), real-time clock (6), charger (7)">
 
@@ -97,7 +97,7 @@ The device has the size and the proportions of a credit card. The drawing shows 
 | 6 | Real-time clock | Keeps the time and the date. |
 | 7 | Charger | Charges the battery and controls the charge current. |
 | — | ICSP connector | Programs the microcontroller (refer to [14](#14-firmware-installation)). |
-| — | `POWER` jumper | Connects the battery to the circuit (refer to [4.5](#45-power-jumper-and-reset)). |
+| — | POWER jumper | Connects the battery to the circuit (refer to [4.5](#45-power-jumper-and-reset)). |
 
 For the types of the parts, refer to [15](#15-technical-data).
 
@@ -162,10 +162,10 @@ If the battery voltage is 3.5 V or less, the device does not turn on. This preve
 
 ### 4.5 POWER jumper and reset
 
-The `POWER` jumper connects the battery to the circuit. The real-time clock gets power from the same battery.
+The POWER jumper connects the battery to the circuit. The real-time clock gets power from the same battery.
 
 > [!IMPORTANT]
-> If the power is fully removed (open `POWER` jumper, fully discharged battery or a new firmware), the firmware does a reset:
+> If the power is fully removed (open POWER jumper, fully discharged battery or a new firmware), the firmware does a reset:
 > - The clock is set to the time when the firmware was compiled.
 > - The time zone is set to the default value (refer to [10.3](#103-set-the-time-zone)).
 > - The calculator stack and memory are cleared.
@@ -191,8 +191,8 @@ To change the mode, use these keys:
 | Watch | Other keys | Calculator |
 | TOTP | <kbd>E</kbd> or <kbd>±</kbd> | TOTP (previous or next key) |
 | TOTP | Other keys | Calculator |
-| Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>±</kbd> <kbd>1</kbd> (<kbd>TOTP</kbd>) | TOTP |
-| Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>1</kbd> (<kbd>TIME</kbd>) or <kbd>2</kbd> (<kbd>DATE</kbd>) | Watch |
+| Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>±</kbd> <kbd>1</kbd> (TOTP) | TOTP |
+| Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>1</kbd> (TIME) or <kbd>2</kbd> (DATE) | Watch |
 | All modes | No key for 20 s | Device is off |
 
 > [!NOTE]
@@ -230,13 +230,13 @@ Each key has two functions:
 | <kbd>F</kbd> <kbd>↑</kbd> | + | <kbd>+</kbd> | Y + X |
 | <kbd>F</kbd> <kbd>.</kbd> | X↔Y | <kbd>x↔y</kbd> | Exchange X and Y |
 | <kbd>F</kbd> <kbd>±</kbd> | ROT↓ | <kbd>R↓</kbd> | Roll the stack down |
-| <kbd>F</kbd> <kbd>E</kbd> | ROT↑ | — | **Extension.** Roll the stack up |
+| <kbd>F</kbd> <kbd>E</kbd> | ROT↑ | — | <img src="images/hp35-extension.svg" alt="Extension" align="absmiddle"> Roll the stack up |
 | <kbd>F</kbd> <kbd>C</kbd> | AC | <kbd>CLR</kbd> | Clear the stack (X, Y, Z, T) |
 | <kbd>F</kbd> <kbd>2</kbd> | STO | <kbd>STO</kbd> | Copy X to the memory |
 | <kbd>F</kbd> <kbd>1</kbd> | RCL | <kbd>RCL</kbd> | Copy the memory to X |
-| <kbd>F</kbd> <kbd>5</kbd> | MEM+ | — | **Extension.** Add X to the memory |
+| <kbd>F</kbd> <kbd>5</kbd> | MEM+ | — | <img src="images/hp35-extension.svg" alt="Extension" align="absmiddle"> Add X to the memory |
 | <kbd>F</kbd> <kbd>4</kbd> | CONST | <kbd>π</kbd> | Enter π |
-| <kbd>F</kbd> <kbd>0</kbd> | LAST | — | **Extension.** Do the last menu operation again |
+| <kbd>F</kbd> <kbd>0</kbd> | LAST | — | <img src="images/hp35-extension.svg" alt="Extension" align="absmiddle"> Do the last menu operation again |
 | <kbd>F</kbd> <kbd>F</kbd> | MATH | — | Open the MATH menu |
 | <kbd>F</kbd> <kbd>7</kbd> | TRIG | — | Open the TRIG menu |
 | <kbd>F</kbd> <kbd>8</kbd> | PROG | — | Open the PROG menu |
@@ -286,7 +286,7 @@ The stack has four registers: **X**, **Y**, **Z** and **T**. The HP-35 stack ope
 - An operation with two numbers (for example, +) uses Y and X. The result goes to X. Then Z moves to Y, and T copies to Z. T keeps its value.
 - A function with one number (for example, √x) uses only X. The result goes to X.
 - STO copies X to the memory. X does not change.
-- A new number after an operation lifts the stack automatically. For example, after <kbd>5</kbd> <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>1</kbd> (<kbd>LOG</kbd>) <kbd>1</kbd> <kbd>0</kbd>, Y contains log 5 and X contains 10.
+- A new number after an operation lifts the stack automatically. For example, after <kbd>5</kbd> <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>1</kbd> (LOG) <kbd>1</kbd> <kbd>0</kbd>, Y contains log 5 and X contains 10.
 
 **Example:** (4 + 5) × 6. The table shows the stack after each step.
 
@@ -396,7 +396,7 @@ A menu shows on the bottom line of the display. The top line shows X with small 
 > 2. Enter the number. It stays in X.
 > 3. Do <kbd>xʸ</kbd>.
 >
-> For example, 2⁷ = 128: push <kbd>7</kbd> <kbd>↑</kbd> <kbd>2</kbd>, then <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (<kbd>xʸ</kbd>).
+> For example, 2⁷ = 128: push <kbd>7</kbd> <kbd>↑</kbd> <kbd>2</kbd>, then <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (xʸ).
 >
 > The number in X must be more than zero. The power in Y can be any number. The result is not always exact in the last digit, because the HP-35 uses logarithms for this calculation.
 
@@ -441,7 +441,7 @@ A menu shows on the bottom line of the display. The top line shows X with small 
 2. Enter the minutes: <kbd>3</kbd> <kbd>0</kbd> <kbd>↑</kbd>.
 3. Enter the seconds: <kbd>0</kbd>.
 4. Push <kbd>F</kbd> <kbd>8</kbd> to open the PROG menu.
-5. Push <kbd>1</kbd> (<kbd>TIME</kbd>) at the moment when the time is correct.
+5. Push <kbd>1</kbd> (TIME) at the moment when the time is correct.
 6. Make sure that the watch screen shows the correct time.
 
 > [!TIP]
@@ -460,7 +460,7 @@ A menu shows on the bottom line of the display. The top line shows X with small 
 1. Enter the day: <kbd>1</kbd> <kbd>7</kbd> <kbd>↑</kbd>.
 2. Enter the month: <kbd>1</kbd> <kbd>0</kbd> <kbd>↑</kbd>.
 3. Enter the year: <kbd>2</kbd> <kbd>6</kbd>.
-4. Push <kbd>F</kbd> <kbd>8</kbd>, then <kbd>2</kbd> (<kbd>DATE</kbd>).
+4. Push <kbd>F</kbd> <kbd>8</kbd>, then <kbd>2</kbd> (DATE).
 5. Make sure that the watch screen shows the correct date.
 
 > [!NOTE]
@@ -478,7 +478,7 @@ The clock keeps the **local time**. The TOTP function needs UTC time. The time z
 
 1. Enter the time zone: <kbd>2</kbd>.
 2. For a negative time zone, push <kbd>±</kbd>.
-3. Push <kbd>F</kbd> <kbd>8</kbd>, then <kbd>3</kbd> (<kbd>ZONE</kbd>).
+3. Push <kbd>F</kbd> <kbd>8</kbd>, then <kbd>3</kbd> (ZONE).
 
 The device stays in calculator mode.
 
@@ -511,7 +511,7 @@ You can use secrets of different lengths together. The `totp` tool tells you the
 
 1. Do one of these steps:
    - In watch mode, push <kbd>F</kbd>.
-   - In calculator mode, push <kbd>F</kbd> <kbd>8</kbd>, then <kbd>±</kbd>, then <kbd>1</kbd> (<kbd>TOTP</kbd>).
+   - In calculator mode, push <kbd>F</kbd> <kbd>8</kbd>, then <kbd>±</kbd>, then <kbd>1</kbd> (TOTP).
 2. Read the label of the key. Make sure that it is the correct key.
 3. To show the next key, push <kbd>±</kbd>. To show the previous key, push <kbd>E</kbd>.
 4. Enter the code in the web site or the application.
@@ -561,27 +561,27 @@ The TOTP keys are in the EEPROM of the microcontroller. To install your keys, yo
 
 Calculate π × 2.5².
 
-| Step | Keys | Display (X) |
-| :---: | --- | --- |
-| 1 | <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> | `2.5` |
-| 2 | <kbd>↑</kbd> | `2.5` |
-| 3 | <kbd>F</kbd> <kbd>6</kbd> (×) | `6.25` |
-| 4 | <kbd>F</kbd> <kbd>4</kbd> (CONST) | `3.141592654` |
-| 5 | <kbd>F</kbd> <kbd>6</kbd> (×) | `19.63495408` |
+| Step | Keys | HP-35 keys | Display (X) |
+| :---: | --- | --- | --- |
+| 1 | <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> | <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> | `2.5` |
+| 2 | <kbd>↑</kbd> | <kbd>ENTER↑</kbd> | `2.5` |
+| 3 | <kbd>F</kbd> <kbd>6</kbd> (×) | <kbd>×</kbd> | `6.25` |
+| 4 | <kbd>F</kbd> <kbd>4</kbd> (CONST) | <kbd>π</kbd> | `3.141592654` |
+| 5 | <kbd>F</kbd> <kbd>6</kbd> (×) | <kbd>×</kbd> | `19.63495408` |
 
 </details>
 
 <details>
 <summary><b>Example 2: Sine of 30°, cosine of 60° and 45° (LAST)</b></summary>
 
-| Step | Keys | Display (X) |
-| :---: | --- | --- |
-| 1 | <kbd>3</kbd> <kbd>0</kbd> | `30` |
-| 2 | <kbd>F</kbd> <kbd>7</kbd> <kbd>1</kbd> (<kbd>SIN</kbd>) | `0.5` |
-| 3 | <kbd>6</kbd> <kbd>0</kbd> | `60` |
-| 4 | <kbd>F</kbd> <kbd>7</kbd> <kbd>2</kbd> (<kbd>COS</kbd>) | `0.5` |
-| 5 | <kbd>4</kbd> <kbd>5</kbd> | `45` |
-| 6 | <kbd>F</kbd> <kbd>0</kbd> (LAST = <kbd>COS</kbd>) | `0.7071067812` |
+| Step | Keys | HP-35 keys | Display (X) |
+| :---: | --- | --- | --- |
+| 1 | <kbd>3</kbd> <kbd>0</kbd> | <kbd>3</kbd> <kbd>0</kbd> | `30` |
+| 2 | <kbd>F</kbd> <kbd>7</kbd> <kbd>1</kbd> (SIN) | <kbd>sin</kbd> | `0.5` |
+| 3 | <kbd>6</kbd> <kbd>0</kbd> | <kbd>6</kbd> <kbd>0</kbd> | `60` |
+| 4 | <kbd>F</kbd> <kbd>7</kbd> <kbd>2</kbd> (COS) | <kbd>cos</kbd> | `0.5` |
+| 5 | <kbd>4</kbd> <kbd>5</kbd> | <kbd>4</kbd> <kbd>5</kbd> | `45` |
+| 6 | <kbd>F</kbd> <kbd>0</kbd> (LAST = COS) | <kbd>cos</kbd> | `0.7071067812` |
 
 </details>
 
@@ -590,42 +590,42 @@ Calculate π × 2.5².
 
 Calculate 2⁷ and 8^(2/3).
 
-| Step | Keys | Display (X) | Comment |
-| :---: | --- | --- | --- |
-| 1 | <kbd>7</kbd> <kbd>↑</kbd> | `7` | The power goes to Y |
-| 2 | <kbd>2</kbd> | `2` | The number is in X |
-| 3 | <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (<kbd>xʸ</kbd>) | `128` | 2⁷ |
-| 4 | <kbd>2</kbd> <kbd>↑</kbd> <kbd>3</kbd> <kbd>F</kbd> <kbd>9</kbd> (÷) | `0.6666666667` | The power 2/3 |
-| 5 | <kbd>↑</kbd> | `0.6666666667` | The power goes to Y |
-| 6 | <kbd>8</kbd> | `8` | The number is in X |
-| 7 | <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (<kbd>xʸ</kbd>) | `3.999999999` | 8^(2/3) = 4. The HP-35 uses logarithms, thus the last digit is not exact. This example is from the HP-35 Operating Manual. |
+| Step | Keys | HP-35 keys | Display (X) | Comment |
+| :---: | --- | --- | --- | --- |
+| 1 | <kbd>7</kbd> <kbd>↑</kbd> | <kbd>7</kbd> <kbd>ENTER↑</kbd> | `7` | The power goes to Y |
+| 2 | <kbd>2</kbd> | <kbd>2</kbd> | `2` | The number is in X |
+| 3 | <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (xʸ) | <kbd>xʸ</kbd> | `128` | 2⁷ |
+| 4 | <kbd>2</kbd> <kbd>↑</kbd> <kbd>3</kbd> <kbd>F</kbd> <kbd>9</kbd> (÷) | <kbd>2</kbd> <kbd>ENTER↑</kbd> <kbd>3</kbd> <kbd>÷</kbd> | `0.6666666667` | The power 2/3 |
+| 5 | <kbd>↑</kbd> | <kbd>ENTER↑</kbd> | `0.6666666667` | The power goes to Y |
+| 6 | <kbd>8</kbd> | <kbd>8</kbd> | `8` | The number is in X |
+| 7 | <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (xʸ) | <kbd>xʸ</kbd> | `3.999999999` | 8^(2/3) = 4. The HP-35 uses logarithms, thus the last digit is not exact. This example is from the HP-35 Operating Manual. |
 
 </details>
 
 <details>
 <summary><b>Example 4: Sum in the memory (MEM+)</b></summary>
 
-Add 12.5, 7.25 and 30 in the memory.
+Add 12.5, 7.25 and 30 in the memory. The HP-35 has no MEM+, thus it uses <kbd>RCL</kbd> <kbd>+</kbd> <kbd>STO</kbd>.
 
-| Step | Keys | Result |
-| :---: | --- | --- |
-| 1 | <kbd>C</kbd> <kbd>F</kbd> <kbd>2</kbd> (STO) | Memory = 0 |
-| 2 | <kbd>1</kbd> <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> <kbd>F</kbd> <kbd>5</kbd> (MEM+) | Memory = 12.5 |
-| 3 | <kbd>7</kbd> <kbd>.</kbd> <kbd>2</kbd> <kbd>5</kbd> <kbd>F</kbd> <kbd>5</kbd> (MEM+) | Memory = 19.75 |
-| 4 | <kbd>3</kbd> <kbd>0</kbd> <kbd>F</kbd> <kbd>5</kbd> (MEM+) | Memory = 49.75 |
-| 5 | <kbd>F</kbd> <kbd>1</kbd> (RCL) | X = `49.75` |
+| Step | Keys | HP-35 keys | Result |
+| :---: | --- | --- | --- |
+| 1 | <kbd>C</kbd> <kbd>F</kbd> <kbd>2</kbd> (STO) | <kbd>CLx</kbd> <kbd>STO</kbd> | Memory = 0 |
+| 2 | <kbd>1</kbd> <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> <kbd>F</kbd> <kbd>5</kbd> (MEM+) | <kbd>1</kbd> <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> <kbd>RCL</kbd> <kbd>+</kbd> <kbd>STO</kbd> | Memory = 12.5 |
+| 3 | <kbd>7</kbd> <kbd>.</kbd> <kbd>2</kbd> <kbd>5</kbd> <kbd>F</kbd> <kbd>5</kbd> (MEM+) | <kbd>7</kbd> <kbd>.</kbd> <kbd>2</kbd> <kbd>5</kbd> <kbd>RCL</kbd> <kbd>+</kbd> <kbd>STO</kbd> | Memory = 19.75 |
+| 4 | <kbd>3</kbd> <kbd>0</kbd> <kbd>F</kbd> <kbd>5</kbd> (MEM+) | <kbd>3</kbd> <kbd>0</kbd> <kbd>RCL</kbd> <kbd>+</kbd> <kbd>STO</kbd> | Memory = 49.75 |
+| 5 | <kbd>F</kbd> <kbd>1</kbd> (RCL) | <kbd>RCL</kbd> | X = `49.75` |
 
 </details>
 
 <details>
 <summary><b>Example 5: Hypotenuse √(3² + 4²)</b></summary>
 
-| Step | Keys | Display (X) |
-| :---: | --- | --- |
-| 1 | <kbd>3</kbd> <kbd>↑</kbd> <kbd>F</kbd> <kbd>6</kbd> (×) | `9` |
-| 2 | <kbd>4</kbd> <kbd>↑</kbd> <kbd>F</kbd> <kbd>6</kbd> (×) | `16` |
-| 3 | <kbd>F</kbd> <kbd>↑</kbd> (+) | `25` |
-| 4 | <kbd>F</kbd> <kbd>F</kbd> <kbd>2</kbd> (<kbd>√x</kbd>) | `5` |
+| Step | Keys | HP-35 keys | Display (X) |
+| :---: | --- | --- | --- |
+| 1 | <kbd>3</kbd> <kbd>↑</kbd> <kbd>F</kbd> <kbd>6</kbd> (×) | <kbd>3</kbd> <kbd>ENTER↑</kbd> <kbd>×</kbd> | `9` |
+| 2 | <kbd>4</kbd> <kbd>↑</kbd> <kbd>F</kbd> <kbd>6</kbd> (×) | <kbd>4</kbd> <kbd>ENTER↑</kbd> <kbd>×</kbd> | `16` |
+| 3 | <kbd>F</kbd> <kbd>↑</kbd> (+) | <kbd>+</kbd> | `25` |
+| 4 | <kbd>F</kbd> <kbd>F</kbd> <kbd>2</kbd> (√x) | <kbd>√x</kbd> | `5` |
 
 </details>
 
@@ -635,7 +635,7 @@ Add 12.5, 7.25 and 30 in the memory.
 | --- | --- | --- |
 | The device does not turn on. | You pushed a key in the two top rows. | Push a key in the two bottom rows (refer to [4.3](#43-automatic-power-off-and-power-on)). |
 | | The battery is empty. | Charge the battery (refer to [4.1](#41-charge-the-battery)). |
-| | The `POWER` jumper is open. | Close the jumper. Then set the time and the date. |
+| | The POWER jumper is open. | Close the jumper. Then set the time and the date. |
 | The time or the date is not correct. | A reset occurred. | Set the time and the date (refer to [10](#10-set-the-time-the-date-and-the-time-zone)). |
 | <kbd>TIME</kbd>, <kbd>DATE</kbd> or <kbd>ZONE</kbd> shows an error. | A value is not in the range, or is not a whole number. | Push <kbd>C</kbd>. Do the procedure again with correct values. |
 | The web site does not accept the TOTP code. | The time, the date or the time zone is not correct. | Set the time, the date and the time zone again. |

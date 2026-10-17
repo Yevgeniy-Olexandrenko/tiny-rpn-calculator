@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 20" width="76" height="20" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Extension</title>
+  <style>
+    .ext      { stroke-width: 1; fill: #ddf4ff; stroke: #0969da; }
+    .exttx    { font-size: 12px; font-weight: 600; text-anchor: middle; fill: #0969da; }
+    @media (prefers-color-scheme: dark) {
+      .ext      { fill: #132339; stroke: #2f81f7; }
+      .exttx    { fill: #2f81f7; }
+    }
+  </style>
+  <rect class="ext" x="0.5" y="0.5" width="75" height="19" rx="9.5"/>
+  <text class="exttx" x="38" y="14" textLength="58" lengthAdjust="spacingAndGlyphs">Extension</text>
+</svg>

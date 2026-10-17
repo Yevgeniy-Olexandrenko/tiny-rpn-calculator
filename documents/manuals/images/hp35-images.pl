@@ -216,6 +216,7 @@ my %theme = (           # light, dark
     chip  => ['#24292f', '#30363d'],
     pin   => ['#8c959f', '#6e7681'],
     badge => ['#0969da', '#2f81f7'],
+    tint  => ['#ddf4ff', '#132339'],
 );
 my %class = (           # static properties, then property => theme color
     board    => ['stroke-width: 2.5', fill => 'bg', stroke => 'edge'],
@@ -235,6 +236,8 @@ my %class = (           # static properties, then property => theme color
     badge    => ['', fill => 'badge'],
     chiptxt  => ['fill: #ffffff; font-size: 14px; font-weight: 600; text-anchor: middle'],
     badgetx  => ['fill: #ffffff; font-size: 13px; font-weight: 700; text-anchor: middle'],
+    ext      => ['stroke-width: 1', fill => 'tint', stroke => 'badge'],
+    exttx    => ['font-size: 12px; font-weight: 600; text-anchor: middle', fill => 'badge'],
     glass    => ['fill: #24292f; stroke: #57606a; stroke-width: 1.5'],
     panel    => ['fill: #000000'],
     ledge    => ['fill: #57606a'],
@@ -431,3 +434,10 @@ $key_defs    <!-- one side of a SOIC-8 -->
   <circle class="badge" cx="596" cy="108" r="11"/><text class="badgetx" x="596" y="113">7</text>
 SVG
 write_svg('hp35-device.svg', 'Tiny RPN Calculator: primary parts', '-10 -10 875 560', $device);
+
+# ================================================================ labels
+# "Extension" label for the text of the manual, in the colors of a GitHub label;
+# textLength keeps the text inside the frame with any font
+write_svg('hp35-extension.svg', 'Extension', '0 0 76 20',
+    qq{  <rect class="ext" x="0.5" y="0.5" width="75" height="19" rx="9.5"/>\n}
+  . qq{  <text class="exttx" x="38" y="14" textLength="58" lengthAdjust="spacingAndGlyphs">Extension</text>\n});
