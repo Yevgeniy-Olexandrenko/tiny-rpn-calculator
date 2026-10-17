@@ -85,9 +85,7 @@ In this manual, <kbd>F</kbd> <kbd>9</kbd> means: push the <kbd>F</kbd> key, rele
 
 The device has the size and the proportions of a credit card. The drawing shows the primary parts. The positions of the small parts are approximate. The drawing does not show the ICSP connector and the `POWER` jumper.
 
-<p align="center">
-  <img src="images/hp35-device.svg" alt="Tiny RPN Calculator: display (1), keyboard (2), USB-C connector (3), battery (4), microcontroller (5), real-time clock (6), charger (7)">
-</p>
+<img src="images/hp35-device.svg" alt="Tiny RPN Calculator: display (1), keyboard (2), USB-C connector (3), battery (4), microcontroller (5), real-time clock (6), charger (7)">
 
 | No. | Part | Function |
 | :---: | --- | --- |
