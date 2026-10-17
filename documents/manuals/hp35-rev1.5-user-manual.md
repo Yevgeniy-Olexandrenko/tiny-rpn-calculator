@@ -34,14 +34,31 @@ This manual tells you how to use the Tiny RPN Calculator (PCB rev 1.5) with the 
 
 Hewlett-Packard introduced the HP-35 in 1972. It was the first pocket calculator with transcendental functions (logarithms, exponent, trigonometric functions) and with RPN (refer to [8.1](#81-rpn-and-the-stack)). At that time, most calculators, including large desktop models, had only the four arithmetic operations.
 
-The firmware is an emulator. It runs the original ROM of the HP-35 on a virtual copy of the HP CPU, at about the speed of the original calculator. Thus, the calculations, the results and the display format are the same as on the HP-35. The firmware also adds some functions that make the calculator easier to use. This manual marks them with this label: <img src="images/hp35-extension.svg" alt="Extension" align="absmiddle">
+The firmware is an emulator. It runs the original ROM of the HP-35 on a virtual copy of the HP CPU, at about the speed of the original calculator. Thus, the calculations, the results and the display format are the same as on the HP-35 with the corrected ROM (refer to [1.2](#12-the-corrected-rom)). The firmware also adds some functions that make the calculator easier to use. This manual marks them with this label: <img src="images/hp35-extension.svg" alt="Extension" align="absmiddle">
 
 For more data, refer to:
 
 - [HP-35 Operating Manual](hp35-om-en-remake.pdf): all functions of the HP-35, with examples.
 - [HP-35 page of the Museum of HP Calculators](https://www.hpmuseum.org/hp35.htm): photos and history.
 
-### 1.2 Symbols
+### 1.2 The corrected ROM
+
+The first HP-35 calculators had errors in the ROM. The best-known error: after <kbd>2</kbd> <kbd>.</kbd> <kbd>0</kbd> <kbd>2</kbd> <kbd>ln</kbd> <kbd>eˣ</kbd>, the display showed `2.` instead of `2.02`. HP found the errors in 1972, when it had sold approximately 25,000 calculators. HP sent an errata sheet to the owners and offered to replace the ROM. From January 1973, HP shipped the calculators with a corrected ROM.
+
+The firmware contains the corrected ROM. The table shows some calculations that had errors in the first ROM:
+
+| Calculation | First ROM | This firmware |
+| --- | --- | --- |
+| e^(ln 2.02) | `2.` | `2.02` |
+| e^0.00995033085 | `1.` | `1.01` |
+| arc tan 1.00020002 | `45.` | `45.00572958` |
+| arc sin 0.7071774883 | `45.` | `45.00572958` |
+| arc sin 0.0002 | `5.729577893-03` | `.0114591558` |
+| √(−0) | Error (a flashing `0.`) | `0.` |
+
+For more data about the errors, refer to the [article of Jacques Laporte](https://archived.hpcalc.org/laporte/HP35%20bug.htm) and to the [HP-35 data on finseth.com](https://finseth.com/hpdata/hp35a.php).
+
+### 1.3 Symbols
 
 The text uses these symbols:
 
@@ -243,8 +260,8 @@ Each key has two functions:
 | <kbd>F</kbd> <kbd>8</kbd> | PROG | — | Open the PROG menu |
 
 > [!NOTE]
-> - **MEM+** keeps the value in X. The T register gets the new memory value. The old value of T is lost.
-> - **LAST** repeats only an operation that you selected in a menu (MATH, TRIG or PROG). It does not repeat the operations of the keyboard, for example <kbd>F</kbd> <kbd>↑</kbd> (+). If you did not use a menu operation before, LAST does nothing.
+> - <kbd>F</kbd> <kbd>5</kbd> (MEM+) keeps the value in X. The T register gets the new memory value. The old value of T is lost.
+> - <kbd>F</kbd> <kbd>0</kbd> (LAST) repeats only an operation that you selected in a menu (MATH, TRIG or PROG). It does not repeat the operations of the keyboard, for example <kbd>F</kbd> <kbd>↑</kbd> (+). If you did not use a menu operation before, it does nothing.
 > - <kbd>F</kbd> <kbd>C</kbd> (AC) also clears the memory. To clear only the memory, push <kbd>C</kbd> <kbd>F</kbd> <kbd>2</kbd> (STO). This also clears X.
 
 ## 7. Watch mode
@@ -266,7 +283,7 @@ In watch mode, the display is always dim.
 
 ### 8.1 RPN and the stack
 
-The calculator uses RPN (Reverse Polish Notation). You enter the numbers first, then the operation. Thus, you do not need parentheses and an `=` key.
+The calculator uses RPN (Reverse Polish Notation). You enter the numbers first, then the operation. Thus, you do not need parentheses and an <kbd>=</kbd> key.
 
 In the 1920s, Jan Łukasiewicz made a notation for logic that puts the operators before or after the operands. HP changed the postfix form of this notation for a calculator keyboard and added a stack for the operands. HP named the result RPN. With RPN, you push fewer keys, and you make fewer mistakes.
 
@@ -278,29 +295,27 @@ For example, the expression (4 + 5) × 6 in RPN is:
 
 **The stack**
 
-The stack has four registers: **X**, **Y**, **Z** and **T**. The HP-35 stack operates with these rules:
+The stack has four registers: **X**, **Y**, **Z** and **T**. The HP-35 stack operates with the rules below. The rules use the keys of the HP-35. For the keys of this calculator, refer to [6.2](#62-primary-functions) and [6.3](#63-shifted-functions).
 
 - The display shows only X.
-- <kbd>↑</kbd> copies X to Y. Y moves to Z, Z moves to T. The old value of T is lost.
-- An operation with two numbers (for example, +) uses Y and X. The result goes to X. Then Z moves to Y, and T copies to Z. T keeps its value.
-- A function with one number (for example, √x) uses only X. The result goes to X.
-- The trigonometric functions (<kbd>SIN</kbd> to <kbd>ATAN</kbd>) also copy Z to T. The old value of T is lost.
-- STO copies X to the memory. X does not change.
-- A new number after an operation lifts the stack automatically. For example, after <kbd>5</kbd> <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>1</kbd> (LOG) <kbd>1</kbd> <kbd>0</kbd>, Y contains log 5 and X contains 10.
+- <kbd>ENTER↑</kbd> copies X to Y. Y moves to Z, Z moves to T. The old value of T is lost.
+- An operation with two numbers (for example, <kbd>+</kbd>) uses Y and X. The result goes to X. Then Z moves to Y, and T copies to Z. T keeps its value.
+- A function with one number (for example, <kbd>√x</kbd>) uses only X. The result goes to X.
+- The trigonometric functions (<kbd>sin</kbd>, <kbd>cos</kbd>, <kbd>tan</kbd>, with or without <kbd>arc</kbd>) also copy Z to T. The old value of T is lost.
+- <kbd>STO</kbd> copies X to the memory. X does not change.
+- After <kbd>ENTER↑</kbd>, <kbd>CLx</kbd> and <kbd>STO</kbd>, the next number replaces X. It does not lift the stack.
+- After the other operations, the next number lifts the stack automatically. For example, after <kbd>5</kbd> <kbd>log</kbd> <kbd>1</kbd> <kbd>0</kbd>, Y contains log 5 and X contains 10.
 
 **Example:** (4 + 5) × 6. The table shows the stack after each step.
 
-| Keys | T | Z | Y | X |
-| --- | :---: | :---: | :---: | :---: |
-| <kbd>4</kbd> | 0 | 0 | 0 | **4** |
-| <kbd>↑</kbd> | 0 | 0 | 4 | **4** |
-| <kbd>5</kbd> | 0 | 0 | 4 | **5** |
-| <kbd>F</kbd> <kbd>↑</kbd> (+) | 0 | 0 | 0 | **9** |
-| <kbd>6</kbd> | 0 | 0 | 9 | **6** |
-| <kbd>F</kbd> <kbd>6</kbd> (×) | 0 | 0 | 0 | **54** |
-
-> [!NOTE]
-> After <kbd>↑</kbd>, <kbd>C</kbd> and <kbd>F</kbd> <kbd>2</kbd> (STO), the next number replaces X. It does not lift the stack.
+| Keys | HP-35 keys | T | Z | Y | X |
+| --- | --- | :---: | :---: | :---: | :---: |
+| <kbd>4</kbd> | <kbd>4</kbd> | 0 | 0 | 0 | **4** |
+| <kbd>↑</kbd> | <kbd>ENTER↑</kbd> | 0 | 0 | 4 | **4** |
+| <kbd>5</kbd> | <kbd>5</kbd> | 0 | 0 | 4 | **5** |
+| <kbd>F</kbd> <kbd>↑</kbd> (+) | <kbd>+</kbd> | 0 | 0 | 0 | **9** |
+| <kbd>6</kbd> | <kbd>6</kbd> | 0 | 0 | 9 | **6** |
+| <kbd>F</kbd> <kbd>6</kbd> (×) | <kbd>×</kbd> | 0 | 0 | 0 | **54** |
 
 For more data about RPN, read the [HP-35 Operating Manual](hp35-om-en-remake.pdf).
 
@@ -320,7 +335,7 @@ The example shows 6.02214076 × 10²³.
 - If a result is too large, the display shows the largest number: `9.999999999 99`.
 
 > [!NOTE]
-> During a calculation, the display is blank. Some functions, for example <kbd>SIN</kbd> and <kbd>xʸ</kbd>, take up to 0.7 s.
+> During a calculation, the display is blank. Some functions, for example the sine and the power, take up to 0.7 s.
 
 ### 8.3 Indicators
 
@@ -357,10 +372,10 @@ These operations are not possible:
 
 - Division by zero.
 - Square root of a negative number.
-- <kbd>LN</kbd>, <kbd>LOG</kbd> or <kbd>xʸ</kbd> when X is zero or negative.
-- <kbd>ASIN</kbd> or <kbd>ACOS</kbd> when X is more than 1 or less than −1.
+- Logarithm (LN, LOG) or power (xʸ) when X is zero or negative.
+- Arc sine (ASIN) or arc cosine (ACOS) when X is more than 1 or less than −1.
 
-If you try one of these operations, a flashing zero shows. To stop the error, push <kbd>C</kbd>.
+If you try one of these operations, a flashing `0.` shows. To stop the error, push <kbd>C</kbd>.
 
 ### 8.6 Angles
 
@@ -391,18 +406,18 @@ A menu shows on the bottom line of the display. The top line shows X with small 
 
 | Keys in the menu | Item | Function |
 | --- | :---: | --- |
-| <kbd>1</kbd> | <kbd>xʸ</kbd> | X to the power Y |
-| <kbd>2</kbd> | <kbd>√x</kbd> | Square root of X |
-| <kbd>3</kbd> | <kbd>1/x</kbd> | Reciprocal of X |
-| <kbd>±</kbd> <kbd>1</kbd> | <kbd>LOG</kbd> | Common logarithm of X |
-| <kbd>±</kbd> <kbd>2</kbd> | <kbd>LN</kbd> | Natural logarithm of X |
-| <kbd>±</kbd> <kbd>3</kbd> | <kbd>eˣ</kbd> | e to the power X |
+| <kbd>1</kbd> | xʸ | X to the power Y |
+| <kbd>2</kbd> | √x | Square root of X |
+| <kbd>3</kbd> | 1/x | Reciprocal of X |
+| <kbd>±</kbd> <kbd>1</kbd> | LOG | Common logarithm of X |
+| <kbd>±</kbd> <kbd>2</kbd> | LN | Natural logarithm of X |
+| <kbd>±</kbd> <kbd>3</kbd> | eˣ | e to the power X |
 
 > [!IMPORTANT]
-> <kbd>xʸ</kbd> calculates **X to the power Y**. This is the order of the original HP-35:
+> <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (xʸ) calculates **X to the power Y**. This is the order of the original HP-35:
 > 1. Enter the power. Push <kbd>↑</kbd> to move it to Y.
 > 2. Enter the number. It stays in X.
-> 3. Do <kbd>xʸ</kbd>.
+> 3. Push <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (xʸ).
 >
 > For example, 2⁷ = 128: push <kbd>7</kbd> <kbd>↑</kbd> <kbd>2</kbd>, then <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (xʸ).
 >
@@ -412,28 +427,28 @@ A menu shows on the bottom line of the display. The top line shows X with small 
 
 | Keys in the menu | Item | Function |
 | --- | :---: | --- |
-| <kbd>1</kbd> | <kbd>SIN</kbd> | Sine of X |
-| <kbd>2</kbd> | <kbd>COS</kbd> | Cosine of X |
-| <kbd>3</kbd> | <kbd>TAN</kbd> | Tangent of X |
-| <kbd>±</kbd> <kbd>1</kbd> | <kbd>ASIN</kbd> | Arc sine of X |
-| <kbd>±</kbd> <kbd>2</kbd> | <kbd>ACOS</kbd> | Arc cosine of X |
-| <kbd>±</kbd> <kbd>3</kbd> | <kbd>ATAN</kbd> | Arc tangent of X |
+| <kbd>1</kbd> | SIN | Sine of X |
+| <kbd>2</kbd> | COS | Cosine of X |
+| <kbd>3</kbd> | TAN | Tangent of X |
+| <kbd>±</kbd> <kbd>1</kbd> | ASIN | Arc sine of X |
+| <kbd>±</kbd> <kbd>2</kbd> | ACOS | Arc cosine of X |
+| <kbd>±</kbd> <kbd>3</kbd> | ATAN | Arc tangent of X |
 
 ### 9.4 PROG menu: <kbd>F</kbd> <kbd>8</kbd>
 
 | Keys in the menu | Item | Function |
 | --- | :---: | --- |
-| <kbd>1</kbd> | <kbd>TIME</kbd> | Set the time (refer to [10.1](#101-set-the-time)) |
-| <kbd>2</kbd> | <kbd>DATE</kbd> | Set the date (refer to [10.2](#102-set-the-date)) |
-| <kbd>3</kbd> | <kbd>ZONE</kbd> | Set the time zone (refer to [10.3](#103-set-the-time-zone)) |
-| <kbd>±</kbd> <kbd>1</kbd> | <kbd>TOTP</kbd> | Show the TOTP codes (refer to [11](#11-totp-codes)) |
+| <kbd>1</kbd> | TIME | Set the time (refer to [10.1](#101-set-the-time)) |
+| <kbd>2</kbd> | DATE | Set the date (refer to [10.2](#102-set-the-date)) |
+| <kbd>3</kbd> | ZONE | Set the time zone (refer to [10.3](#103-set-the-time-zone)) |
+| <kbd>±</kbd> <kbd>1</kbd> | TOTP | Show the TOTP codes (refer to [11](#11-totp-codes)) |
 
 ## 10. Set the time, the date and the time zone
 
 > [!IMPORTANT]
 > - Enter **whole numbers** in the range of the table. Do not enter a decimal fraction or an exponent.
-> - If a value is not correct, the operation does not change the clock and the time zone. The calculator shows an error and **clears the stack** (X, Y, Z, T). The memory does not change. Push <kbd>C</kbd> and do the procedure again.
-> - If the values are correct, the operation removes them from the stack. After <kbd>TIME</kbd> and <kbd>DATE</kbd>, the device shows the watch screen. After <kbd>ZONE</kbd>, the device shows the TOTP codes. If there are no TOTP keys, the device stays in calculator mode.
+> - If a value is not correct, the operation does not change the clock and the time zone. The calculator shows an error (a flashing `0.`) and **clears the stack** (X, Y, Z, T). The memory does not change. Push <kbd>C</kbd> and do the procedure again.
+> - If the values are correct, the operation removes them from the stack. After the time and the date operations (TIME, DATE), the device shows the watch screen. After the time zone operation (ZONE), the device shows the TOTP codes. If there are no TOTP keys, the device stays in calculator mode.
 
 ### 10.1 Set the time
 
@@ -472,7 +487,7 @@ A menu shows on the bottom line of the display. The top line shows X with small 
 5. Make sure that the watch screen shows the correct date.
 
 > [!NOTE]
-> The <kbd>DATE</kbd> operation does not change the time. The <kbd>TIME</kbd> operation does not change the date.
+> The date operation (DATE) does not change the time. The time operation (TIME) does not change the date.
 
 ### 10.3 Set the time zone
 
@@ -599,7 +614,7 @@ Calculate π × 2.5².
 </details>
 
 <details>
-<summary><b>Example 3: Powers with xʸ</b></summary>
+<summary><b>Example 3: Powers (xʸ)</b></summary>
 
 Calculate 2⁷ and 8^(2/3).
 
@@ -618,7 +633,7 @@ Calculate 2⁷ and 8^(2/3).
 <details>
 <summary><b>Example 4: Sum in the memory (MEM+)</b></summary>
 
-Add 12.5, 7.25 and 30 in the memory. The HP-35 has no MEM+, thus it uses <kbd>RCL</kbd> <kbd>+</kbd> <kbd>STO</kbd>.
+Add 12.5, 7.25 and 30 in the memory. The HP-35 has no operation like <kbd>F</kbd> <kbd>5</kbd> (MEM+), thus it uses <kbd>RCL</kbd> <kbd>+</kbd> <kbd>STO</kbd>.
 
 | Step | Keys | HP-35 keys | Result |
 | :---: | --- | --- | --- |
@@ -650,16 +665,16 @@ Add 12.5, 7.25 and 30 in the memory. The HP-35 has no MEM+, thus it uses <kbd>RC
 | | The battery is empty. | Charge the battery (refer to [4.1](#41-charge-the-battery)). |
 | | The POWER jumper is open. | Close the jumper. Then set the time, the date and the time zone. |
 | The time or the date is not correct. | A reset occurred (refer to [4.5](#45-power-jumper-and-reset)). | Set the time, the date and the time zone (refer to [10](#10-set-the-time-the-date-and-the-time-zone)). |
-| <kbd>TIME</kbd>, <kbd>DATE</kbd> or <kbd>ZONE</kbd> shows an error. | A value is not in the range, or is not a whole number. | Push <kbd>C</kbd>. Do the procedure again with correct values. |
+| The time, date or time zone operation (TIME, DATE, ZONE) shows an error. | A value is not in the range, or is not a whole number. | Push <kbd>C</kbd>. Do the procedure again with correct values. |
 | The web site does not accept the TOTP code. | The time, the date or the time zone is not correct. | Set the time, the date and the time zone again. |
 | | The key label is not correct. | Push <kbd>±</kbd> or <kbd>E</kbd> to select the correct key. |
 | <kbd>F</kbd> in watch mode opens calculator mode. | The device has no TOTP keys. | Install the TOTP keys (refer to [11.3](#113-install-your-totp-keys)). |
 | The display is dim. | 10 s passed after the last key push. | Push a key. |
 | The battery indicator does not flash during the charge. | The battery is full. | No action is necessary. |
 | | The USB cable or the power supply is defective. | Use a different cable or power supply. |
-| A zero flashes on the display. | An error occurred in a calculation. | Push <kbd>C</kbd>. |
-| <kbd>xʸ</kbd> gives an incorrect result. | The power and the number are in the wrong registers. | Enter the power first, then the number (refer to [9.2](#92-math-menu-f-f)). |
-| <kbd>F</kbd> <kbd>0</kbd> (LAST) does not repeat an arithmetic operation. | LAST repeats only menu operations. | Push the arithmetic keys again. |
+| A flashing `0.` shows on the display. | An error occurred in a calculation. | Push <kbd>C</kbd>. |
+| <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (xʸ) gives an incorrect result. | The power and the number are in the wrong registers. | Enter the power first, then the number (refer to [9.2](#92-math-menu-f-f)). |
+| <kbd>F</kbd> <kbd>0</kbd> (LAST) does not repeat an arithmetic operation. | It repeats only menu operations. | Push the arithmetic keys again. |
 | A key does an incorrect function. | <kbd>F</kbd> is active (indicator F shows). | Look at the indicators before you push a key. |
 
 ## 14. Firmware installation
@@ -744,21 +759,21 @@ The top row shows the keys that open each menu. The left column shows the keys t
 
 | Keys in the menu | MATH<br><kbd>F</kbd> <kbd>F</kbd> | TRIG<br><kbd>F</kbd> <kbd>7</kbd> | PROG<br><kbd>F</kbd> <kbd>8</kbd> |
 | --- | :---: | :---: | :---: |
-| <kbd>1</kbd> | <kbd>xʸ</kbd> | <kbd>SIN</kbd> | <kbd>TIME</kbd> |
-| <kbd>2</kbd> | <kbd>√x</kbd> | <kbd>COS</kbd> | <kbd>DATE</kbd> |
-| <kbd>3</kbd> | <kbd>1/x</kbd> | <kbd>TAN</kbd> | <kbd>ZONE</kbd> |
-| <kbd>±</kbd> <kbd>1</kbd> | <kbd>LOG</kbd> | <kbd>ASIN</kbd> | <kbd>TOTP</kbd> |
-| <kbd>±</kbd> <kbd>2</kbd> | <kbd>LN</kbd> | <kbd>ACOS</kbd> | — |
-| <kbd>±</kbd> <kbd>3</kbd> | <kbd>eˣ</kbd> | <kbd>ATAN</kbd> | — |
+| <kbd>1</kbd> | xʸ | SIN | TIME |
+| <kbd>2</kbd> | √x | COS | DATE |
+| <kbd>3</kbd> | 1/x | TAN | ZONE |
+| <kbd>±</kbd> <kbd>1</kbd> | LOG | ASIN | TOTP |
+| <kbd>±</kbd> <kbd>2</kbd> | LN | ACOS | — |
+| <kbd>±</kbd> <kbd>3</kbd> | eˣ | ATAN | — |
 
 **Stack input for the operations**
 
 | Operation | Z | Y | X |
 | --- | --- | --- | --- |
-| <kbd>TIME</kbd> | Hours (0–23) | Minutes (0–59) | Seconds (0–59) |
-| <kbd>DATE</kbd> | Day (1–31) | Month (1–12) | Year (0–99) |
-| <kbd>ZONE</kbd> | — | — | Hours from UTC (−14 to +14) |
-| <kbd>xʸ</kbd> | — | Power | Number (more than 0) |
+| <kbd>F</kbd> <kbd>8</kbd> <kbd>1</kbd> (TIME) | Hours (0–23) | Minutes (0–59) | Seconds (0–59) |
+| <kbd>F</kbd> <kbd>8</kbd> <kbd>2</kbd> (DATE) | Day (1–31) | Month (1–12) | Year (0–99) |
+| <kbd>F</kbd> <kbd>8</kbd> <kbd>3</kbd> (ZONE) | — | — | Hours from UTC (−14 to +14) |
+| <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (xʸ) | — | Power | Number (more than 0) |
 
 **Modes and power**
 
