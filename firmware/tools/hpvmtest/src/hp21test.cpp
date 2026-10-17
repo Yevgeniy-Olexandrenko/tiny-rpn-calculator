@@ -276,6 +276,13 @@ int main(int argc, char** argv)
 	keys("PI");
 	expect("func lift Y", reg2str(HPVM::Y), "03000000000000");
 	expect("func lift Z", reg2str(HPVM::Z), "00000000000000");
+	keys("CLR 5 STO 9 ENTER 1 2"); // invalid TIME or DATE values
+	HPVM::Error();
+	run_to_idle();
+	expect("error shown", seg2str(HPVM::Display, sizeof(HPVM::Display)), " Error");
+	expect("error clears Y", reg2str(HPVM::Y), "00000000000000");
+	expect("error keeps M1", reg2str(HPVM::M1), "05000000000000");
+	check("after error", "3 ENTER RCL", " 5.00");
 
 	// low battery: F1 high keeps S5 clear, ROM lights all dots
 	HPVM::F1 = true; HPVM::s[HPVM::STATUS_BIT_F1] = 0;

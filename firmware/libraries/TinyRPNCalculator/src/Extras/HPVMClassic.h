@@ -19,6 +19,7 @@ namespace HPVM
 	void Operation(u08 op);
 	void OpAndWait(u08 op);
 	void DisplayY(u08 (&disp)[sizeof(Display)]); // Y rendered as Display
+	void Error(); // clears the stack, shows the error
 	b08 Idling(); // true if idling
 	b08 Cycle();  // true if display updated
 
@@ -201,6 +202,15 @@ namespace HPVM
 		memcpy(disp, Display, sizeof(Display));
 		OpAndWait(OpSWAP);
 		s[STATUS_BIT_LIFT] = lift;
+	}
+
+	// puts the calculator into the error state the way its ROM shows it:
+	// the stack registers X..T are cleared and 1/x of zero is computed
+	// (the model provides OpINV_), memory registers are kept
+	void Error()
+	{
+		for (u08 i = rC * sizeof(reg); i < (rC + 4) * sizeof(reg); ++i) ((bcd*)regs)[i] = 0;
+		Operation(OpINV_);
 	}
 
 	b08 Idling()

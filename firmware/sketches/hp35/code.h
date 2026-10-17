@@ -202,31 +202,34 @@ void enterMenu(u08 type)
 	select = 0;
 }
 
-void dropStackTop()
+void dropStack(u08 n)
 {
 	using namespace HPVM;
 	// roll down via ROM to end number entry and refresh display,
 	// then restore T to get a drop: C, D, E <- D, E, F
-	OpAndWait(OpROT_);
-	reg_move(F, E, 0, 13, COPY);
+	do
+	{
+		OpAndWait(OpROT_);
+		reg_move(F, E, 0, 13, COPY);
+	}
+	while (--n);
 }
 
-b08 getBCDFromStack(u08& out, u08 min, u08 max)
+b08 getBCD(const HPVM::reg& r, u08& out, u08 min, u08 max)
 {
 	// positive integer 0..999: mantissa sign, exponent sign and
 	// exponent tens are zero, exponent units 0..2
-	if ((HPVM::C[13] | HPVM::C[2] | HPVM::C[1]) == 0 && HPVM::C[0] < 3)
+	if ((r[13] | r[2] | r[1]) == 0 && r[0] < 3)
 	{
 		u16 value = 0;
-		for (u08 i = 0; i <= HPVM::C[0]; ++i)
+		for (u08 i = 0; i <= r[0]; ++i)
 		{
 			value *= 16;
-			value += HPVM::C[12 - i];
+			value += r[12 - i];
 		}
 		if (value >= min && value <= max)
 		{
 			out = u08(value);
-			dropStackTop();
 			return true;
 		}
 	}
@@ -281,25 +284,32 @@ void executeOperation(u08 operation)
 			break;
 
 		case PROG_TIME:
-			// stack: X - seconds, Y - minutes, Z - hours
+			// stack: X - seconds, Y - minutes, Z - hours, the values are
+			// dropped if all are valid, otherwise the error is shown
 			RTC::ReadTimeDate();
-			if (getBCDFromStack(RTC::Seconds, 0x00, 0x59) &&
-			    getBCDFromStack(RTC::Minutes, 0x00, 0x59) &&
-			    getBCDFromStack(RTC::Hours,   0x00, 0x23))
+			if (getBCD(HPVM::C, RTC::Seconds, 0x00, 0x59) &&
+			    getBCD(HPVM::D, RTC::Minutes, 0x00, 0x59) &&
+			    getBCD(HPVM::E, RTC::Hours,   0x00, 0x23))
 			{
+				dropStack(3);
 				setupAndEnterRTCMode();
 			}
+			else HPVM::Error();
 			break;
 
 		case PROG_DATE:
-			// stack: X - year, Y - month, Z - date
+			// stack: X - year, Y - month, Z - date, the date is checked
+			// against the days in the month, leap years included
 			RTC::ReadTimeDate();
-			if (getBCDFromStack(RTC::Year,  0x00, 0x99) &&
-			    getBCDFromStack(RTC::Month, 0x01, 0x12) &&
-			    getBCDFromStack(RTC::Date,  0x01, 0x31))
+			if (getBCD(HPVM::C, RTC::Year,  0x00, 0x99) &&
+			    getBCD(HPVM::D, RTC::Month, 0x01, 0x12) &&
+			    getBCD(HPVM::E, RTC::Date,  0x01, 0x31) &&
+			    BCD::Decode(RTC::Date) <= RTC::GetDaysInMonth())
 			{
+				dropStack(3);
 				setupAndEnterRTCMode();
 			}
+			else HPVM::Error();
 			break;
 
 		case PROG_TOTP:
@@ -312,12 +322,13 @@ void executeOperation(u08 operation)
 			u08 sign = HPVM::C[13];
 			u08 zone;
 			HPVM::C[13] = 0;
-			if (getBCDFromStack(zone, 0x00, 0x14))
+			if (getBCD(HPVM::C, zone, 0x00, 0x14))
 			{
 				gmtZone = BCD::Decode(zone);
 				if (sign) gmtZone = -gmtZone;
+				dropStack(1);
 			}
-			else HPVM::C[13] = sign;
+			else HPVM::Error();
 			break;
 		}
 

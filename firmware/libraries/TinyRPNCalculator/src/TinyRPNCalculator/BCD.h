@@ -4,6 +4,7 @@
 
 namespace BCD
 {
+	NOINLINE
 	constexpr u08 Decode(u08 data)
 	{
 		return data - 6 * (data >> 4);
