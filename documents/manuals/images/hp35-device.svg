@@ -1,24 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 875 560" width="875" height="560" font-family="Segoe UI, Helvetica, Arial, sans-serif">
   <title>Tiny RPN Calculator: primary parts</title>
   <style>
-    .board   { fill: #ffffff; stroke: #57606a; stroke-width: 2.5; }
-    .overlay { fill: #f6f8fa; stroke: #57606a; stroke-width: 2; }
-    .line    { fill: none; stroke: #8c959f; stroke-width: 1.5; }
+    .board, .overlay { fill: #ffffff; }
+    .board   { stroke-width: 2.5; }
+    .overlay, .hole { stroke-width: 2; }
+    .hole    { fill: none; }
+    .slot    { fill: none; stroke-width: 1.5; }
+    .board, .overlay, .hole, .slot { stroke: #57606a; }
+    .line    { fill: none; stroke: #1f2328; stroke-width: 1.5; }
+    .main, .shift, .title, .cap { fill: #1f2328; }
+    .main    { font-size: 52px; text-anchor: middle; }
+    .shift   { font-size: 26px; }
+    .title   { font-size: 46px; font-weight: 700; text-anchor: middle; }
+    .subtitle{ fill: #57606a; font-size: 27px; text-anchor: middle; }
     .chip    { fill: #24292f; }
     .pin     { fill: #8c959f; }
     .chiptxt { fill: #ffffff; font-size: 14px; font-weight: 600; text-anchor: middle; }
-    .usb     { fill: #d0d7de; stroke: #57606a; stroke-width: 1.5; }
-    .port    { fill: #57606a; }
-    .cell    { fill: #eaeef2; stroke: #57606a; stroke-width: 1.5; }
-    .tab     { fill: #d0d7de; stroke: #57606a; stroke-width: 1.5; }
-    .label   { fill: #1f2328; font-size: 18px; font-weight: 600; text-anchor: middle; }
-    .main    { fill: #1f2328; font-size: 52px; text-anchor: middle; }
-    .shift   { fill: #57606a; font-size: 26px; text-anchor: middle; }
-    .title   { fill: #1f2328; font-size: 46px; font-weight: 700; text-anchor: middle; }
-    .subtitle{ fill: #57606a; font-size: 27px; text-anchor: middle; }
-    .slot    { fill: #8c959f; }
-    .switch  { fill: #d0d7de; stroke: #8c959f; stroke-width: 1; }
-    .cap     { fill: #ffffff; stroke: #8c959f; stroke-width: 1; }
     .badge   { fill: #0969da; }
     .badgetx { fill: #ffffff; font-size: 13px; font-weight: 700; text-anchor: middle; }
     .glass   { fill: #24292f; stroke: #57606a; stroke-width: 1.5; }
@@ -26,34 +23,28 @@
     .ledge   { fill: #57606a; }
     .pixel   { fill: #ffffff; }
     .ribbon  { fill: #d18b2c; }
-    .hole    { fill: #ffffff; stroke: #57606a; stroke-width: 2; }
+    .usb, .tab { fill: #d0d7de; stroke: #57606a; stroke-width: 1.5; }
+    .usbleg  { fill: #8c959f; }
+    .cell    { fill: #eaeef2; stroke: #d18b2c; stroke-width: 10; }
+    .label   { fill: #1f2328; font-size: 18px; font-weight: 600; text-anchor: middle; }
     @media (prefers-color-scheme: dark) {
-      .board   { fill: #0d1117; stroke: #8b949e; }
-      .overlay { fill: #161b22; stroke: #8b949e; }
-      .line    { stroke: #6e7681; }
+      .board, .overlay { fill: #0d1117; }
+      .board, .overlay, .hole, .slot { stroke: #8b949e; }
+      .line    { stroke: #e6edf3; }
+      .main, .shift, .title, .cap { fill: #e6edf3; }
+      .subtitle{ fill: #8b949e; }
       .chip    { fill: #30363d; }
       .pin     { fill: #6e7681; }
-      .usb, .tab { fill: #30363d; stroke: #8b949e; }
-      .port    { fill: #8b949e; }
-      .cell    { fill: #21262d; stroke: #8b949e; }
-      .label, .main, .title { fill: #e6edf3; }
-      .shift, .subtitle { fill: #8b949e; }
-      .slot    { fill: #484f58; }
-      .switch  { fill: #30363d; stroke: #6e7681; }
-      .cap     { fill: #c9d1d9; stroke: #6e7681; }
       .badge   { fill: #2f81f7; }
-      .glass   { stroke: #8b949e; }
-      .ledge   { fill: #6e7681; }
-      .hole    { fill: #0d1117; stroke: #8b949e; }
     }
   </style>
   <defs>
-    <!-- key seen through the slot of the keyboard board: 3 x 6 mm tact switch -->
+    <!-- slot of the keyboard board and the button of the 3 x 6 mm tact switch -->
     <g id="key">
       <path class="slot" d="M-25,-20 H25 L35,-10 V10 L25,20 H-25 L-35,10 V-10 Z"/>
-      <rect class="switch" x="-30" y="-15" width="60" height="30" rx="3"/>
-      <rect class="cap" x="-19" y="-9" width="38" height="18" rx="2"/>
+      <rect class="cap" x="-19" y="-9" width="38" height="18" rx="3"/>
     </g>
+    <!-- one side of a SOIC-8 -->
     <g id="soic-pins">
       <rect class="pin" x="-21" y="-4" width="4" height="8"/>
       <rect class="pin" x="-8.5" y="-4" width="4" height="8"/>
@@ -71,7 +62,7 @@
   <rect class="glass" x="12" y="24" width="303" height="115" rx="3"/>
   <rect class="panel" x="16" y="28" width="246" height="94"/>
   <rect class="ledge" x="16" y="122" width="246" height="13"/>
-  <g transform="translate(26 47) scale(1.75)"><path class="pixel" d="M25,1h5v1h-5zM33,1h5v1h-5zM49,1h5v1h-5zM57,1h5v1h-5zM72,1h5v1h-5zM78,1h5v1h-5zM84,1h5v1h-5zM98,1h2v1h-2zM103,1h5v1h-5zM115,1h5v1h-5zM121,1h5v1h-5zM6,2h1v1h-1zM8,2h1v1h-1zM14,2h1v1h-1zM30,2h1v1h-1zM32,2h1v1h-1zM38,2h1v1h-1zM48,2h1v1h-1zM54,2h1v1h-1zM56,2h1v1h-1zM62,2h1v1h-1zM72,2h1v1h-1zM76,2h1v1h-1zM78,2h1v1h-1zM86,2h1v1h-1zM99,2h1v1h-1zM103,2h1v1h-1zM107,2h1v1h-1zM113,2h1v1h-1zM119,2h1v1h-1zM121,2h1v1h-1zM6,3h1v1h-1zM8,3h1v1h-1zM14,3h1v1h-1zM30,3h1v1h-1zM32,3h1v1h-1zM38,3h1v1h-1zM48,3h1v1h-1zM54,3h1v1h-1zM56,3h1v1h-1zM62,3h1v1h-1zM72,3h1v1h-1zM76,3h1v1h-1zM78,3h1v1h-1zM86,3h1v1h-1zM99,3h1v1h-1zM107,3h1v1h-1zM112,3h1v1h-1zM119,3h1v1h-1zM121,3h5v1h-5zM6,4h1v1h-1zM8,4h1v1h-1zM14,4h1v1h-1zM30,4h1v1h-1zM32,4h1v1h-1zM38,4h1v1h-1zM48,4h1v1h-1zM54,4h1v1h-1zM56,4h1v1h-1zM62,4h1v1h-1zM72,4h1v1h-1zM76,4h1v1h-1zM78,4h1v1h-1zM86,4h1v1h-1zM99,4h1v1h-1zM107,4h1v1h-1zM111,4h1v1h-1zM115,4h5v1h-5zM121,4h1v1h-1zM125,4h1v1h-1zM6,5h1v1h-1zM8,5h1v1h-1zM14,5h1v1h-1zM30,5h1v1h-1zM32,5h1v1h-1zM38,5h1v1h-1zM48,5h1v1h-1zM54,5h1v1h-1zM56,5h1v1h-1zM62,5h1v1h-1zM72,5h1v1h-1zM76,5h1v1h-1zM78,5h1v1h-1zM86,5h1v1h-1zM99,5h1v1h-1zM107,5h1v1h-1zM110,5h1v1h-1zM115,5h1v1h-1zM121,5h1v1h-1zM125,5h1v1h-1zM6,6h1v1h-1zM8,6h1v1h-1zM14,6h1v1h-1zM30,6h1v1h-1zM32,6h1v1h-1zM38,6h1v1h-1zM48,6h1v1h-1zM54,6h1v1h-1zM56,6h1v1h-1zM62,6h1v1h-1zM72,6h5v1h-5zM78,6h5v1h-5zM86,6h1v1h-1zM99,6h1v1h-1zM107,6h1v1h-1zM109,6h1v1h-1zM115,6h5v1h-5zM121,6h5v1h-5zM6,7h1v1h-1zM8,7h1v1h-1zM14,7h1v1h-1zM30,7h1v1h-1zM32,7h1v1h-1zM38,7h1v1h-1zM48,7h1v1h-1zM54,7h1v1h-1zM56,7h1v1h-1zM62,7h1v1h-1zM6,8h1v1h-1zM8,8h1v1h-1zM14,8h1v1h-1zM18,8h3v1h-3zM30,8h1v1h-1zM32,8h1v1h-1zM38,8h1v1h-1zM42,8h3v1h-3zM48,8h1v1h-1zM54,8h1v1h-1zM56,8h1v1h-1zM62,8h1v1h-1zM6,9h1v1h-1zM8,9h1v1h-1zM14,9h1v1h-1zM18,9h3v1h-3zM30,9h1v1h-1zM32,9h1v1h-1zM38,9h1v1h-1zM42,9h3v1h-3zM48,9h1v1h-1zM54,9h1v1h-1zM56,9h1v1h-1zM62,9h1v1h-1zM6,10h1v1h-1zM8,10h1v1h-1zM14,10h1v1h-1zM18,10h3v1h-3zM30,10h1v1h-1zM32,10h1v1h-1zM38,10h1v1h-1zM42,10h3v1h-3zM48,10h1v1h-1zM54,10h1v1h-1zM56,10h1v1h-1zM62,10h1v1h-1zM6,11h1v1h-1zM8,11h1v1h-1zM14,11h1v1h-1zM30,11h1v1h-1zM32,11h1v1h-1zM38,11h1v1h-1zM48,11h1v1h-1zM54,11h1v1h-1zM56,11h1v1h-1zM62,11h1v1h-1zM72,11h10v1h-10zM83,11h10v1h-10zM94,11h10v1h-10zM105,11h10v1h-10zM6,12h1v1h-1zM8,12h1v1h-1zM14,12h1v1h-1zM30,12h1v1h-1zM32,12h1v1h-1zM38,12h1v1h-1zM48,12h1v1h-1zM54,12h1v1h-1zM56,12h1v1h-1zM62,12h1v1h-1zM6,13h1v1h-1zM8,13h1v1h-1zM14,13h1v1h-1zM30,13h1v1h-1zM32,13h1v1h-1zM38,13h1v1h-1zM48,13h1v1h-1zM54,13h1v1h-1zM56,13h1v1h-1zM62,13h1v1h-1zM6,14h1v1h-1zM8,14h1v1h-1zM14,14h1v1h-1zM30,14h1v1h-1zM32,14h1v1h-1zM38,14h1v1h-1zM48,14h1v1h-1zM54,14h1v1h-1zM56,14h1v1h-1zM62,14h1v1h-1zM9,15h5v1h-5zM25,15h5v1h-5zM6,16h1v1h-1zM14,16h1v1h-1zM30,16h1v1h-1zM32,16h1v1h-1zM38,16h1v1h-1zM48,16h1v1h-1zM54,16h1v1h-1zM56,16h1v1h-1zM62,16h1v1h-1zM6,17h1v1h-1zM14,17h1v1h-1zM30,17h1v1h-1zM32,17h1v1h-1zM38,17h1v1h-1zM48,17h1v1h-1zM54,17h1v1h-1zM56,17h1v1h-1zM62,17h1v1h-1zM72,17h2v1h-2zM80,17h2v1h-2zM83,17h10v1h-10zM105,17h10v1h-10zM116,17h10v1h-10zM6,18h1v1h-1zM14,18h1v1h-1zM30,18h1v1h-1zM32,18h1v1h-1zM38,18h1v1h-1zM48,18h1v1h-1zM54,18h1v1h-1zM56,18h1v1h-1zM62,18h1v1h-1zM72,18h2v1h-2zM80,18h2v1h-2zM83,18h2v1h-2zM91,18h2v1h-2zM113,18h2v1h-2zM116,18h2v1h-2zM6,19h1v1h-1zM14,19h1v1h-1zM30,19h1v1h-1zM32,19h1v1h-1zM38,19h1v1h-1zM48,19h1v1h-1zM54,19h1v1h-1zM56,19h1v1h-1zM62,19h1v1h-1zM72,19h10v1h-10zM83,19h2v1h-2zM91,19h2v1h-2zM94,19h10v1h-10zM107,19h8v1h-8zM116,19h10v1h-10zM6,20h1v1h-1zM14,20h1v1h-1zM18,20h3v1h-3zM30,20h1v1h-1zM32,20h1v1h-1zM38,20h1v1h-1zM42,20h3v1h-3zM48,20h1v1h-1zM54,20h1v1h-1zM56,20h1v1h-1zM62,20h1v1h-1zM72,20h2v1h-2zM80,20h2v1h-2zM83,20h10v1h-10zM113,20h2v1h-2zM124,20h2v1h-2zM6,21h1v1h-1zM14,21h1v1h-1zM18,21h3v1h-3zM30,21h1v1h-1zM32,21h1v1h-1zM38,21h1v1h-1zM42,21h3v1h-3zM48,21h1v1h-1zM54,21h1v1h-1zM56,21h1v1h-1zM62,21h1v1h-1zM72,21h2v1h-2zM80,21h2v1h-2zM83,21h2v1h-2zM113,21h2v1h-2zM124,21h2v1h-2zM6,22h1v1h-1zM14,22h1v1h-1zM18,22h3v1h-3zM30,22h1v1h-1zM32,22h1v1h-1zM38,22h1v1h-1zM42,22h3v1h-3zM48,22h1v1h-1zM54,22h1v1h-1zM56,22h1v1h-1zM62,22h1v1h-1zM72,22h2v1h-2zM80,22h2v1h-2zM83,22h2v1h-2zM105,22h10v1h-10zM116,22h10v1h-10zM6,23h1v1h-1zM14,23h1v1h-1zM30,23h1v1h-1zM32,23h1v1h-1zM38,23h1v1h-1zM48,23h1v1h-1zM54,23h1v1h-1zM56,23h1v1h-1zM62,23h1v1h-1zM6,24h1v1h-1zM14,24h1v1h-1zM30,24h1v1h-1zM32,24h1v1h-1zM38,24h1v1h-1zM48,24h1v1h-1zM54,24h1v1h-1zM56,24h1v1h-1zM62,24h1v1h-1zM6,25h1v1h-1zM14,25h1v1h-1zM30,25h1v1h-1zM32,25h1v1h-1zM38,25h1v1h-1zM48,25h1v1h-1zM54,25h1v1h-1zM56,25h1v1h-1zM62,25h1v1h-1zM6,26h1v1h-1zM14,26h1v1h-1zM30,26h1v1h-1zM32,26h1v1h-1zM38,26h1v1h-1zM48,26h1v1h-1zM54,26h1v1h-1zM56,26h1v1h-1zM62,26h1v1h-1zM6,27h1v1h-1zM14,27h1v1h-1zM30,27h1v1h-1zM32,27h1v1h-1zM38,27h1v1h-1zM48,27h1v1h-1zM54,27h1v1h-1zM56,27h1v1h-1zM62,27h1v1h-1zM6,28h1v1h-1zM14,28h1v1h-1zM30,28h1v1h-1zM32,28h1v1h-1zM38,28h1v1h-1zM48,28h1v1h-1zM54,28h1v1h-1zM56,28h1v1h-1zM62,28h1v1h-1zM25,29h5v1h-5zM33,29h5v1h-5zM49,29h5v1h-5zM57,29h5v1h-5z"/></g>
+  <path class="pixel" transform="translate(26 47) scale(1.75)" d="M25 1h5v1h-5zM33 1h5v1h-5zM49 1h5v1h-5zM57 1h5v1h-5zM72 1h5v1h-5zM78 1h5v1h-5zM84 1h5v1h-5zM98 1h2v1h-2zM103 1h5v1h-5zM115 1h5v1h-5zM121 1h5v1h-5zM6 2h1v13h-1zM8 2h1v13h-1zM14 2h1v13h-1zM30 2h1v13h-1zM32 2h1v13h-1zM38 2h1v13h-1zM48 2h1v13h-1zM54 2h1v13h-1zM56 2h1v13h-1zM62 2h1v13h-1zM72 2h1v4h-1zM76 2h1v4h-1zM78 2h1v4h-1zM86 2h1v5h-1zM99 2h1v5h-1zM103 2h1v1h-1zM107 2h1v5h-1zM113 2h1v1h-1zM119 2h1v2h-1zM121 2h1v1h-1zM112 3h1v1h-1zM121 3h5v1h-5zM111 4h1v1h-1zM115 4h5v1h-5zM121 4h1v2h-1zM125 4h1v2h-1zM110 5h1v1h-1zM115 5h1v1h-1zM72 6h5v1h-5zM78 6h5v1h-5zM109 6h1v1h-1zM115 6h5v1h-5zM121 6h5v1h-5zM18 8h3v3h-3zM42 8h3v3h-3zM72 11h10v1h-10zM83 11h10v1h-10zM94 11h10v1h-10zM105 11h10v1h-10zM9 15h5v1h-5zM25 15h5v1h-5zM6 16h1v13h-1zM14 16h1v13h-1zM30 16h1v13h-1zM32 16h1v13h-1zM38 16h1v13h-1zM48 16h1v13h-1zM54 16h1v13h-1zM56 16h1v13h-1zM62 16h1v13h-1zM72 17h2v2h-2zM80 17h2v2h-2zM83 17h10v1h-10zM105 17h10v1h-10zM116 17h10v1h-10zM83 18h2v2h-2zM91 18h2v2h-2zM113 18h2v1h-2zM116 18h2v1h-2zM72 19h10v1h-10zM94 19h10v1h-10zM107 19h8v1h-8zM116 19h10v1h-10zM18 20h3v3h-3zM42 20h3v3h-3zM72 20h2v3h-2zM80 20h2v3h-2zM83 20h10v1h-10zM113 20h2v2h-2zM124 20h2v2h-2zM83 21h2v2h-2zM105 22h10v1h-10zM116 22h10v1h-10zM25 29h5v1h-5zM33 29h5v1h-5zM49 29h5v1h-5zM57 29h5v1h-5z"/>
 
   <!-- (5) MCU, ATtiny85 in SOIC-8 5.3 mm -->
   <use href="#soic-pins" x="460" y="40"/>
@@ -86,10 +77,10 @@
   <text class="chiptxt" x="515" y="70">RTC</text>
 
   <!-- (3) USB-C receptacle, its front flush with the top edge -->
-  <rect class="pin" x="549" y="42" width="8" height="16" rx="1"/>
-  <rect class="pin" x="643" y="42" width="8" height="16" rx="1"/>
+  <rect class="usbleg" x="549" y="42" width="8" height="16" rx="1"/>
+  <rect class="usbleg" x="643" y="42" width="8" height="16" rx="1"/>
   <rect class="usb" x="556" y="0" width="88" height="72" rx="3"/>
-  <text class="label" x="600" y="42" font-size="15">USB-C</text>
+  <text class="label" x="600" y="60">USB-C</text>
 
   <!-- (7) charger in SOT-23-5, right edge aligned with USB-C -->
   <rect class="pin" x="617" y="93" width="4" height="7"/>
@@ -98,77 +89,42 @@
   <rect class="pin" x="627" y="115" width="4" height="7"/>
   <rect class="pin" x="637" y="115" width="4" height="7"/>
   <rect class="chip" x="614" y="99" width="30" height="17" rx="2"/>
-  <text class="chiptxt" x="629" y="112" font-size="10">CHG</text>
 
   <!-- (4) battery: 16 mm coin cell in the cutout of the board -->
-  <circle class="cell" cx="735" cy="102.5" r="80"/>
-  <rect class="tab" x="700" y="80" width="130" height="30" rx="6"/>
-  <text class="label" x="735" y="58">Battery</text>
+  <circle class="cell" cx="735" cy="102.5" r="75"/>
+  <rect class="tab" x="700" y="87.5" width="130" height="30" rx="6"/>
+  <text class="label" x="735" y="70">BATTERY</text>
 
   <!-- keyboard board over the lower part: 37 mm high, cut out around the battery -->
   <path class="overlay" d="M0,170 H687.5 A82.55,82.55 0 0 0 782.5,170 H855 V510 a30,30 0 0 1 -30,30 H30 a30,30 0 0 1 -30,-30 Z"/>
-  <text class="title" transform="rotate(-90 141 358)" x="141" y="358">Business Card</text>
-  <text class="subtitle" transform="rotate(-90 176 358)" x="176" y="358">RPN Calculator with Watch</text>
+  <text class="title" transform="rotate(-90 141 358)" x="141" y="358" textLength="330" lengthAdjust="spacingAndGlyphs">Business Card</text>
+  <text class="subtitle" transform="rotate(-90 176 358)" x="176" y="358" textLength="330" lengthAdjust="spacingAndGlyphs">RPN Calculator with Watch</text>
 
-  <!-- (2) keyboard: 4 x 4 keys, main legend left, shifted legend above the key -->
+  <!-- (2) keyboard: main legend left of the key, shifted legend above it -->
   <path class="line" d="M215,200 H840 V520 H215 Z M375,200 V520 M535,200 V520 M695,200 V520 M215,280 H840 M215,360 H840 M215,440 H840"/>
-    <use href="#key" x="295" y="250"/>
-    <text class="main" x="235" y="267">F</text>
-    <text class="shift" x="295" y="225">MATH</text>
-    <use href="#key" x="455" y="250"/>
-    <text class="main" x="395" y="267">7</text>
-    <text class="shift" x="455" y="225">TRIG</text>
-    <use href="#key" x="615" y="250"/>
-    <text class="main" x="555" y="267">8</text>
-    <text class="shift" x="615" y="225">PROG</text>
-    <use href="#key" x="775" y="250"/>
-    <text class="main" x="715" y="267">9</text>
-    <text class="shift" x="775" y="225">÷</text>
-    <use href="#key" x="295" y="330"/>
-    <text class="main" x="235" y="347">E</text>
-    <text class="shift" x="295" y="305">ROT↑</text>
-    <use href="#key" x="455" y="330"/>
-    <text class="main" x="395" y="347">4</text>
-    <text class="shift" x="455" y="305">CONST</text>
-    <use href="#key" x="615" y="330"/>
-    <text class="main" x="555" y="347">5</text>
-    <text class="shift" x="615" y="305">MEM+</text>
-    <use href="#key" x="775" y="330"/>
-    <text class="main" x="715" y="347">6</text>
-    <text class="shift" x="775" y="305">×</text>
-    <use href="#key" x="295" y="410"/>
-    <text class="main" x="235" y="427">±</text>
-    <text class="shift" x="295" y="385">ROT↓</text>
-    <use href="#key" x="455" y="410"/>
-    <text class="main" x="395" y="427">1</text>
-    <text class="shift" x="455" y="385">RCL</text>
-    <use href="#key" x="615" y="410"/>
-    <text class="main" x="555" y="427">2</text>
-    <text class="shift" x="615" y="385">STO</text>
-    <use href="#key" x="775" y="410"/>
-    <text class="main" x="715" y="427">3</text>
-    <text class="shift" x="775" y="385">−</text>
-    <use href="#key" x="295" y="490"/>
-    <text class="main" x="235" y="507">C</text>
-    <text class="shift" x="295" y="465">AC</text>
-    <use href="#key" x="455" y="490"/>
-    <text class="main" x="395" y="507">0</text>
-    <text class="shift" x="455" y="465">LAST</text>
-    <use href="#key" x="615" y="490"/>
-    <text class="main" x="555" y="507">.</text>
-    <text class="shift" x="615" y="465">X↔Y</text>
-    <use href="#key" x="775" y="490"/>
-    <text class="main" x="715" y="507">↑</text>
-    <text class="shift" x="775" y="465">+</text>
+  <use href="#key" x="295" y="250"/><text class="main" x="235" y="258">F</text><text class="shift" x="260" y="225">MATH</text>
+  <use href="#key" x="455" y="250"/><text class="main" x="395" y="258">7</text><text class="shift" x="420" y="225">TRIG</text>
+  <use href="#key" x="615" y="250"/><text class="main" x="555" y="258">8</text><text class="shift" x="580" y="225">PROG</text>
+  <use href="#key" x="775" y="250"/><text class="main" x="715" y="258">9</text><text class="shift" x="740" y="225">÷</text>
+  <use href="#key" x="295" y="330"/><text class="main" x="235" y="338">E</text><text class="shift" x="260" y="305">ROT↑</text>
+  <use href="#key" x="455" y="330"/><text class="main" x="395" y="338">4</text><text class="shift" x="420" y="305">CONST</text>
+  <use href="#key" x="615" y="330"/><text class="main" x="555" y="338">5</text><text class="shift" x="580" y="305">MEM+</text>
+  <use href="#key" x="775" y="330"/><text class="main" x="715" y="338">6</text><text class="shift" x="740" y="305">×</text>
+  <use href="#key" x="295" y="410"/><text class="main" x="235" y="418">±</text><text class="shift" x="260" y="385">ROT↓</text>
+  <use href="#key" x="455" y="410"/><text class="main" x="395" y="418">1</text><text class="shift" x="420" y="385">RCL</text>
+  <use href="#key" x="615" y="410"/><text class="main" x="555" y="418">2</text><text class="shift" x="580" y="385">STO</text>
+  <use href="#key" x="775" y="410"/><text class="main" x="715" y="418">3</text><text class="shift" x="740" y="385">−</text>
+  <use href="#key" x="295" y="490"/><text class="main" x="235" y="498">C</text><text class="shift" x="260" y="465">AC</text>
+  <use href="#key" x="455" y="490"/><text class="main" x="395" y="498">0</text><text class="shift" x="420" y="465">LAST</text>
+  <use href="#key" x="615" y="490"/><text class="main" x="555" y="498">.</text><text class="shift" x="580" y="465">X↔Y</text>
+  <use href="#key" x="775" y="490"/><text class="main" x="715" y="498">↑</text><text class="shift" x="740" y="465">+</text>
 
   <!-- part numbers -->
-  <g>
-    <circle class="badge" cx="163" cy="155" r="11"/><text class="badgetx" x="163" y="160">1</text>
-    <circle class="badge" cx="195" cy="528" r="11"/><text class="badgetx" x="195" y="533">2</text>
-    <circle class="badge" cx="532" cy="22" r="11"/><text class="badgetx" x="532" y="27">3</text>
-    <circle class="badge" cx="735" cy="140" r="11"/><text class="badgetx" x="735" y="145">4</text>
-    <circle class="badge" cx="460" cy="136" r="11"/><text class="badgetx" x="460" y="141">5</text>
-    <circle class="badge" cx="515" cy="122" r="11"/><text class="badgetx" x="515" y="127">6</text>
-    <circle class="badge" cx="596" cy="108" r="11"/><text class="badgetx" x="596" y="113">7</text>
-  </g>
+  <circle class="badge" cx="288" cy="81" r="11"/><text class="badgetx" x="288" y="86">1</text>
+  <circle class="badge" cx="196" cy="186" r="11"/><text class="badgetx" x="196" y="191">2</text>
+  <circle class="badge" cx="600" cy="28" r="11"/><text class="badgetx" x="600" y="33">3</text>
+  <circle class="badge" cx="735" cy="140" r="11"/><text class="badgetx" x="735" y="145">4</text>
+  <circle class="badge" cx="460" cy="136" r="11"/><text class="badgetx" x="460" y="141">5</text>
+  <circle class="badge" cx="515" cy="122" r="11"/><text class="badgetx" x="515" y="127">6</text>
+  <circle class="badge" cx="596" cy="108" r="11"/><text class="badgetx" x="596" y="113">7</text>
 </svg>
