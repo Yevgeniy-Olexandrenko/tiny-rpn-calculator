@@ -1,35 +1,60 @@
 #pragma once
 
 // -----------------------------------------------------------------------------
-// Switch between working modes
+// Working mode and keyboard input, shared by all modes
 // -----------------------------------------------------------------------------
 
-b08 rtcMode;
-b08 totpMode;
-u08 battery;
+enum { MODE_RTC, MODE_TOTP, MODE_CALC };
+u08 mode;
 
 u08 newKey;
 u08 oldkey;
 
-void enterCalcMode()
+// -----------------------------------------------------------------------------
+// RTC mode
+// -----------------------------------------------------------------------------
+
+u08 battery;
+
+void renderRTCMode()
 {
-	if (newKey != KBD::NONE)
-	{
-		TMR::Start(TMR::TIMEOUT_64MS);
-		if (rtcMode)
-		{
-			// FUNC goes from the clock straight to TOTP codes,
-			// any other key or no TOTP keys - to the calculator
-			void executeOperation(u08 operation);
-			if (newKey == KBD::FUNC) executeOperation(PROG_TOTP);
+	LCD::Clear();
 
-			newKey  = KBD::NONE;
-			rtcMode = false;
+	TXT::SetFont(digits7x32);
+	TXT::PrintChar(RTC_TIME_COLON, RTC_POS_COLON_HM, 0);
+	TXT::PrintChar(RTC_TIME_COLON, RTC_POS_COLON_MS, 0);
+	TXT::PrintSegBCD(RTC::Hours,   RTC_POS_HOURS, 0);
+	TXT::PrintSegBCD(RTC::Minutes, RTC_POS_MINUTES, 0);
+	TXT::PrintSegBCD(RTC::Seconds, RTC_POS_SECONDS, 0);
 
-			void renderCalcMode();
-			if (!totpMode) renderCalcMode();
-		}
+	TXT::SetFont(menu5x8);
+	u08 month = BCD::Decode(RTC::Month);
+	TXT::PrintString(DPSTR(strMonth), month - 1, RTC_POS_MONTH, 0);
+	TXT::PrintBCD(RTC::Date, RTC_POS_DATE, 0);
+	TXT::PrintBCD(RTC::Year, RTC_POS_YEAR, 0);
+	TXT::PrintChar(RTC_DATE_SLASH, RTC_POS_SLASH, 0);
+
+	TXT::SetScale(TXT::x2, TXT::x1);
+	TXT::PrintString(D(RTC_INFO_HP_LABEL), RTC_POS_INFO, 2);
+	// blink the last bar while charging, toggling it every 512 ms
+	u08 bars = battery;
+	if (bars && (TMR::Millis & 0x200) && PWR::Charging()) --bars;
+	for (u08 i = bars, x = RTC_POS_INFO; i > 0; --i)
+	{ 
+		TXT::PrintChar(RTC_BATTERY_LEVEL, x, 1);
+		x += TXT::char_dx;
 	}
+
+	LCD::Flip();
+}
+
+// returns false if a key is pressed to leave the mode
+b08 updateRTCMode()
+{
+	if (newKey != KBD::NONE) return false;
+	RTC::ReadTimeDate();
+	renderRTCMode();
+	return true;
 }
 
 void enterRTCMode()
@@ -39,9 +64,8 @@ void enterRTCMode()
 	LCD::TurnOn();
 	TMR::Start(TMR::TIMEOUT_64MS);
 
-	oldkey   = KBD::Read();
-	rtcMode  = true;
-	totpMode = false;
+	oldkey = KBD::Read();
+	mode   = MODE_RTC;
 }
 
 NOINLINE void setupAndEnterRTCMode()
@@ -51,7 +75,101 @@ NOINLINE void setupAndEnterRTCMode()
 }
 
 // -----------------------------------------------------------------------------
-// Calculator operations execution
+// TOTP mode
+// -----------------------------------------------------------------------------
+
+u08 totpIndex;
+u08 totpCount;
+u32 totpCounter;
+u32 totpCode;
+
+// RTC keeps local time, RAM survives sleeping and any reset
+// rewrites RTC with the build time anyway, so no need to store
+s08 gmtZone = TOTP_GMT_ZONE;
+
+void renderTOTPMode(const TOTP::Key& key, u08 left)
+{
+	LCD::Clear();
+
+	// code as two groups of three digits
+	TXT::SetFont(digits7x32);
+	u32 code = totpCode;
+	for (u08 i = 6; i-- > 0;)
+	{
+		u08 x = TOTP_POS_CODE + (i < 3 ? i : i + 1) * TOTP_CHAR_W;
+		TXT::PrintSeg(TXT::NumToSeg(code % 10), x, 0);
+		code /= 10;
+	}
+
+	// seconds left in place of exponent
+	TXT::SetFont(digits7x16);
+	TXT::PrintSegBCD(BCD::Encode(left), TOTP_POS_LEFT, 0);
+
+	// key label under seconds, looks like a menu item
+	TXT::SetFont(menu5x8);
+	TXT::SetScale(TXT::x1, TXT::x2);
+	TXT::SetInverse(true);
+	for (u08 i = 0, x = TOTP_POS_LABEL; i < TOTP::LABEL_SIZE + 2; ++i, x += TXT::char_dx)
+	{
+		u08 ch = (i == 0 || i > TOTP::LABEL_SIZE ? ' ' : key.label[i - 1]);
+		TXT::PrintChar(ch, x, 2);
+	}
+	TXT::SetInverse(false);
+
+	LCD::Flip();
+}
+
+// returns false if a key is pressed to leave the mode
+b08 updateTOTPMode()
+{
+	if (newKey != KBD::NONE)
+	{
+		// select previous or next key, any other key leaves the mode
+		switch (newKey)
+		{
+			default:
+				return false;
+			case KBD::ROTU:
+				totpIndex = (totpIndex ? totpIndex : totpCount) - 1;
+				break;
+			case KBD::ROTD:
+				if (++totpIndex == totpCount) totpIndex = 0;
+				break;
+		}
+		totpCounter = 0;
+	}
+
+	TOTP::Key key;
+	TOTP::ReadKey(totp_keys, totpIndex, key);
+
+	// recompute the code when its time step or the key changes
+	RTC::ReadTimeDate();
+	u32 time = RTC::GetTimestamp(gmtZone);
+	u32 counter = time / TOTP::PERIOD;
+	if (counter != totpCounter)
+	{
+		totpCounter = counter;
+		totpCode = TOTP::GetCode(key, counter);
+	}
+	renderTOTPMode(key, TOTP::PERIOD - u08(time - counter * TOTP::PERIOD));
+	return true;
+}
+
+void enterTOTPMode()
+{
+	// count the keys, stay in the current mode if there are none
+	TOTP::Key key;
+	for (totpCount = 0; TOTP::ReadKey(totp_keys, totpCount, key); ++totpCount);
+	if (totpCount)
+	{
+		if (totpIndex >= totpCount) totpIndex = 0;
+		totpCounter = 0;
+		mode = MODE_TOTP;
+	}
+}
+
+// -----------------------------------------------------------------------------
+// Calculator mode
 // -----------------------------------------------------------------------------
 
 b08 isFunc;
@@ -63,10 +181,6 @@ u08  select;
 u16 cycles;
 u08 hidden[15];
 u08 lastOp = HPVM::OpCLR_;
-
-// RTC keeps local time, RAM survives sleeping and any reset
-// rewrites RTC with the build time anyway, so no need to store
-s08 gmtZone = TOTP_GMT_ZONE;
 
 void enterMenu(u08 type)
 {
@@ -178,7 +292,6 @@ void executeOperation(u08 operation)
 			break;
 
 		case PROG_TOTP:
-			void enterTOTPMode();
 			enterTOTPMode();
 			break;
 
@@ -201,10 +314,6 @@ void executeOperation(u08 operation)
 			break;
 	}
 }
-
-// -----------------------------------------------------------------------------
-// Calculator mode
-// -----------------------------------------------------------------------------
 
 void renderCalcNumber(const u08 * numStr, u08 y)
 {
@@ -295,7 +404,7 @@ void updateCalcMode()
 			executeOperation(op);
 			renderCalcMode();
 		}
-		
+
 		// local counter, unused cycles are carried to the next frame
 		u16 n = cycles + HPVM_CYCLES_PER_FRAME;
 		for (; n > 0; --n)
@@ -310,136 +419,10 @@ void updateCalcMode()
 	}
 }
 
-// -----------------------------------------------------------------------------
-// TOTP mode
-// -----------------------------------------------------------------------------
-
-u08 totpIndex;
-u08 totpCount;
-u32 totpCounter;
-u32 totpCode;
-
-void enterTOTPMode()
+void enterCalcMode()
 {
-	// count the keys, stay in calculator mode if there are none
-	TOTP::Key key;
-	for (totpCount = 0; TOTP::ReadKey(totp_keys, totpCount, key); ++totpCount);
-	if (totpCount)
-	{
-		if (totpIndex >= totpCount) totpIndex = 0;
-		totpCounter = 0;
-		totpMode = true;
-	}
-}
-
-void renderTOTPMode(const TOTP::Key& key, u08 left)
-{
-	LCD::Clear();
-
-	// code as two groups of three digits
-	TXT::SetFont(digits7x32);
-	u32 code = totpCode;
-	for (u08 i = 6; i-- > 0;)
-	{
-		u08 x = TOTP_POS_CODE + (i < 3 ? i : i + 1) * TOTP_CHAR_W;
-		TXT::PrintSeg(TXT::NumToSeg(code % 10), x, 0);
-		code /= 10;
-	}
-
-	// seconds left in place of exponent
-	TXT::SetFont(digits7x16);
-	TXT::PrintSegBCD(BCD::Encode(left), TOTP_POS_LEFT, 0);
-
-	// key label under seconds, looks like a menu item
-	TXT::SetFont(menu5x8);
-	TXT::SetScale(TXT::x1, TXT::x2);
-	TXT::SetInverse(true);
-	for (u08 i = 0, x = TOTP_POS_LABEL; i < TOTP::LABEL_SIZE + 2; ++i, x += TXT::char_dx)
-	{
-		u08 ch = (i == 0 || i > TOTP::LABEL_SIZE ? ' ' : key.label[i - 1]);
-		TXT::PrintChar(ch, x, 2);
-	}
-	TXT::SetInverse(false);
-
-	LCD::Flip();
-}
-
-void updateTOTPMode()
-{
-	if (newKey != KBD::NONE)
-	{
-		// select previous or next key, any other key returns to calculator
-		switch (newKey)
-		{
-			default:
-				totpMode = false;
-				renderCalcMode();
-				return;
-			case KBD::ROTU:
-				totpIndex = (totpIndex ? totpIndex : totpCount) - 1;
-				break;
-			case KBD::ROTD:
-				if (++totpIndex == totpCount) totpIndex = 0;
-				break;
-		}
-		totpCounter = 0;
-	}
-
-	TOTP::Key key;
-	TOTP::ReadKey(totp_keys, totpIndex, key);
-
-	// recompute the code when its time step or the key changes
-	RTC::ReadTimeDate();
-	u32 time = RTC::GetTimestamp(gmtZone);
-	u32 counter = time / TOTP::PERIOD;
-	if (counter != totpCounter)
-	{
-		totpCounter = counter;
-		totpCode = TOTP::GetCode(key, counter);
-	}
-	renderTOTPMode(key, TOTP::PERIOD - u08(time - counter * TOTP::PERIOD));
-}
-
-// -----------------------------------------------------------------------------
-// RTC mode
-// -----------------------------------------------------------------------------
-
-void renderRTCMode()
-{
-	LCD::Clear();
-
-	TXT::SetFont(digits7x32);
-	TXT::PrintChar(RTC_TIME_COLON, RTC_POS_COLON_HM, 0);
-	TXT::PrintChar(RTC_TIME_COLON, RTC_POS_COLON_MS, 0);
-	TXT::PrintSegBCD(RTC::Hours,   RTC_POS_HOURS, 0);
-	TXT::PrintSegBCD(RTC::Minutes, RTC_POS_MINUTES, 0);
-	TXT::PrintSegBCD(RTC::Seconds, RTC_POS_SECONDS, 0);
-
-	TXT::SetFont(menu5x8);
-	u08 month = BCD::Decode(RTC::Month);
-	TXT::PrintString(DPSTR(strMonth), month - 1, RTC_POS_MONTH, 0);
-	TXT::PrintBCD(RTC::Date, RTC_POS_DATE, 0);
-	TXT::PrintBCD(RTC::Year, RTC_POS_YEAR, 0);
-	TXT::PrintChar(RTC_DATE_SLASH, RTC_POS_SLASH, 0);
-
-	TXT::SetScale(TXT::x2, TXT::x1);
-	TXT::PrintString(D(RTC_INFO_HP_LABEL), RTC_POS_INFO, 2);
-	// blink the last bar while charging, toggling it every 512 ms
-	u08 bars = battery;
-	if (bars && (TMR::Millis & 0x200) && PWR::Charging()) --bars;
-	for (u08 i = bars, x = RTC_POS_INFO; i > 0; --i)
-	{ 
-		TXT::PrintChar(RTC_BATTERY_LEVEL, x, 1);
-		x += TXT::char_dx;
-	}
-
-	LCD::Flip();
-}
-
-void updateRTCMode()
-{
-	RTC::ReadTimeDate();
-	renderRTCMode();
+	mode = MODE_CALC;
+	renderCalcMode();
 }
 
 // -----------------------------------------------------------------------------
@@ -460,7 +443,7 @@ int main()
 		u16 timeout = TMR::Millis;
 
 		// handle display brightness change
-		LCD::Brightness(rtcMode || timeout >= DIMOUT_MILLIS ? 0x00 : 0xFF);
+		LCD::Brightness(mode == MODE_RTC || timeout >= DIMOUT_MILLIS ? 0x00 : 0xFF);
 
 		// handle power down condition
 		if (timeout >= POWEROFF_MILLIS)
@@ -472,15 +455,33 @@ int main()
 			enterRTCMode();
 		}
 
-		// read key press and switch to calculator operation mode
+		// read key press, any key restarts the timeouts
 		newKey = KBD::Read();
 		if (newKey != oldkey) oldkey = newKey; else newKey = KBD::NONE;
-		enterCalcMode();
+		if (newKey != KBD::NONE) TMR::Start(TMR::TIMEOUT_64MS);
 
-		// update current operation mode and idle until next frame
-		if (rtcMode) updateRTCMode();
-		else if (totpMode) updateTOTPMode();
-		else updateCalcMode();
+		// update current operation mode, switch it on a leaving key
+		switch (mode)
+		{
+			case MODE_RTC:
+				// FUNC goes to TOTP codes if there are keys, others to calculator
+				if (!updateRTCMode())
+				{
+					if (newKey == KBD::FUNC) enterTOTPMode();
+					if (mode == MODE_RTC) enterCalcMode();
+				}
+				break;
+
+			case MODE_TOTP:
+				if (!updateTOTPMode()) enterCalcMode();
+				break;
+
+			default:
+				updateCalcMode();
+				break;
+		}
+
+		// idle until next frame
 		TMR::Sync();
 	}
 	return 0;

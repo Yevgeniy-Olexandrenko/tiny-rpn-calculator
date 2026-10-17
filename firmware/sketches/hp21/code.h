@@ -1,29 +1,60 @@
 #pragma once
 
 // -----------------------------------------------------------------------------
-// Switch between working modes
+// Working mode and keyboard input, shared by all modes
 // -----------------------------------------------------------------------------
 
-b08 rtcMode;
-u08 battery;
+enum { MODE_RTC, MODE_CALC };
+u08 mode;
 
 u08 newKey;
 u08 oldkey;
 
-void enterCalcMode()
-{
-	if (newKey != KBD::NONE)
-	{
-		TMR::Start(TMR::TIMEOUT_64MS);
-		if (rtcMode)
-		{
-			newKey  = KBD::NONE;
-			rtcMode = false;
+// -----------------------------------------------------------------------------
+// RTC mode
+// -----------------------------------------------------------------------------
 
-			void renderCalcMode();
-			renderCalcMode();
-		}
+u08 battery;
+
+void renderRTCMode()
+{
+	LCD::Clear();
+
+	TXT::SetFont(digits7x32);
+	TXT::PrintChar(RTC_TIME_COLON, RTC_POS_COLON_HM, 0);
+	TXT::PrintChar(RTC_TIME_COLON, RTC_POS_COLON_MS, 0);
+	TXT::PrintSegBCD(RTC::Hours,   RTC_POS_HOURS, 0);
+	TXT::PrintSegBCD(RTC::Minutes, RTC_POS_MINUTES, 0);
+	TXT::PrintSegBCD(RTC::Seconds, RTC_POS_SECONDS, 0);
+
+	TXT::SetFont(menu5x8);
+	u08 month = BCD::Decode(RTC::Month);
+	TXT::PrintString(DPSTR(strMonth), month - 1, RTC_POS_MONTH, 0);
+	TXT::PrintBCD(RTC::Date, RTC_POS_DATE, 0);
+	TXT::PrintBCD(RTC::Year, RTC_POS_YEAR, 0);
+	TXT::PrintChar(RTC_DATE_SLASH, RTC_POS_SLASH, 0);
+
+	TXT::SetScale(TXT::x2, TXT::x1);
+	TXT::PrintString(D(RTC_INFO_HP_LABEL), RTC_POS_INFO, 2);
+	// blink the last bar while charging, toggling it every 512 ms
+	u08 bars = battery;
+	if (bars && (TMR::Millis & 0x200) && PWR::Charging()) --bars;
+	for (u08 i = bars, x = RTC_POS_INFO; i > 0; --i)
+	{ 
+		TXT::PrintChar(RTC_BATTERY_LEVEL, x, 1);
+		x += TXT::char_dx;
 	}
+
+	LCD::Flip();
+}
+
+// returns false if a key is pressed to leave the mode
+b08 updateRTCMode()
+{
+	if (newKey != KBD::NONE) return false;
+	RTC::ReadTimeDate();
+	renderRTCMode();
+	return true;
 }
 
 void enterRTCMode()
@@ -33,8 +64,8 @@ void enterRTCMode()
 	LCD::TurnOn();
 	TMR::Start(TMR::TIMEOUT_64MS);
 
-	oldkey  = KBD::Read();
-	rtcMode = true;
+	oldkey = KBD::Read();
+	mode   = MODE_RTC;
 }
 
 NOINLINE void setupAndEnterRTCMode()
@@ -44,7 +75,7 @@ NOINLINE void setupAndEnterRTCMode()
 }
 
 // -----------------------------------------------------------------------------
-// Calculator operations execution
+// Calculator mode
 // -----------------------------------------------------------------------------
 
 b08 isFunc;
@@ -169,10 +200,6 @@ void executeOperation(u08 operation)
 	}
 }
 
-// -----------------------------------------------------------------------------
-// Calculator mode
-// -----------------------------------------------------------------------------
-
 void renderCalcNumber(const u08 * segs, u08 y)
 {
 	// the dot is a part of the display position, but drawn as a separate char
@@ -285,48 +312,11 @@ void updateCalcMode()
 	}
 }
 
-// -----------------------------------------------------------------------------
-// RTC mode
-// -----------------------------------------------------------------------------
-
-void renderRTCMode()
+void enterCalcMode()
 {
-	LCD::Clear();
-
-	TXT::SetFont(digits7x32);
-	TXT::PrintChar(RTC_TIME_COLON, RTC_POS_COLON_HM, 0);
-	TXT::PrintChar(RTC_TIME_COLON, RTC_POS_COLON_MS, 0);
-	TXT::PrintSegBCD(RTC::Hours,   RTC_POS_HOURS, 0);
-	TXT::PrintSegBCD(RTC::Minutes, RTC_POS_MINUTES, 0);
-	TXT::PrintSegBCD(RTC::Seconds, RTC_POS_SECONDS, 0);
-
-	TXT::SetFont(menu5x8);
-	u08 month = BCD::Decode(RTC::Month);
-	TXT::PrintString(DPSTR(strMonth), month - 1, RTC_POS_MONTH, 0);
-	TXT::PrintBCD(RTC::Date, RTC_POS_DATE, 0);
-	TXT::PrintBCD(RTC::Year, RTC_POS_YEAR, 0);
-	TXT::PrintChar(RTC_DATE_SLASH, RTC_POS_SLASH, 0);
-
-	TXT::SetScale(TXT::x2, TXT::x1);
-	TXT::PrintString(D(RTC_INFO_HP_LABEL), RTC_POS_INFO, 2);
-	// blink the last bar while charging, toggling it every 512 ms
-	u08 bars = battery;
-	if (bars && (TMR::Millis & 0x200) && PWR::Charging()) --bars;
-	for (u08 i = bars, x = RTC_POS_INFO; i > 0; --i)
-	{ 
-		TXT::PrintChar(RTC_BATTERY_LEVEL, x, 1);
-		x += TXT::char_dx;
-	}
-
-	LCD::Flip();
+	mode = MODE_CALC;
+	renderCalcMode();
 }
-
-void updateRTCMode()
-{
-	RTC::ReadTimeDate();
-	renderRTCMode();
-}
-
 // -----------------------------------------------------------------------------
 // Enter point and main cycle
 // -----------------------------------------------------------------------------
@@ -345,7 +335,7 @@ int main()
 		u16 timeout = TMR::Millis;
 
 		// handle display brightness change
-		LCD::Brightness(rtcMode || timeout >= DIMOUT_MILLIS ? 0x00 : 0xFF);
+		LCD::Brightness(mode == MODE_RTC || timeout >= DIMOUT_MILLIS ? 0x00 : 0xFF);
 
 		// handle power down condition
 		if (timeout >= POWEROFF_MILLIS)
@@ -357,13 +347,25 @@ int main()
 			enterRTCMode();
 		}
 
-		// read key press and switch to calculator operation mode
+		// read key press, any key restarts the timeouts
 		newKey = KBD::Read();
 		if (newKey != oldkey) oldkey = newKey; else newKey = KBD::NONE;
-		enterCalcMode();
+		if (newKey != KBD::NONE) TMR::Start(TMR::TIMEOUT_64MS);
 
-		// update current operation mode and idle until next frame
-		if (rtcMode) updateRTCMode(); else updateCalcMode();
+		// update current operation mode, switch it on a leaving key
+		switch (mode)
+		{
+			case MODE_RTC:
+				// any key goes to calculator
+				if (!updateRTCMode()) enterCalcMode();
+				break;
+
+			default:
+				updateCalcMode();
+				break;
+		}
+
+		// idle until next frame
 		TMR::Sync();
 	}
 	return 0;
