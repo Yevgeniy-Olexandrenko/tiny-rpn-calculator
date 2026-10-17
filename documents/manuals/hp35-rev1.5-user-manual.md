@@ -702,13 +702,13 @@ Add 12.5, 7.25 and 30 in the memory.
 
 | Parameter | Value |
 | --- | --- |
-| Microcontroller | ATtiny85, 16 MHz (internal PLL), 8 KB flash, 512 B RAM, 512 B EEPROM |
-| Display | OLED 128 × 32, SSD1306, I²C |
-| Real-time clock | DS3231M, I²C, temperature-compensated |
+| Microcontroller | [ATtiny85](../../datasheets/ATtiny85.pdf), 16 MHz (internal PLL), 8 KB flash, 512 B RAM, 512 B EEPROM |
+| Display | OLED 0.91 inch, 128 × 32, [SSD1306](../../datasheets/SSD1306.pdf), I²C |
+| Real-time clock | [DS3231M](../../datasheets/DS3231M.pdf), I²C, temperature-compensated |
 | Keyboard | 16 keys on one analog input (resistor ladder) |
-| Battery | Rechargeable lithium battery, 3.5 V to 4.2 V |
+| Battery | [LIR1620](../../datasheets/LIR1620.pdf) rechargeable lithium-ion coin battery, 20 mAh, 3.5 V to 4.2 V |
 | Battery protection | XB5358D0 |
-| Charger | MCP73832, 4.2 V, 15 mA, from USB-C (5 V) |
+| Charger | [MCP73832](../../datasheets/MCP73831.pdf), 4.2 V, 15 mA, from USB-C (5 V) |
 | Schematic | [Tiny-RPN-Calculator-rev1.5_Schematic.pdf](../../hardware/pcb-rev1.5/Tiny-RPN-Calculator-rev1.5_Schematic.pdf) |
 
 ## 16. Quick reference
