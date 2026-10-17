@@ -86,12 +86,12 @@ In this manual, <kbd>F</kbd> <kbd>9</kbd> means: push the <kbd>F</kbd> key, rele
 The device has the size and the proportions of a credit card. The drawing shows the primary parts. The positions of the small parts are approximate. The drawing does not show the ICSP connector and the `POWER` jumper.
 
 ```text
-┌───────────────────────────────────────────┬───────┬──────────────────┐
-│  ┌─────────────────────┐              (3) │ USB-C │ ┌────────────┐ o │
-│  │                     │  ┌─────┐ ┌─────┐ └───────┘ │  Battery   │   │
-│  │  (1) OLED display   │  │ MCU │ │ RTC │     ┌───┐ │    (4)     │   │
-│  │                     │  │ (5) │ │ (6) │ (7) │CHG│ │            │   │
-│  └─────────────────────┘  └─────┘ └─────┘     └───┘ └────────────┘   │
+┌────────────────────────────────────────────┬───────┬─────────────────┐
+│  ┌──────────────────────┐              (3) │ USB-C │ ┌───────────┐ o │
+│  │                      │  ┌─────┐ ┌─────┐ └───────┘ │  Battery  │   │
+│  │   (1) OLED display   │  │ MCU │ │ RTC │     ┌───┐ │    (4)    │   │
+│  │                      │  │ (5) │ │ (6) │ (7) │CHG│ │           │   │
+│  └──────────────────────┘  └─────┘ └─────┘     └───┘ └───────────┘   │
 ├──────────────────────────────────────────────────────────────────────┤
 │                  ┌───────────┬───────────┬───────────┬───────────┐   │
 │                  │    MATH   │    TRIG   │    PROG   │    ÷      │   │
