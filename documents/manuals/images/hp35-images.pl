@@ -207,6 +207,14 @@ sub pixels_path {
 }
 
 # ================================================================ styles
+# Flashing pixels are lit for the first half of the period. The HP-35 ROM toggles the
+# display of an error every 602 cycles (measured on HPVMClassic.h), the sketch runs
+# 3571 / 15 = 238 cycles in a frame of 64 ms (TMR::TIMEOUT_64MS); renderRTCMode() toggles
+# the last bar of the battery indicator during the charge every 512 ms (TMR::Millis & 0x200).
+my $error_period  = int(2 * 602 / int(3571 / 15) * 64 + 0.5);
+my $charge_period = 2 * 512;
+my %keyframes = (flash => '50% { opacity: 0; }');
+
 # Classes that follow the theme get the light color and a dark one in @media.
 my %theme = (           # light, dark
     bg    => ['#ffffff', '#0d1117'],
@@ -241,6 +249,8 @@ my %class = (           # static properties, then property => theme color
     panel    => ['fill: #000000'],
     ledge    => ['fill: #57606a'],
     pixel    => ['fill: #ffffff'],
+    errflash => ["animation: flash ${error_period}ms step-end infinite"],
+    barflash => ["animation: flash ${charge_period}ms step-end infinite"],
     ribbon   => ['fill: #d18b2c'],
     usb      => ['fill: #d0d7de; stroke: #57606a; stroke-width: 1.5'],
     tab      => ['fill: #d0d7de; stroke: #57606a; stroke-width: 1.5'],
@@ -248,20 +258,24 @@ my %class = (           # static properties, then property => theme color
     cell     => ['fill: #eaeef2; stroke: #d18b2c; stroke-width: 10'],
     label    => ['fill: #1f2328; font-size: 18px; font-weight: 600; text-anchor: middle'],
 );
-# <style> with the rules of the classes used in the svg body
+# <style> with the rules of the classes used in the svg body; animations get
+# their @keyframes and stop for prefers-reduced-motion
 sub style {
     my $body = shift;
     my %used; $used{$_} = 1 for map { split ' ' } $body =~ /class="([^"]+)"/g;
-    my ($light, $dark) = ('', '');
+    my ($light, $dark, $still, %anim) = ('', '', '');
     for my $c (sort keys %used) {
         my ($static, %prop) = @{$class{$c} // die "no style for class $c"};
         my @l = grep { length } $static, map { "$_: $theme{$prop{$_}}[0]" } sort keys %prop;
         my @d = map { "$_: $theme{$prop{$_}}[1]" } sort keys %prop;
         $light .= sprintf "    .%-9s{ %s; }\n", $c, join '; ', @l;
         $dark  .= sprintf "      .%-9s{ %s; }\n", $c, join '; ', @d if @d;
+        if ($static =~ /animation: (\w+)/) { $anim{$1} = 1; $still .= sprintf "      .%-9s{ animation: none; }\n", $c }
     }
     $dark = "    \@media (prefers-color-scheme: dark) {\n$dark    }\n" if $dark;
-    return "  <style>\n$light$dark  </style>\n";
+    my $motion = join '', map { "    \@keyframes $_ { $keyframes{$_} }\n" } sort keys %anim;
+    $motion .= "    \@media (prefers-reduced-motion: reduce) {\n$still    }\n" if $still;
+    return "  <style>\n$light$dark$motion  </style>\n";
 }
 
 sub write_svg {
@@ -346,17 +360,19 @@ my $scr_w   = 128 * 4 + 2 * $scr_pad;
 my $scr_h   = 32 * 4 + 2 * $scr_pad;
 my $scr_gap = 16;                              # between the screens of one image
 
-# the current pixels as a screen at the top $y of the image
-sub screen {
-    my ($y, @notes) = @_;
-    my $body = sprintf qq{  <rect class="screen" x="0.5" y="%g" width="%d" height="%d" rx="8"/>\n}, $y + 0.5, $scr_w - 1, $scr_h - 1;
-    $body .= sprintf qq{  <path class="pixel" transform="translate(%d %d) scale(4)" d="%s"/>\n}, $scr_pad, $y + $scr_pad, pixels_path();
-    for (@notes) {
-        my ($row, $text) = @$_;
-        $body .= sprintf qq{  <text class="note" x="%d" y="%d">← %s</text>\n}, $scr_w + 14, $y + $scr_pad + $row * 4 + 8, $text;
-    }
-    return $body;
+# parts of a screen at the top $y of the image: the glass, the current pixels (none
+# if all are dark) and the notes
+sub screen_glass { my $y = shift; sprintf qq{  <rect class="screen" x="0.5" y="%g" width="%d" height="%d" rx="8"/>\n}, $y + 0.5, $scr_w - 1, $scr_h - 1 }
+sub screen_pixels {
+    my ($y, $class) = @_;
+    my $d = pixels_path();
+    return length $d ? sprintf(qq{  <path class="%s" transform="translate(%d %d) scale(4)" d="%s"/>\n}, $class, $scr_pad, $y + $scr_pad, $d) : '';
 }
+sub screen_notes {
+    my ($y, @notes) = @_;
+    return join '', map { sprintf qq{  <text class="note" x="%d" y="%d">← %s</text>\n}, $scr_w + 14, $y + $scr_pad + $_->[0] * 4 + 8, $_->[1] } @notes;
+}
+sub screen { my ($y, @notes) = @_; screen_glass($y) . screen_pixels($y, 'pixel') . screen_notes($y, @notes) }
 # screens one below the other; the same width for all images, room for notes
 sub screens_svg {
     my ($name, $title, @screens) = @_;
@@ -377,17 +393,36 @@ sub menu_svg {
     screens_svg($name, $title, @screens);
 }
 
+# a screen with flashing pixels: lit in the frame drawn by $on, dark in the frame drawn by $off
+sub flash_svg {
+    my ($name, $title, $class, $on, $off, @notes) = @_;
+    $on->();
+    my @lit = map { [@$_] } @px;
+    $off->();
+    for my $r (0..31) { $px[$r][$_] && !$lit[$r][$_] and die "$name: pixel ($_, $r) is lit only in the off frame" for 0..127 }
+    my $body = screen_glass(0) . screen_pixels(0, 'pixel');
+    @px = map { my $r = $_; [ map { $lit[$r][$_] && !$px[$r][$_] ? 1 : 0 } 0..127 ] } 0..31;
+    screens_svg($name, $title, $body . screen_pixels(0, "pixel $class") . screen_notes(0, @notes));
+}
+
 my %watch = (h => 14, m => 30, s => 0, month => 'OCT', date => 17, year => 26, bars => 4);
 
 render_rtc(%watch);
 my $device_screen = pixels_path();
 screen_svg('rpn-calc-screen-watch.svg', 'Watch screen: 14:30:00, OCT 17/26, battery level, HP-35');
 
+flash_svg('rpn-calc-screen-charge.svg', 'Watch screen during the charge: the last bar of the battery indicator flashes', 'barflash',
+    sub { render_rtc(%watch, bars => 3) }, sub { render_rtc(%watch, bars => 2) }, [11, 'flashes']);
+
 render_calc(x => display(' 6.02214076  23'));
 screen_svg('rpn-calc-screen-number.svg', 'Calculator screen: 6.02214076 x 10^23', [7.5, 'exponent']);
 
 render_calc(x => display(' 3.141592654   '), memory => 1);
 screen_svg('rpn-calc-screen-memory.svg', 'Calculator screen: pi, with the S indicator');
+
+# the ROM blanks the whole display, HPVM::Error() of the sketch shows the same
+flash_svg('rpn-calc-screen-error.svg', 'Calculator screen with an error: a flashing 0.', 'errflash',
+    sub { render_calc(x => display(' 0.            ')) }, sub { render_calc(x => display(' ' x 15)) }, [15.5, 'flashes']);
 
 render_calc(y => display(' 12.5          '), x => display(' 3.            '), memory => 1);
 screen_svg('rpn-calc-screen-function.svg', 'Calculator screen with F active: Y on top, X below', [7.5, 'Y'], [23.5, 'X']);

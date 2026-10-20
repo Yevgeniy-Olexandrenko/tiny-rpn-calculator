@@ -144,6 +144,10 @@ For the types of the parts, refer to [15](#15-technical-data).
 4. Let the battery charge. When the charge is complete, the device turns on and shows the watch screen. The last bar does not flash.
 5. Disconnect the USB cable.
 
+The watch screen during the charge:
+
+<img src="images/rpn-calc-screen-charge.svg" alt="Watch screen during the charge: 14:30:00, OCT 17/26, battery indicator with 3 bars, the last bar flashes">
+
 > [!NOTE]
 > - A full charge can take some hours.
 > - During the charge, the device also turns off after 20 s (refer to [4.3](#43-automatic-power-off-and-power-on)). To look at the battery indicator again, push a key in the two bottom rows when the device is off.
@@ -413,7 +417,11 @@ These operations are not possible:
 - Logarithm (LN, LOG) or power (xʸ) when X is zero or negative.
 - Arc sine (ASIN) or arc cosine (ACOS) when X is more than 1 or less than −1.
 
-If you try one of these operations, a flashing `0.` shows. To stop the error, push <kbd>C</kbd>.
+If you try one of these operations, a flashing `0.` shows:
+
+<img src="images/rpn-calc-screen-error.svg" alt="Calculator screen with an error: 0. flashes">
+
+To stop the error, push <kbd>C</kbd>.
 
 The time, date and time zone operations (TIME, DATE, ZONE) show the same error if a value is not correct (refer to [10](#10-set-the-time-the-date-and-the-time-zone)).
 

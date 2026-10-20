@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 748 164" width="748" height="164" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Calculator screen with an error: a flashing 0.</title>
+  <style>
+    .errflash { animation: flash 324ms step-end infinite; }
+    .note     { font-size: 22px; fill: #1f2328; }
+    .pixel    { fill: #ffffff; }
+    .screen   { fill: #151b23; stroke: #3d444d; stroke-width: 1; }
+    @media (prefers-color-scheme: dark) {
+      .note     { fill: #e6edf3; }
+    }
+    @keyframes flash { 50% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .errflash { animation: none; }
+    }
+  </style>
+  <rect class="screen" x="0.5" y="0.5" width="543" height="159" rx="8"/>
+  <path class="pixel errflash" transform="translate(16 16) scale(4)" d="M9 1h5v1h-5zM8 2h1v13h-1zM14 2h1v13h-1zM8 16h1v13h-1zM14 16h1v13h-1zM18 26h3v3h-3zM9 29h5v1h-5z"/>
+  <text class="note" x="558" y="86">← flashes</text>
+</svg>
