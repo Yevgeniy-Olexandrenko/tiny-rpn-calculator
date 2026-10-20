@@ -37,6 +37,7 @@ const u08 key_ops[] PROGMEM =
 };
 
 b08 shift;
+u16 cycles; // VM cycles left from the previous frame
 
 void render()
 {
@@ -103,8 +104,10 @@ int main()
 		}
 		last = key;
 
-		// run the ROM in real time, draw when it changes the display
-		for (u16 n = CYCLES_PER_FRAME; n > 0; --n)
+		// run the ROM in real time, draw at most once per frame when it
+		// changes the display, the rest of the cycles runs in the next frame
+		u16 n = cycles + CYCLES_PER_FRAME;
+		for (; n > 0; --n)
 		{
 			if (HPVM::Cycle())
 			{
@@ -112,6 +115,7 @@ int main()
 				break;
 			}
 		}
+		cycles = n;
 
 		// idle until the next frame
 		TMR::Sync();
