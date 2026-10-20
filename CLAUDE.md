@@ -53,7 +53,7 @@ For the HP-21 / Woodstock CPU work, read `documents/firmware/hp21-woodstock-arch
 
 ## Documentation
 
-User manuals (`documents/manuals/*.md`, e.g. `hp35-rev1.5-user-manual.md`) and `README.md` are GitHub markdown written to these rules. `README.md` is the landing page of the project: the name, the device image without part numbers (`rpn-calc.svg`) linked to the manual, a short description of the hardware, the firmware list and links to the manuals; the details stay in the manuals.
+User manuals (`documents/manuals/*.md`, e.g. `hp35-firmware-user-manual.md`) and `README.md` are GitHub markdown written to these rules. `README.md` is the landing page of the project: the name, the device image without part numbers (`rpn-calc.svg`) linked to the manual, a short description of the hardware, the firmware list and links to the manuals; the details stay in the manuals.
 
 - Language: about 80% ASD-STE100 (Simplified Technical English): short sentences, active voice, one action per procedure step.
 - Short `#` title with no metadata line under it. No Mermaid or other graphs (use tables), no `---` rules between sections; GitHub alerts (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`), `<details>` and tables are fine. GitHub does not render an alert inside `<details>` (it shows `[!NOTE]` as text): put the alert before the `<details>` block, or write plain text there.

@@ -325,20 +325,56 @@ write_svg('rpn-calc-keyboard-power-on.svg', 'Keys that turn on the device: the t
     . sprintf(qq{  <!-- the two top rows do not turn on the device -->\n  <rect class="dim" x="%d" y="%d" width="%d" height="%d"/>\n},
         $grid_x[0] - 10, $grid_y[0] - 10, $grid_x[-1] - $grid_x[0] + 20, $grid_y[2] - $grid_y[0] + 9));
 
+# keys that do nothing in a context are dimmed inside their cells, the grid stays: [row, column]
+sub dim_keys {
+    my ($comment, @keys) = @_;
+    return "  <!-- $comment -->\n" . join '', map {
+        my ($r, $c) = @$_;
+        sprintf qq{  <rect class="dim" x="%d" y="%d" width="%d" height="%d"/>\n},
+            $grid_x[$c] + 1, $grid_y[$r] + 1, $grid_x[$c + 1] - $grid_x[$c] - 2, $grid_y[$r + 1] - $grid_y[$r] - 2;
+    } @keys;
+}
+
+# code.h: updateCalcMode() in a menu: F 7 8 open a menu, E ± change the line, 1 2 3 select an item
+write_svg('rpn-calc-keyboard-menu.svg', 'Keys that work in a menu: F, 7, 8, E, ±, 1, 2, 3', $kbd_viewbox,
+    keyboard() . dim_keys('the other keys close the menu', [0, 3], [1, 1], [1, 2], [1, 3], [3, 0], [3, 1], [3, 2], [3, 3]));
+
 # ================================================================ screens
 # 4 units per pixel on a dark glass with the colors of a GitHub table (muted cell, border), notes on the right: [pixel row, text]
-sub screen_svg {
-    my ($name, $title, @notes) = @_;
-    my $pad = 16;
-    my $w = 128 * 4 + 2 * $pad;
-    my $body = sprintf qq{  <rect class="screen" x="0.5" y="0.5" width="%d" height="%d" rx="8"/>\n}, $w - 1, 32 * 4 + 2 * $pad - 1;
-    $body .= sprintf qq{  <path class="pixel" transform="translate($pad $pad) scale(4)" d="%s"/>\n}, pixels_path();
+my $scr_pad = 16;
+my $scr_w   = 128 * 4 + 2 * $scr_pad;
+my $scr_h   = 32 * 4 + 2 * $scr_pad;
+my $scr_gap = 16;                              # between the screens of one image
+
+# the current pixels as a screen at the top $y of the image
+sub screen {
+    my ($y, @notes) = @_;
+    my $body = sprintf qq{  <rect class="screen" x="0.5" y="%g" width="%d" height="%d" rx="8"/>\n}, $y + 0.5, $scr_w - 1, $scr_h - 1;
+    $body .= sprintf qq{  <path class="pixel" transform="translate(%d %d) scale(4)" d="%s"/>\n}, $scr_pad, $y + $scr_pad, pixels_path();
     for (@notes) {
         my ($row, $text) = @$_;
-        $body .= sprintf qq{  <text class="note" x="%d" y="%d">← %s</text>\n}, $w + 14, $pad + $row * 4 + 8, $text;
+        $body .= sprintf qq{  <text class="note" x="%d" y="%d">← %s</text>\n}, $scr_w + 14, $y + $scr_pad + $row * 4 + 8, $text;
     }
-    my $vw = $w + 200;                         # same width for all screens, room for notes
-    write_svg($name, $title, sprintf('-2 -2 %d %d', $vw + 4, 32 * 4 + 2 * $pad + 4), $body);
+    return $body;
+}
+# screens one below the other; the same width for all images, room for notes
+sub screens_svg {
+    my ($name, $title, @screens) = @_;
+    my $h = @screens * ($scr_h + $scr_gap) - $scr_gap;
+    write_svg($name, $title, sprintf('-2 -2 %d %d', $scr_w + 200 + 4, $h + 4), join '', @screens);
+}
+sub screen_svg { my ($name, $title, @notes) = @_; screens_svg($name, $title, screen(0, @notes)) }
+
+# both lines of a menu with X on the top line, ± shows line 2
+sub menu_svg {
+    my ($name, $title, $x, $menu) = @_;
+    my @items = menu_items($menu);
+    my @screens;
+    for my $line (0, 1) {
+        render_calc(x => display($x), menu => [ @items[3 * $line .. 3 * $line + 2] ]);
+        push @screens, screen($line * ($scr_h + $scr_gap), [23.5, 'line ' . ($line + 1)]);
+    }
+    screens_svg($name, $title, @screens);
 }
 
 my %watch = (h => 14, m => 30, s => 0, month => 'OCT', date => 17, year => 26, bars => 4);
@@ -358,6 +394,10 @@ screen_svg('rpn-calc-screen-function.svg', 'Calculator screen with F active: Y o
 
 render_calc(x => display(' 30.           '), menu => [ (menu_items('strMenuTrig'))[0..2] ]);
 screen_svg('rpn-calc-screen-menu.svg', 'Calculator screen with the TRIG menu', [7.5, 'X'], [23.5, 'menu']);
+
+menu_svg('rpn-calc-screen-menu-math.svg', 'MATH menu: line 1 x^y, square root, 1/x; line 2 LOG, LN, e^x', ' 2.            ', 'strMenuMath');
+menu_svg('rpn-calc-screen-menu-trig.svg', 'TRIG menu: line 1 SIN, COS, TAN; line 2 ASIN, ACOS, ATAN', ' 30.           ', 'strMenuTrig');
+menu_svg('rpn-calc-screen-menu-prog.svg', 'PROG menu: line 1 TIME, DATE, ZONE; line 2 TOTP', ' 0.            ', 'strMenuProg');
 
 render_totp(code => 287082, left => 17, label => 'KEY1');
 screen_svg('rpn-calc-screen-totp.svg', 'TOTP screen: code 287 082, 17 seconds left, key KEY1', [7.5, 'seconds left'], [23.5, 'key label']);

@@ -1,6 +1,6 @@
 # Business Card RPN Calculator with Watch
 
-<a href="documents/manuals/hp35-rev1.5-user-manual.md#3-device-description"><img src="documents/manuals/images/rpn-calc.svg" alt="Drawing of the device: display, microcontroller, real-time clock, USB-C connector, charger, battery and keyboard"></a>
+<a href="documents/manuals/hp35-firmware-user-manual.md#3-device-description"><img src="documents/manuals/images/rpn-calc.svg" alt="Drawing of the device: display, microcontroller, real-time clock, USB-C connector, charger, battery and keyboard"></a>
 
 A scientific RPN calculator with a watch, on one PCB of the size of a credit card (85.5 × 54 mm).
 
@@ -30,13 +30,13 @@ Each firmware emulates one HP calculator. The source code of each firmware is an
 | [hp35](firmware/sketches/hp35) | HP-35 (1972), the first pocket calculator with scientific functions | Watch, TOTP codes for two-factor authentication | Ready |
 | [hp21](firmware/sketches/hp21) | HP-21 (1975) | Watch | Not tested on the device |
 
-To install the firmware, refer to [Firmware installation](documents/manuals/hp35-rev1.5-user-manual.md#14-firmware-installation) in the User Manual.
+To install the firmware, refer to [Firmware installation](documents/manuals/hp35-firmware-user-manual.md#14-firmware-installation) in the HP-35 Firmware — User Manual.
 
 ## Documentation
 
 | Document | Content |
 | --- | --- |
-| [User Manual](documents/manuals/hp35-rev1.5-user-manual.md) | How to use the device with the hp35 firmware: calculator, watch, TOTP codes, firmware installation |
+| [HP-35 Firmware — User Manual](documents/manuals/hp35-firmware-user-manual.md) | How to use the device with the hp35 firmware: calculator, watch, TOTP codes, firmware installation |
 | [HP-35 Operating Manual](documents/manuals/hp35-om-en-remake.pdf) | Remake of the original Hewlett-Packard manual: all functions of the HP-35, with examples (PDF, 23 MB) |
 | [HP-21 Owner's Handbook](documents/manuals/hp21-oh-en.pdf) | Original Hewlett-Packard manual of the HP-21 (PDF, 16 MB) |
 

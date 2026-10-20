@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 748 340" width="748" height="340" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>PROG menu: line 1 TIME, DATE, ZONE; line 2 TOTP</title>
+  <style>
+    .note     { font-size: 22px; fill: #1f2328; }
+    .pixel    { fill: #ffffff; }
+    .screen   { fill: #151b23; stroke: #3d444d; stroke-width: 1; }
+    @media (prefers-color-scheme: dark) {
+      .note     { fill: #e6edf3; }
+    }
+  </style>
+  <rect class="screen" x="0.5" y="0.5" width="543" height="159" rx="8"/>
+  <path class="pixel" transform="translate(16 16) scale(4)" d="M9 1h5v1h-5zM8 2h1v5h-1zM14 2h1v5h-1zM8 8h1v5h-1zM14 8h1v5h-1zM18 11h3v2h-3zM9 13h5v1h-5zM0 16h36v2h-36zM46 16h36v2h-36zM92 16h36v2h-36zM0 18h6v2h-6zM11 18h1v2h-1zM17 18h1v2h-1zM22 18h2v2h-2zM29 18h7v2h-7zM46 18h6v12h-6zM56 18h2v2h-2zM63 18h1v2h-1zM69 18h1v2h-1zM75 18h7v2h-7zM92 18h6v2h-6zM103 18h1v4h-1zM109 18h1v12h-1zM114 18h2v2h-2zM121 18h7v2h-7zM0 20h8v10h-8zM9 20h5v8h-5zM15 20h3v8h-3zM19 20h1v6h-1zM21 20h1v6h-1zM23 20h1v10h-1zM25 20h11v2h-11zM53 20h3v8h-3zM57 20h1v8h-1zM59 20h3v4h-3zM63 20h3v10h-3zM67 20h3v10h-3zM71 20h11v2h-11zM92 20h10v2h-10zM105 20h3v8h-3zM111 20h3v10h-3zM115 20h1v10h-1zM117 20h11v2h-11zM28 22h8v2h-8zM74 22h8v2h-8zM92 22h8v2h-8zM102 22h2v2h-2zM120 22h8v2h-8zM25 24h11v4h-11zM71 24h11v4h-11zM92 24h7v2h-7zM100 24h4v2h-4zM117 24h11v4h-11zM19 26h3v4h-3zM59 26h3v4h-3zM92 26h6v4h-6zM99 26h5v2h-5zM9 28h3v2h-3zM17 28h1v2h-1zM29 28h7v2h-7zM56 28h2v2h-2zM75 28h7v2h-7zM103 28h1v2h-1zM121 28h7v2h-7zM0 30h36v2h-36zM46 30h36v2h-36zM92 30h36v2h-36z"/>
+  <text class="note" x="558" y="118">← line 1</text>
+  <rect class="screen" x="0.5" y="176.5" width="543" height="159" rx="8"/>
+  <path class="pixel" transform="translate(16 192) scale(4)" d="M9 1h5v1h-5zM8 2h1v5h-1zM14 2h1v5h-1zM8 8h1v5h-1zM14 8h1v5h-1zM18 11h3v2h-3zM9 13h5v1h-5zM0 16h36v2h-36zM46 16h36v16h-36zM92 16h36v16h-36zM0 18h6v2h-6zM11 18h1v2h-1zM17 18h1v2h-1zM23 18h1v2h-1zM29 18h7v8h-7zM0 20h8v10h-8zM9 20h3v10h-3zM13 20h3v8h-3zM17 20h3v10h-3zM21 20h3v10h-3zM25 20h3v4h-3zM25 26h11v4h-11zM0 30h36v2h-36z"/>
+  <text class="note" x="558" y="294">← line 2</text>
+</svg>
