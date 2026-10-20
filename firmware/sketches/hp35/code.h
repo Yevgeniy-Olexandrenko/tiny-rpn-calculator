@@ -139,11 +139,17 @@ b08 updateTOTPMode()
 {
 	if (newKey != KBD::NONE)
 	{
-		// select previous or next key, any other key leaves the mode
+		// select previous or next key, digits 1..9 select the key directly
+		// (the totp tool allows up to 9 keys), any other key leaves the mode
 		switch (newKey)
 		{
 			default:
-				return false;
+			{
+				u08 index = newKey - KBD::NUM1;
+				if (index >= totpCount) return false;
+				totpIndex = index;
+				break;
+			}
 			case KBD::ROTU:
 				totpIndex = (totpIndex ? totpIndex : totpCount) - 1;
 				break;

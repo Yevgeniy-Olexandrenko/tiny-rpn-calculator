@@ -229,6 +229,7 @@ To change the mode, use these keys:
 | Watch | <kbd>F</kbd> | TOTP |
 | Watch | Other keys | Calculator |
 | TOTP | <kbd>E</kbd> or <kbd>±</kbd> | TOTP (previous or next key) |
+| TOTP | A digit from <kbd>1</kbd> to the number of keys | TOTP (the key with this number) |
 | TOTP | Other keys | Calculator |
 | Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>±</kbd> <kbd>1</kbd> (TOTP) or <kbd>3</kbd> (ZONE) | TOTP |
 | Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>1</kbd> (TIME) or <kbd>2</kbd> (DATE) | Watch |
@@ -585,7 +586,7 @@ The device keeps the keys in a keys area of 126 bytes: 5 bytes for the header an
 | 32 | 20 | 25 | 4 |
 | 52 | 32 | 37 | 3 |
 
-You can use secrets of different lengths together. The `totp` tool tells you the number of bytes that your keys use, with the header. If the keys are too large for the area, the tool shows an error.
+You can use secrets of different lengths together. The maximum is 9 keys, because the digit keys select them (refer to [11.2](#112-show-the-codes)). The `totp` tool tells you the number of bytes that your keys use, with the header. If the keys are too large for the area, the tool shows an error.
 
 ### 11.2 Show the codes
 
@@ -595,7 +596,7 @@ The TOTP screen opens with the key that you selected last. After a reset (refer 
    - In watch mode, push <kbd>F</kbd>.
    - In calculator mode, push <kbd>F</kbd> <kbd>8</kbd>, then <kbd>±</kbd>, then <kbd>1</kbd> (TOTP).
 2. Read the label of the key. Make sure that it is the correct key.
-3. To show the next key, push <kbd>±</kbd>. To show the previous key, push <kbd>E</kbd>. After the last key, <kbd>±</kbd> shows the first key again.
+3. To show the next key, push <kbd>±</kbd>. To show the previous key, push <kbd>E</kbd>. After the last key, <kbd>±</kbd> shows the first key again. To show a key directly, push its number: <kbd>1</kbd> shows the first key, <kbd>2</kbd> shows the second key. A digit larger than the number of keys opens calculator mode.
 4. Enter the code in the web site or the application.
 5. Push another key to go to calculator mode, or let the device turn off.
 
@@ -872,5 +873,6 @@ The top row shows the keys that open each menu. The left column shows the keys t
 | Watch → TOTP | <kbd>F</kbd> |
 | Watch or TOTP → Calculator | Other keys |
 | TOTP: previous / next key | <kbd>E</kbd> / <kbd>±</kbd> |
+| TOTP: key with this number | <kbd>1</kbd> ... <kbd>9</kbd> |
 | Display becomes dim | 10 s |
 | Device turns off | 20 s |

@@ -42,6 +42,7 @@ namespace MEM
 #include "../../../libraries/TinyRPNCalculator/src/Extras/TOTP.h"
 
 const char k_signature[] = { 'T', 'O', 'T', 'P' };
+const size_t k_keysMax = 9;
 
 struct Entry
 {
@@ -282,6 +283,13 @@ bool BuildArea(const std::vector<Entry>& entries, size_t size, std::vector<uint8
 	if (size < TOTP::SIGNATURE_SIZE || size > 255)
 	{
 		std::cerr << "Keys area size must be " << int(TOTP::SIGNATURE_SIZE) << "..255 bytes" << std::endl;
+		return false;
+	}
+
+	// digit keys 1..9 select the key on the calculator
+	if (entries.size() > k_keysMax)
+	{
+		std::cerr << "Too many keys: " << entries.size() << ", maximum is " << k_keysMax << std::endl;
 		return false;
 	}
 
