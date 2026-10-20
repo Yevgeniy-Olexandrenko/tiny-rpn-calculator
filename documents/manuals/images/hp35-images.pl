@@ -318,7 +318,7 @@ sub keyboard {
 }
 my $kbd_viewbox = sprintf '%d %d %d %d', $grid_x[0] - 10, $grid_y[0] - 10, $grid_x[-1] - $grid_x[0] + 20, $grid_y[-1] - $grid_y[0] + 20;
 
-write_svg('rpn-calc-keyboard.svg', 'Keyboard of the Tiny RPN Calculator', $kbd_viewbox, keyboard());
+write_svg('rpn-calc-keyboard.svg', 'Keyboard of the Business Card RPN Calculator with Watch', $kbd_viewbox, keyboard());
 
 write_svg('rpn-calc-keyboard-power-on.svg', 'Keys that turn on the device: the two bottom rows', $kbd_viewbox,
     keyboard()
@@ -474,9 +474,9 @@ my $part_numbers = <<"SVG";
   <circle class="badge" cx="735" cy="140" r="11"/><text class="badgetx" x="735" y="145">6</text>
   <circle class="badge" cx="43.5" cy="355" r="11"/><text class="badgetx" x="43.5" y="360">7</text>
 SVG
-write_svg('rpn-calc-parts.svg', 'Tiny RPN Calculator: primary parts', '-10 -10 875 560', $device . $part_numbers);
+write_svg('rpn-calc-parts.svg', 'Business Card RPN Calculator with Watch: primary parts', '-10 -10 875 560', $device . $part_numbers);
 # the same drawing without the part numbers, for README.md
-write_svg('rpn-calc.svg', 'Tiny RPN Calculator', '-10 -10 875 560', $device);
+write_svg('rpn-calc.svg', 'Business Card RPN Calculator with Watch', '-10 -10 875 560', $device);
 
 # ================================================================ labels
 # "Extension" label for the text of the manual, in the colors of a GitHub label;

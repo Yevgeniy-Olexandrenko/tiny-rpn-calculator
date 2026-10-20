@@ -24,7 +24,9 @@
 
 ## 1. Introduction
 
-This manual tells you how to use the HP-35 firmware on the Tiny RPN Calculator (PCB rev 1.5). With this firmware, the device has three functions:
+This manual tells you how to use the HP-35 firmware on the Business Card RPN Calculator with Watch. The device uses the Tiny RPN Calculator hardware platform, PCB rev 1.5. Each firmware of the device has its own manual.
+
+With the HP-35 firmware, the device has three functions:
 
 - An HP-35 calculator (refer to [8](#8-calculator-mode)).
 - A watch (refer to [7](#7-watch-mode)).
@@ -113,7 +115,7 @@ The text uses these conventions:
 
 The device has the size and the proportions of a credit card. The drawing shows the primary parts. The positions of the small parts are approximate. The drawing does not show the ICSP connector and the POWER jumper.
 
-<img src="images/rpn-calc-parts.svg" alt="Tiny RPN Calculator: display (1), microcontroller (2), real-time clock (3), USB-C connector (4), charger (5), battery (6), keyboard (7)">
+<img src="images/rpn-calc-parts.svg" alt="Business Card RPN Calculator with Watch: display (1), microcontroller (2), real-time clock (3), USB-C connector (4), charger (5), battery (6), keyboard (7)">
 
 | No. | Part | Function |
 | :---: | --- | --- |
@@ -815,6 +817,7 @@ The result is 9.460730473 × 10¹⁵ m.
 
 | Parameter | Value |
 | --- | --- |
+| Hardware platform | Tiny RPN Calculator, PCB rev 1.5 |
 | Dimensions | 85.5 × 54 mm (PCB), the size of a credit card |
 | Microcontroller | [ATtiny85](../../datasheets/ATtiny85.pdf), 16 MHz (internal PLL), 8 KB flash, 512 B RAM, 512 B EEPROM |
 | Display | OLED 0.91 inch, 128 × 32, [SSD1306](../../datasheets/SSD1306.pdf), I²C |

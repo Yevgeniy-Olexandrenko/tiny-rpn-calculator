@@ -55,6 +55,7 @@ For the HP-21 / Woodstock CPU work, read `documents/firmware/hp21-woodstock-arch
 
 User manuals (`documents/manuals/*.md`, e.g. `hp35-firmware-user-manual.md`) and `README.md` are GitHub markdown written to these rules. `README.md` is the landing page of the project: the name, the device image without part numbers (`rpn-calc.svg`) linked to the manual, a short description of the hardware, the firmware list and links to the manuals; the details stay in the manuals.
 
+- Names: **Business Card RPN Calculator with Watch** is the device (the name printed on it, used in the text for users); **Tiny RPN Calculator** is the hardware platform (PCB, the `TinyRPNCalculator` library, the GitHub repository); **HP-35 Firmware**, **HP-21 Firmware** are the firmware the device can run. Each firmware has its own manual: `<model>-firmware-user-manual.md`, titled `<Model> Firmware — User Manual`.
 - Language: about 80% ASD-STE100 (Simplified Technical English): short sentences, active voice, one action per procedure step.
 - Short `#` title with no metadata line under it. No Mermaid or other graphs (use tables), no `---` rules between sections; GitHub alerts (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`), `<details>` and tables are fine. GitHub does not render an alert inside `<details>` (it shows `[!NOTE]` as text): put the alert before the `<details>` block, or write plain text there.
 - Four kinds of text, each with its own style, chosen by the context:
