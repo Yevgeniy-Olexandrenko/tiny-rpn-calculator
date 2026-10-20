@@ -1,7 +1,7 @@
 #pragma once
 
 // -----------------------------------------------------------------------------
-// Bult Time Computation
+// Build Time Computation
 // -----------------------------------------------------------------------------
 
 // figure out build date and time (Example __DATE__ : "Jul 27 2012" and __TIME__ : "21:06:19")

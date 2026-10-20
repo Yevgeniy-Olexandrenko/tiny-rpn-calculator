@@ -21,7 +21,7 @@
 // TXT - Display text using custom fonts
 // RTC - DS3231M Real Time Clock control
 // KBD - One Pin Analog 16-Key Keyboard reading
-// PWR - MPU Power management (Idle + Power down + Charging status)
+// PWR - MCU Power management (Idle + Power down + Charging status)
 // TMR - WDT-based Timer for main loop sync in time
 // FNT - A Set of Predefined Fonts
 // SYS - System initialization and power down
