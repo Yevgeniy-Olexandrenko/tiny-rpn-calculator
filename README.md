@@ -1,6 +1,6 @@
 # Business Card RPN Calculator with Watch
 
-<a href="documents/manuals/hp35-rev1.5-user-manual.md#3-device-description"><img src="documents/manuals/images/hp35-device.svg" alt="Drawing of the device: display (1), keyboard (2), USB-C connector (3), battery (4), microcontroller (5), real-time clock (6), charger (7)"></a>
+<a href="documents/manuals/hp35-rev1.5-user-manual.md#3-device-description"><img src="documents/manuals/images/rpn-calc.svg" alt="Drawing of the device: display, microcontroller, real-time clock, USB-C connector, charger, battery and keyboard"></a>
 
 A scientific RPN calculator with a watch, on one PCB of the size of a credit card (85.5 × 54 mm).
 

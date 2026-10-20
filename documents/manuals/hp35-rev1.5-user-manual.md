@@ -34,7 +34,7 @@ This manual tells you how to use the Tiny RPN Calculator (PCB rev 1.5) with the 
 
 Hewlett-Packard introduced the HP-35 in 1972. It was the first pocket calculator with transcendental functions (logarithms, exponent, trigonometric functions) and with RPN (refer to [8.1](#81-rpn-and-the-stack)). At that time, most calculators, including large desktop models, had only the four arithmetic operations.
 
-The firmware is an emulator. It runs the original ROM of the HP-35 on a virtual copy of the HP CPU, at about the speed of the original calculator. Thus, the calculations, the results and the display format are the same as on the HP-35 with the corrected ROM (refer to [1.2](#12-the-corrected-rom)). The firmware also adds some functions that make the calculator easier to use. This manual marks them with this label: <img src="images/hp35-extension.svg" alt="Extension" align="absmiddle">
+The firmware is an emulator. It runs the original ROM of the HP-35 on a virtual copy of the HP CPU, at about the speed of the original calculator. Thus, the calculations, the results and the display format are the same as on the HP-35 with the corrected ROM (refer to [1.2](#12-the-corrected-rom)). The firmware also adds some functions that make the calculator easier to use. This manual marks them with this label: <img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle">
 
 For more data, refer to:
 
@@ -102,17 +102,17 @@ In this manual, <kbd>F</kbd> <kbd>9</kbd> means: push the <kbd>F</kbd> key, rele
 
 The device has the size and the proportions of a credit card. The drawing shows the primary parts. The positions of the small parts are approximate. The drawing does not show the ICSP connector and the POWER jumper.
 
-<img src="images/hp35-device.svg" alt="Tiny RPN Calculator: display (1), keyboard (2), USB-C connector (3), battery (4), microcontroller (5), real-time clock (6), charger (7)">
+<img src="images/rpn-calc-parts.svg" alt="Tiny RPN Calculator: display (1), microcontroller (2), real-time clock (3), USB-C connector (4), charger (5), battery (6), keyboard (7)">
 
 | No. | Part | Function |
 | :---: | --- | --- |
 | 1 | Display | Shows numbers, menus, time and codes (refer to [8.2](#82-display)). |
-| 2 | Keyboard | 16 keys (refer to [6](#6-keyboard)). |
-| 3 | USB-C connector | Connects the USB cable to charge the battery (refer to [4.1](#41-charge-the-battery)). |
-| 4 | Battery | Supplies power to the device. |
-| 5 | Microcontroller | Runs the firmware. |
-| 6 | Real-time clock | Keeps the time and the date. |
-| 7 | Charger | Charges the battery and controls the charge current. |
+| 2 | Microcontroller | Runs the firmware. |
+| 3 | Real-time clock | Keeps the time and the date. |
+| 4 | USB-C connector | Connects the USB cable to charge the battery (refer to [4.1](#41-charge-the-battery)). |
+| 5 | Charger | Charges the battery and controls the charge current. |
+| 6 | Battery | Supplies power to the device. |
+| 7 | Keyboard | 16 keys (refer to [6](#6-keyboard)). |
 | — | ICSP connector | Programs the microcontroller (refer to [14](#14-firmware-installation)). |
 | — | POWER jumper | Connects the battery to the circuit (refer to [4.5](#45-power-jumper-and-reset)). |
 
@@ -160,7 +160,7 @@ The device saves energy with two timeouts. Each key push starts the timeouts aga
 
 To turn on the device, push a key in one of the **two bottom rows**:
 
-<img src="images/hp35-keyboard-power-on.svg" alt="Keyboard: the keys of the two bottom rows turn on the device (±, 1, 2, 3, C, 0, ., ↑)">
+<img src="images/rpn-calc-keyboard-power-on.svg" alt="Keyboard: the keys of the two bottom rows turn on the device (±, 1, 2, 3, C, 0, ., ↑)">
 
 The device always starts in watch mode.
 
@@ -224,7 +224,7 @@ Each key has two functions:
 - The **primary function** (large legend on the key). Push the key.
 - The **shifted function** (small legend above the key). Push <kbd>F</kbd>, then push the key.
 
-<img src="images/hp35-keyboard.svg" alt="Keyboard, 4 x 4 keys. Rows of main legends: F 7 8 9, E 4 5 6, ± 1 2 3, C 0 . ↑. Rows of shifted legends: MATH TRIG PROG ÷, ROT↑ CONST MEM+ ×, ROT↓ RCL STO −, AC LAST X↔Y +">
+<img src="images/rpn-calc-keyboard.svg" alt="Keyboard, 4 x 4 keys. Rows of main legends: F 7 8 9, E 4 5 6, ± 1 2 3, C 0 . ↑. Rows of shifted legends: MATH TRIG PROG ÷, ROT↑ CONST MEM+ ×, ROT↓ RCL STO −, AC LAST X↔Y +">
 
 ### 6.2 Primary functions
 
@@ -248,13 +248,13 @@ Each key has two functions:
 | <kbd>F</kbd> <kbd>↑</kbd> | + | <kbd>+</kbd> | Y + X |
 | <kbd>F</kbd> <kbd>.</kbd> | X↔Y | <kbd>x↔y</kbd> | Exchange X and Y |
 | <kbd>F</kbd> <kbd>±</kbd> | ROT↓ | <kbd>R↓</kbd> | Roll the stack down |
-| <kbd>F</kbd> <kbd>E</kbd> | ROT↑ | — | <img src="images/hp35-extension.svg" alt="Extension" align="absmiddle"> Roll the stack up |
+| <kbd>F</kbd> <kbd>E</kbd> | ROT↑ | — | <img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle"> Roll the stack up |
 | <kbd>F</kbd> <kbd>C</kbd> | AC | <kbd>CLR</kbd> | Clear the stack (X, Y, Z, T) and the memory |
 | <kbd>F</kbd> <kbd>2</kbd> | STO | <kbd>STO</kbd> | Copy X to the memory |
 | <kbd>F</kbd> <kbd>1</kbd> | RCL | <kbd>RCL</kbd> | Copy the memory to X |
-| <kbd>F</kbd> <kbd>5</kbd> | MEM+ | — | <img src="images/hp35-extension.svg" alt="Extension" align="absmiddle"> Add X to the memory |
+| <kbd>F</kbd> <kbd>5</kbd> | MEM+ | — | <img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle"> Add X to the memory |
 | <kbd>F</kbd> <kbd>4</kbd> | CONST | <kbd>π</kbd> | Enter π |
-| <kbd>F</kbd> <kbd>0</kbd> | LAST | — | <img src="images/hp35-extension.svg" alt="Extension" align="absmiddle"> Do the last menu operation again |
+| <kbd>F</kbd> <kbd>0</kbd> | LAST | — | <img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle"> Do the last menu operation again |
 | <kbd>F</kbd> <kbd>F</kbd> | MATH | — | Open the MATH menu |
 | <kbd>F</kbd> <kbd>7</kbd> | TRIG | — | Open the TRIG menu |
 | <kbd>F</kbd> <kbd>8</kbd> | PROG | — | Open the PROG menu |
@@ -268,7 +268,7 @@ Each key has two functions:
 
 The watch screen shows:
 
-<img src="images/hp35-screen-watch.svg" alt="Watch screen: 14:30:00, OCT 17/26, battery level, HP-35">
+<img src="images/rpn-calc-screen-watch.svg" alt="Watch screen: 14:30:00, OCT 17/26, battery level, HP-35">
 
 | Element | Description |
 | --- | --- |
@@ -323,7 +323,7 @@ For more data about RPN, read the [HP-35 Operating Manual](hp35-om-en-remake.pdf
 
 The display shows the number in X with large digits. The exponent shows with small digits at the top right.
 
-<img src="images/hp35-screen-number.svg" alt="Calculator screen: 6.02214076, exponent 23">
+<img src="images/rpn-calc-screen-number.svg" alt="Calculator screen: 6.02214076, exponent 23">
 
 The example shows 6.02214076 × 10²³.
 
@@ -346,13 +346,13 @@ Indicators show on the right side of the display:
 | **F** (box with the letter F) | The <kbd>F</kbd> key is active. The next key does its shifted function. |
 | **S** (box with the letter S, from "Store") | The memory contains a value that is not zero. |
 
-<img src="images/hp35-screen-memory.svg" alt="Calculator screen: 3.141592654 and the S indicator">
+<img src="images/rpn-calc-screen-memory.svg" alt="Calculator screen: 3.141592654 and the S indicator">
 
 ### 8.4 Look at the Y register
 
 When you push <kbd>F</kbd>, the display changes:
 
-<img src="images/hp35-screen-function.svg" alt="Calculator screen with F active: Y (12.5) on the top line, X (3.) on the bottom line, F and S indicators">
+<img src="images/rpn-calc-screen-function.svg" alt="Calculator screen with F active: Y (12.5) on the top line, X (3.) on the bottom line, F and S indicators">
 
 - The top line shows **Y**.
 - The bottom line shows **X**.
@@ -387,7 +387,7 @@ The trigonometric functions use **degrees** only. This is the same as on the ori
 
 A menu shows on the bottom line of the display. The top line shows X with small digits. A menu has one or two lines of three items.
 
-<img src="images/hp35-screen-menu.svg" alt="Calculator screen with a menu: X (30.) on the top line, the items SIN, COS and TAN on the bottom line">
+<img src="images/rpn-calc-screen-menu.svg" alt="Calculator screen with a menu: X (30.) on the top line, the items SIN, COS and TAN on the bottom line">
 
 | Key | Function |
 | --- | --- |
@@ -516,7 +516,7 @@ The clock keeps the **local time**. The TOTP function needs UTC time. The time z
 
 TOTP (Time-based One-Time Password, RFC 6238) is a 6-digit code for two-factor authentication. Many web sites and applications use it, as an authenticator application on a phone does. A new code shows each 30 seconds.
 
-<img src="images/hp35-screen-totp.svg" alt="TOTP screen: code 287 082, 17 seconds left, key label KEY1">
+<img src="images/rpn-calc-screen-totp.svg" alt="TOTP screen: code 287 082, 17 seconds left, key label KEY1">
 
 The device keeps the keys in a keys area of 126 bytes: 5 bytes for the header and 121 bytes for the keys. Each key uses 5 bytes plus the length of its secret. Thus, the number of keys is related to the length of the secrets:
 
@@ -752,7 +752,7 @@ Add 12.5, 7.25 and 30 in the memory. The HP-35 has no operation like <kbd>F</kbd
 
 **Keyboard**
 
-<img src="images/hp35-keyboard.svg" alt="Keyboard, 4 x 4 keys. Rows of main legends: F 7 8 9, E 4 5 6, ± 1 2 3, C 0 . ↑. Rows of shifted legends: MATH TRIG PROG ÷, ROT↑ CONST MEM+ ×, ROT↓ RCL STO −, AC LAST X↔Y +">
+<img src="images/rpn-calc-keyboard.svg" alt="Keyboard, 4 x 4 keys. Rows of main legends: F 7 8 9, E 4 5 6, ± 1 2 3, C 0 . ↑. Rows of shifted legends: MATH TRIG PROG ÷, ROT↑ CONST MEM+ ×, ROT↓ RCL STO −, AC LAST X↔Y +">
 
 **Menus**
 

@@ -212,23 +212,21 @@ my %theme = (           # light, dark
     bg    => ['#ffffff', '#0d1117'],
     edge  => ['#57606a', '#8b949e'],
     ink   => ['#1f2328', '#e6edf3'],
-    ink2  => ['#57606a', '#8b949e'],
     chip  => ['#24292f', '#30363d'],
     pin   => ['#8c959f', '#6e7681'],
     badge => ['#0969da', '#2f81f7'],
     tint  => ['#ddf4ff', '#132339'],
 );
 my %class = (           # static properties, then property => theme color
-    board    => ['stroke-width: 2.5', fill => 'bg', stroke => 'edge'],
-    overlay  => ['stroke-width: 2', fill => 'bg', stroke => 'edge'],
+    board    => ['stroke-width: 2', fill => 'bg', stroke => 'edge'],
     hole     => ['fill: none; stroke-width: 2', stroke => 'edge'],
     slot     => ['fill: none; stroke-width: 1.5', stroke => 'edge'],
-    line     => ['fill: none; stroke-width: 1.5', stroke => 'ink'],
+    line     => ['fill: none; stroke-width: 2', stroke => 'edge'],
     cap      => ['', fill => 'ink'],
     main     => ['font-size: 52px; text-anchor: middle', fill => 'ink'],
     shift    => ['font-size: 26px', fill => 'ink'],
     title    => ['font-size: 46px; font-weight: 700; text-anchor: middle', fill => 'ink'],
-    subtitle => ['font-size: 27px; text-anchor: middle', fill => 'ink2'],
+    subtitle => ['font-size: 27px; text-anchor: middle', fill => 'ink'],
     note     => ['font-size: 22px', fill => 'ink'],
     dim      => ['opacity: 0.8', fill => 'bg'],
     chip     => ['', fill => 'chip'],
@@ -280,10 +278,9 @@ sub write_svg {
 }
 
 # ================================================================ keyboard
-my @key_x  = (295, 455, 615, 775);             # key centers, 16 mm pitch
-my @key_y  = (250, 330, 410, 490);             # 8 mm pitch
-my @grid_x = (215, 375, 535, 695, 840);
-my @grid_y = (200, 280, 360, 440, 520);
+my @key_y  = (245, 325, 405, 485);             # key centers, 8 mm pitch
+my @grid_x = (190, 350, 510, 670, 830);        # 4 cells of 16 mm, 2.5 mm from the board edge
+my @grid_y = (195, 275, 355, 435, 515);        # centered between the keyboard board top and the bottom edge
 my @legends = (
     ['F', 'MATH', '7', 'TRIG',  '8', 'PROG', '9', '÷'],
     ['E', 'ROT↑', '4', 'CONST', '5', 'MEM+', '6', '×'],
@@ -291,39 +288,40 @@ my @legends = (
     ['C', 'AC',   '0', 'LAST',  '.', 'X↔Y',  '↑', '+'],
 );
 my $main_cap = 18;                             # half of the cap height of the 52px main legend
+my $slot_gap = 10;                             # from the slot to the right edge of the cell, as to the bottom one
+my $slot_w   = 97;                             # from 33% of the 16 mm cell to the gap
 
-my $key_defs = <<'DEFS';
-    <!-- slot of the keyboard board and the button of the 3 x 6 mm tact switch -->
-    <g id="key">
-      <path class="slot" d="M-25,-20 H25 L35,-10 V10 L25,20 H-25 L-35,10 V-10 Z"/>
-      <rect class="cap" x="-19" y="-9" width="38" height="18" rx="3"/>
-    </g>
-DEFS
-
-# grid and keys: main legend centered in the cell left of the key, shifted legend above it
+# grid and keys: the slot of the keyboard board ends 1 mm before the right edge of the
+# cell, the button of the 3 x 6 mm tact switch is in its middle; the main legend is
+# centered left of the slot, the shifted legend is above the slot from its left edge
 sub keyboard {
     my $grid = sprintf 'M%d,%d H%d V%d H%d Z', $grid_x[0], $grid_y[0], $grid_x[-1], $grid_y[-1], $grid_x[0];
     $grid .= " M$_,$grid_y[0] V$grid_y[-1]" for @grid_x[1..3];
     $grid .= " M$grid_x[0],$_ H$grid_x[-1]" for @grid_y[1..3];
     my $s = qq{  <path class="line" d="$grid"/>\n};
     for my $r (0..3) {
+        my $y = $key_y[$r];
         my $main_y = ($grid_y[$r] + $grid_y[$r + 1]) / 2 + $main_cap;
         for my $c (0..3) {
             my ($main, $shift) = @{$legends[$r]}[2 * $c, 2 * $c + 1];
-            my ($x, $y) = ($key_x[$c], $key_y[$r]);
-            $s .= sprintf qq{  <use href="#key" x="%d" y="%d"/><text class="main" x="%d" y="%d">%s</text><text class="shift" x="%d" y="%d">%s</text>\n},
-                $x, $y, $x - 60, $main_y, $main, $x - 35, $y - 25, $shift;
+            my ($cell_l, $cell_r) = @grid_x[$c, $c + 1];
+            my $sr = $cell_r - $slot_gap;
+            my $sl = $sr - $slot_w;
+            $s .= sprintf qq{  <path class="slot" d="M%g,%g H%g L%g,%g V%g L%g,%g H%g L%g,%g V%g Z"/><rect class="cap" x="%g" y="%g" width="38" height="18" rx="3"/>\n},
+                $sl + 10, $y - 20, $sr - 10, $sr, $y - 10, $y + 10, $sr - 10, $y + 20, $sl + 10, $sl, $y + 10, $y - 10,
+                ($sl + $sr) / 2 - 19, $y - 9;
+            $s .= sprintf qq{  <text class="main" x="%g" y="%d">%s</text><text class="shift" x="%d" y="%d">%s</text>\n},
+                ($cell_l + $sl) / 2, $main_y, $main, $sl, $y - 25, $shift;
         }
     }
     return $s;
 }
 my $kbd_viewbox = sprintf '%d %d %d %d', $grid_x[0] - 10, $grid_y[0] - 10, $grid_x[-1] - $grid_x[0] + 20, $grid_y[-1] - $grid_y[0] + 20;
 
-write_svg('hp35-keyboard.svg', 'Keyboard of the Tiny RPN Calculator', $kbd_viewbox,
-    "  <defs>\n$key_defs  </defs>\n" . keyboard());
+write_svg('rpn-calc-keyboard.svg', 'Keyboard of the Tiny RPN Calculator', $kbd_viewbox, keyboard());
 
-write_svg('hp35-keyboard-power-on.svg', 'Keys that turn on the device: the two bottom rows', $kbd_viewbox,
-    "  <defs>\n$key_defs  </defs>\n" . keyboard()
+write_svg('rpn-calc-keyboard-power-on.svg', 'Keys that turn on the device: the two bottom rows', $kbd_viewbox,
+    keyboard()
     . sprintf(qq{  <!-- the two top rows do not turn on the device -->\n  <rect class="dim" x="%d" y="%d" width="%d" height="%d"/>\n},
         $grid_x[0] - 10, $grid_y[0] - 10, $grid_x[-1] - $grid_x[0] + 20, $grid_y[2] - $grid_y[0] + 9));
 
@@ -347,27 +345,27 @@ my %watch = (h => 14, m => 30, s => 0, month => 'OCT', date => 17, year => 26, b
 
 render_rtc(%watch);
 my $device_screen = pixels_path();
-screen_svg('hp35-screen-watch.svg', 'Watch screen: 14:30:00, OCT 17/26, battery level, HP-35');
+screen_svg('rpn-calc-screen-watch.svg', 'Watch screen: 14:30:00, OCT 17/26, battery level, HP-35');
 
 render_calc(x => display(' 6.02214076  23'));
-screen_svg('hp35-screen-number.svg', 'Calculator screen: 6.02214076 x 10^23', [7.5, 'exponent']);
+screen_svg('rpn-calc-screen-number.svg', 'Calculator screen: 6.02214076 x 10^23', [7.5, 'exponent']);
 
 render_calc(x => display(' 3.141592654   '), memory => 1);
-screen_svg('hp35-screen-memory.svg', 'Calculator screen: pi, with the S indicator');
+screen_svg('rpn-calc-screen-memory.svg', 'Calculator screen: pi, with the S indicator');
 
 render_calc(y => display(' 12.5          '), x => display(' 3.            '), memory => 1);
-screen_svg('hp35-screen-function.svg', 'Calculator screen with F active: Y on top, X below', [7.5, 'Y'], [23.5, 'X']);
+screen_svg('rpn-calc-screen-function.svg', 'Calculator screen with F active: Y on top, X below', [7.5, 'Y'], [23.5, 'X']);
 
 render_calc(x => display(' 30.           '), menu => [ (menu_items('strMenuTrig'))[0..2] ]);
-screen_svg('hp35-screen-menu.svg', 'Calculator screen with the TRIG menu', [7.5, 'X'], [23.5, 'menu']);
+screen_svg('rpn-calc-screen-menu.svg', 'Calculator screen with the TRIG menu', [7.5, 'X'], [23.5, 'menu']);
 
 render_totp(code => 287082, left => 17, label => 'KEY1');
-screen_svg('hp35-screen-totp.svg', 'TOTP screen: code 287 082, 17 seconds left, key KEY1', [7.5, 'seconds left'], [23.5, 'key label']);
+screen_svg('rpn-calc-screen-totp.svg', 'TOTP screen: code 287 082, 17 seconds left, key KEY1', [7.5, 'seconds left'], [23.5, 'key label']);
 
 # ================================================================ device
 my $device = <<"SVG";
   <defs>
-$key_defs    <!-- one side of a SOIC-8 -->
+    <!-- one side of a SOIC-8 -->
     <g id="soic-pins">
       <rect class="pin" x="-21" y="-4" width="4" height="8"/>
       <rect class="pin" x="-8.5" y="-4" width="4" height="8"/>
@@ -381,31 +379,31 @@ $key_defs    <!-- one side of a SOIC-8 -->
   <circle class="hole" cx="825" cy="30" r="12.7"/>
 
   <!-- (1) display: glass, OLED panel with the watch screen, flexible cable -->
-  <rect class="ribbon" x="310" y="58" width="56" height="78" rx="3"/>
-  <rect class="glass" x="12" y="24" width="303" height="115" rx="3"/>
-  <rect class="panel" x="16" y="28" width="246" height="94"/>
-  <rect class="ledge" x="16" y="122" width="246" height="13"/>
-  <path class="pixel" transform="translate(26 47) scale(1.75)" d="$device_screen"/>
+  <rect class="ribbon" x="320" y="58" width="56" height="78" rx="3"/>
+  <rect class="glass" x="22" y="24" width="303" height="115" rx="3"/>
+  <rect class="panel" x="26" y="28" width="246" height="94"/>
+  <rect class="ledge" x="26" y="122" width="246" height="13"/>
+  <path class="pixel" transform="translate(36 47) scale(1.75)" d="$device_screen"/>
 
-  <!-- (5) MCU, ATtiny85 in SOIC-8 5.3 mm -->
+  <!-- (2) MCU, ATtiny85 in SOIC-8 5.3 mm -->
   <use href="#soic-pins" x="460" y="40"/>
   <use href="#soic-pins" x="460" y="105"/>
   <rect class="chip" x="433.5" y="46" width="53" height="53" rx="3"/>
   <text class="chiptxt" x="460" y="77">MCU</text>
 
-  <!-- (6) RTC, DS3231M in SOIC-8 3.9 mm -->
+  <!-- (3) RTC, DS3231M in SOIC-8 3.9 mm -->
   <use href="#soic-pins" x="515" y="40"/>
   <use href="#soic-pins" x="515" y="90"/>
   <rect class="chip" x="490.5" y="45.5" width="49" height="39" rx="3"/>
   <text class="chiptxt" x="515" y="70">RTC</text>
 
-  <!-- (3) USB-C receptacle, its front flush with the top edge -->
+  <!-- (4) USB-C receptacle, its front flush with the top edge -->
   <rect class="usbleg" x="549" y="42" width="8" height="16" rx="1"/>
   <rect class="usbleg" x="643" y="42" width="8" height="16" rx="1"/>
   <rect class="usb" x="556" y="0" width="88" height="72" rx="3"/>
   <text class="label" x="600" y="60">USB-C</text>
 
-  <!-- (7) charger in SOT-23-5, right edge aligned with USB-C -->
+  <!-- (5) charger in SOT-23-5, right edge aligned with USB-C -->
   <rect class="pin" x="617" y="93" width="4" height="7"/>
   <rect class="pin" x="637" y="93" width="4" height="7"/>
   <rect class="pin" x="617" y="115" width="4" height="7"/>
@@ -413,32 +411,36 @@ $key_defs    <!-- one side of a SOIC-8 -->
   <rect class="pin" x="637" y="115" width="4" height="7"/>
   <rect class="chip" x="614" y="99" width="30" height="17" rx="2"/>
 
-  <!-- (4) battery: 16 mm coin cell in the cutout of the board -->
+  <!-- (6) battery: 16 mm coin cell in the cutout of the board -->
   <circle class="cell" cx="735" cy="102.5" r="75"/>
   <rect class="tab" x="700" y="87.5" width="130" height="30" rx="6"/>
   <text class="label" x="735" y="70">BATTERY</text>
 
   <!-- keyboard board over the lower part: 37 mm high, cut out around the battery -->
-  <path class="overlay" d="M0,170 H687.5 A82.55,82.55 0 0 0 782.5,170 H855 V510 a30,30 0 0 1 -30,30 H30 a30,30 0 0 1 -30,-30 Z"/>
-  <text class="title" transform="rotate(-90 141 358)" x="141" y="358" textLength="330" lengthAdjust="spacingAndGlyphs">Business Card</text>
-  <text class="subtitle" transform="rotate(-90 176 358)" x="176" y="358" textLength="330" lengthAdjust="spacingAndGlyphs">RPN Calculator with Watch</text>
+  <path class="board" d="M0,170 H687.5 A82.55,82.55 0 0 0 782.5,170 H855 V510 a30,30 0 0 1 -30,30 H30 a30,30 0 0 1 -30,-30 Z"/>
+  <text class="title" transform="rotate(-90 121 355)" x="121" y="355" textLength="320" lengthAdjust="spacingAndGlyphs">Business Card</text>
+  <text class="subtitle" transform="rotate(-90 161 355)" x="161" y="355" textLength="320" lengthAdjust="spacingAndGlyphs">RPN Calculator with Watch</text>
 
-  <!-- (2) keyboard -->
+  <!-- (7) keyboard -->
 @{[ keyboard() ]}
-  <!-- part numbers -->
-  <circle class="badge" cx="288" cy="81" r="11"/><text class="badgetx" x="288" y="86">1</text>
-  <circle class="badge" cx="196" cy="186" r="11"/><text class="badgetx" x="196" y="191">2</text>
-  <circle class="badge" cx="600" cy="28" r="11"/><text class="badgetx" x="600" y="33">3</text>
-  <circle class="badge" cx="735" cy="140" r="11"/><text class="badgetx" x="735" y="145">4</text>
-  <circle class="badge" cx="460" cy="136" r="11"/><text class="badgetx" x="460" y="141">5</text>
-  <circle class="badge" cx="515" cy="122" r="11"/><text class="badgetx" x="515" y="127">6</text>
-  <circle class="badge" cx="596" cy="108" r="11"/><text class="badgetx" x="596" y="113">7</text>
 SVG
-write_svg('hp35-device.svg', 'Tiny RPN Calculator: primary parts', '-10 -10 875 560', $device);
+my $part_numbers = <<"SVG";
+  <!-- part numbers in reading order: the upper part from left to right, then the keyboard -->
+  <circle class="badge" cx="298" cy="81" r="11"/><text class="badgetx" x="298" y="86">1</text>
+  <circle class="badge" cx="460" cy="136" r="11"/><text class="badgetx" x="460" y="141">2</text>
+  <circle class="badge" cx="515" cy="122" r="11"/><text class="badgetx" x="515" y="127">3</text>
+  <circle class="badge" cx="600" cy="28" r="11"/><text class="badgetx" x="600" y="33">4</text>
+  <circle class="badge" cx="596" cy="108" r="11"/><text class="badgetx" x="596" y="113">5</text>
+  <circle class="badge" cx="735" cy="140" r="11"/><text class="badgetx" x="735" y="145">6</text>
+  <circle class="badge" cx="43.5" cy="355" r="11"/><text class="badgetx" x="43.5" y="360">7</text>
+SVG
+write_svg('rpn-calc-parts.svg', 'Tiny RPN Calculator: primary parts', '-10 -10 875 560', $device . $part_numbers);
+# the same drawing without the part numbers, for README.md
+write_svg('rpn-calc.svg', 'Tiny RPN Calculator', '-10 -10 875 560', $device);
 
 # ================================================================ labels
 # "Extension" label for the text of the manual, in the colors of a GitHub label;
 # textLength keeps the text inside the frame with any font
-write_svg('hp35-extension.svg', 'Extension', '0 0 76 20',
+write_svg('rpn-calc-extension.svg', 'Extension', '0 0 76 20',
     qq{  <rect class="ext" x="0.5" y="0.5" width="75" height="19" rx="9.5"/>\n}
   . qq{  <text class="exttx" x="38" y="14" textLength="58" lengthAdjust="spacingAndGlyphs">Extension</text>\n});

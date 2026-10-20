@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="180 185 660 340" width="660" height="340" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Keyboard of the Tiny RPN Calculator</title>
+  <style>
+    .cap      { fill: #1f2328; }
+    .line     { fill: none; stroke-width: 2; stroke: #57606a; }
+    .main     { font-size: 52px; text-anchor: middle; fill: #1f2328; }
+    .shift    { font-size: 26px; fill: #1f2328; }
+    .slot     { fill: none; stroke-width: 1.5; stroke: #57606a; }
+    @media (prefers-color-scheme: dark) {
+      .cap      { fill: #e6edf3; }
+      .line     { stroke: #8b949e; }
+      .main     { fill: #e6edf3; }
+      .shift    { fill: #e6edf3; }
+      .slot     { stroke: #8b949e; }
+    }
+  </style>
+  <path class="line" d="M190,195 H830 V515 H190 Z M350,195 V515 M510,195 V515 M670,195 V515 M190,275 H830 M190,355 H830 M190,435 H830"/>
+  <path class="slot" d="M253,225 H330 L340,235 V255 L330,265 H253 L243,255 V235 Z"/><rect class="cap" x="272.5" y="236" width="38" height="18" rx="3"/>
+  <text class="main" x="216.5" y="253">F</text><text class="shift" x="243" y="220">MATH</text>
+  <path class="slot" d="M413,225 H490 L500,235 V255 L490,265 H413 L403,255 V235 Z"/><rect class="cap" x="432.5" y="236" width="38" height="18" rx="3"/>
+  <text class="main" x="376.5" y="253">7</text><text class="shift" x="403" y="220">TRIG</text>
+  <path class="slot" d="M573,225 H650 L660,235 V255 L650,265 H573 L563,255 V235 Z"/><rect class="cap" x="592.5" y="236" width="38" height="18" rx="3"/>
+  <text class="main" x="536.5" y="253">8</text><text class="shift" x="563" y="220">PROG</text>
+  <path class="slot" d="M733,225 H810 L820,235 V255 L810,265 H733 L723,255 V235 Z"/><rect class="cap" x="752.5" y="236" width="38" height="18" rx="3"/>
+  <text class="main" x="696.5" y="253">9</text><text class="shift" x="723" y="220">÷</text>
+  <path class="slot" d="M253,305 H330 L340,315 V335 L330,345 H253 L243,335 V315 Z"/><rect class="cap" x="272.5" y="316" width="38" height="18" rx="3"/>
+  <text class="main" x="216.5" y="333">E</text><text class="shift" x="243" y="300">ROT↑</text>
+  <path class="slot" d="M413,305 H490 L500,315 V335 L490,345 H413 L403,335 V315 Z"/><rect class="cap" x="432.5" y="316" width="38" height="18" rx="3"/>
+  <text class="main" x="376.5" y="333">4</text><text class="shift" x="403" y="300">CONST</text>
+  <path class="slot" d="M573,305 H650 L660,315 V335 L650,345 H573 L563,335 V315 Z"/><rect class="cap" x="592.5" y="316" width="38" height="18" rx="3"/>
+  <text class="main" x="536.5" y="333">5</text><text class="shift" x="563" y="300">MEM+</text>
+  <path class="slot" d="M733,305 H810 L820,315 V335 L810,345 H733 L723,335 V315 Z"/><rect class="cap" x="752.5" y="316" width="38" height="18" rx="3"/>
+  <text class="main" x="696.5" y="333">6</text><text class="shift" x="723" y="300">×</text>
+  <path class="slot" d="M253,385 H330 L340,395 V415 L330,425 H253 L243,415 V395 Z"/><rect class="cap" x="272.5" y="396" width="38" height="18" rx="3"/>
+  <text class="main" x="216.5" y="413">±</text><text class="shift" x="243" y="380">ROT↓</text>
+  <path class="slot" d="M413,385 H490 L500,395 V415 L490,425 H413 L403,415 V395 Z"/><rect class="cap" x="432.5" y="396" width="38" height="18" rx="3"/>
+  <text class="main" x="376.5" y="413">1</text><text class="shift" x="403" y="380">RCL</text>
+  <path class="slot" d="M573,385 H650 L660,395 V415 L650,425 H573 L563,415 V395 Z"/><rect class="cap" x="592.5" y="396" width="38" height="18" rx="3"/>
+  <text class="main" x="536.5" y="413">2</text><text class="shift" x="563" y="380">STO</text>
+  <path class="slot" d="M733,385 H810 L820,395 V415 L810,425 H733 L723,415 V395 Z"/><rect class="cap" x="752.5" y="396" width="38" height="18" rx="3"/>
+  <text class="main" x="696.5" y="413">3</text><text class="shift" x="723" y="380">−</text>
+  <path class="slot" d="M253,465 H330 L340,475 V495 L330,505 H253 L243,495 V475 Z"/><rect class="cap" x="272.5" y="476" width="38" height="18" rx="3"/>
+  <text class="main" x="216.5" y="493">C</text><text class="shift" x="243" y="460">AC</text>
+  <path class="slot" d="M413,465 H490 L500,475 V495 L490,505 H413 L403,495 V475 Z"/><rect class="cap" x="432.5" y="476" width="38" height="18" rx="3"/>
+  <text class="main" x="376.5" y="493">0</text><text class="shift" x="403" y="460">LAST</text>
+  <path class="slot" d="M573,465 H650 L660,475 V495 L650,505 H573 L563,495 V475 Z"/><rect class="cap" x="592.5" y="476" width="38" height="18" rx="3"/>
+  <text class="main" x="536.5" y="493">.</text><text class="shift" x="563" y="460">X↔Y</text>
+  <path class="slot" d="M733,465 H810 L820,475 V495 L810,505 H733 L723,495 V475 Z"/><rect class="cap" x="752.5" y="476" width="38" height="18" rx="3"/>
+  <text class="main" x="696.5" y="493">↑</text><text class="shift" x="723" y="460">+</text>
+</svg>
