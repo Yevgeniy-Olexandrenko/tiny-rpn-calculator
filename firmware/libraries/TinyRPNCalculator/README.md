@@ -1,156 +1,145 @@
 # TinyRPNCalculator Library
 
-An Arduino library for the Tiny RPN Calculator hardware platform: the PCB of the [Business Card RPN Calculator with Watch](../../../README.md). The library controls all the parts of the device: the display, the real-time clock, the keyboard and the power. It also contains virtual machines that run the original ROMs of HP calculators.
+TinyRPNCalculator is an Arduino library for the Tiny RPN Calculator hardware platform, the PCB of the **Business Card RPN Calculator with Watch**. On a board of the size of a credit card, the device has an ATtiny85 microcontroller, a 128 × 32 OLED display, a real-time clock, 16 keys and a rechargeable coin battery.
 
-All the firmware of the project uses this library: [HP-35 Firmware](../../sketches/hp35) and [HP-21 Firmware](../../sketches/hp21).
+The library gives a sketch everything it needs to use this hardware. It draws text on the display, reads the keys and the clock, measures the battery and puts the device to sleep when nobody uses it. It also contains virtual machines that run the original ROMs of HP calculators, and SHA-1 code for one-time passwords. The firmware of the device is built on this library.
 
 ## Contents
 
-1. [Description](#1-description)
+1. [Design](#1-design)
 2. [Hardware](#2-hardware)
 3. [Installation](#3-installation)
-4. [Use the library](#4-use-the-library)
+4. [Getting started](#4-getting-started)
 5. [Examples](#5-examples)
 6. [Module reference](#6-module-reference)
 7. [Extras](#7-extras)
 8. [Limits](#8-limits)
 9. [License](#9-license)
 
-## 1. Description
+## 1. Design
 
-The [ATtiny85](../../../datasheets/ATtiny85.pdf) has 8 KB of flash memory, 512 bytes of RAM and 512 bytes of EEPROM. Thus, the library is small and simple:
+The ATtiny85 has only 8 KB of flash memory, 512 bytes of RAM and 512 bytes of EEPROM. An emulator of an HP calculator together with its ROM takes about half of the flash, so every byte counts. For this reason the library follows a few simple rules:
 
-- The library is header-only. The compiler sees all the code, and link-time optimization removes the functions that the sketch does not use.
-- Each module is a C++ namespace with free functions and variables. There are no classes, no virtual functions and no dynamic memory.
-- The library has no dependencies. It does not use the Arduino functions (`pinMode()`, `millis()`, `Wire`). It uses the registers of the microcontroller directly.
-- Compile-time options move constant data from flash to EEPROM and make the code smaller (refer to [4.2](#42-compile-time-options)).
+- **Header-only.** You include one header, and the compiler sees all the code at once. The compiler and the linker then remove every function and table that the sketch does not use. A sketch pays only for what it calls.
+- **Namespaces, not classes.** Each module is a namespace with free functions and global variables. There are no objects, constructors, virtual functions or heap allocations. You call `LCD::Clear()` directly, and you read the clock as the plain variable `RTC::Hours`.
+- **No Arduino API.** The library does not use `pinMode()`, `millis()` or `Wire`. It writes to the registers of the microcontroller directly. This is smaller, and it gives full control of the sleep modes.
+- **Size options.** Two compile-time options move constant data to the EEPROM and replace inline code with calls (refer to [4.2](#42-compile-time-options)).
 
-| Module | Function |
-| --- | --- |
-| [SYS](#61-sys-system) | Initialization of all the modules, power-down of the device |
-| [TMR](#62-tmr-frame-timer) | Frame timer on the watchdog timer, time in milliseconds |
-| [PWR](#63-pwr-power) | Sleep modes, battery voltage and level, charging state |
-| [KBD](#64-kbd-keyboard) | 16 keys on one analog input |
-| [LCD](#65-lcd-display) | [SSD1306](../../../datasheets/SSD1306.pdf) OLED display, 128 × 32 pixels, with two screen buffers |
-| [TXT](#66-txt-text) | Text with custom fonts, scale and inverse, 7-segment digits |
-| [FNT](#67-fnt-fonts) | Built-in 5 × 8 font |
-| [RTC](#68-rtc-real-time-clock) | [DS3231M](../../../datasheets/DS3231M.pdf) real-time clock: time, date, temperature, Unix time |
-| [I2C](#69-i2c-bus) | I2C bus master on two pins (software) |
-| [ADC](#610-adc-analog-to-digital-converter) | Analog-to-digital converter with noise reduction sleep |
-| [BCD](#611-bcd-binary-coded-decimals) | Packed binary-coded decimals |
-| [MEM](#612-mem-constant-data) | Constant data in flash or in EEPROM |
+The library has these modules:
 
-| Extra | Function |
-| --- | --- |
-| [HPVM](#71-hpvm-hp-virtual-machine) | Virtual machines of the HP Classic CPU (HP-35) and of the HP Woodstock CPU (HP-21), with the original ROMs |
-| [SHA1](#72-sha1-and-totp) | SHA-1 and HMAC-SHA1 |
-| [TOTP](#72-sha1-and-totp) | Time-based one-time passwords (RFC 6238) |
-| [BuildTime](#73-buildtime) | Date and time of the build as compile-time constants |
+- [`SYS`](#61-sys-system): initialization of all modules, power-down of the device.
+- [`TMR`](#62-tmr-frame-timer): frame timer on the watchdog, time in milliseconds.
+- [`PWR`](#63-pwr-power): sleep modes, battery voltage and level, charging state.
+- [`KBD`](#64-kbd-keyboard): 16 keys on one analog input.
+- [`LCD`](#65-lcd-display): SSD1306 display controller with two screen buffers.
+- [`TXT`](#66-txt-text): text with custom fonts, scale and inverse, 7-segment digits.
+- [`FNT`](#67-fnt-fonts): the built-in 5 × 8 font.
+- [`RTC`](#68-rtc-real-time-clock): DS3231M real-time clock: time, date, temperature, Unix time.
+- [`I2C`](#69-i2c-bus): I2C bus master in software.
+- [`ADC`](#610-adc-analog-to-digital-converter): analog-to-digital converter with noise reduction sleep.
+- [`BCD`](#611-bcd-binary-coded-decimals): packed binary-coded decimals.
+- [`MEM`](#612-mem-constant-data): constant data in the flash or in the EEPROM.
+
+The extras are optional headers for the firmware level: [`HPVM`](#71-hpvm-hp-virtual-machine) (HP-35 and HP-21 virtual machines), [`SHA1` and `TOTP`](#72-sha1-and-totp) (one-time passwords) and [`BuildTime`](#73-buildtime).
 
 ## 2. Hardware
 
-The library supports only this hardware:
+The library supports one board: the Tiny RPN Calculator PCB rev 1.5 with an ATtiny85 at 16 MHz. The clock comes from the internal PLL, so the board has no crystal. If the board settings in the IDE select a different microcontroller or clock, the compilation stops with an error.
 
-- Microcontroller: ATtiny85 at 16 MHz from the internal PLL.
-- PCB: Tiny RPN Calculator rev 1.5. For the circuit, refer to the [schematic](../../../hardware/pcb-rev1.5/Tiny-RPN-Calculator-rev1.5_Schematic.pdf).
+The library uses all the pins of the microcontroller:
 
-The library stops the compilation with an error for a different microcontroller, clock source or frequency.
+```text
+                     ATtiny85
+                 +------\/------+
+   RESET   PB5 --| 1          8 |-- VCC
+   STAT    PB3 --| 2          7 |-- PB2   SCL
+   KEYS    PB4 --| 3          6 |-- PB1   RES#
+           GND --| 4          5 |-- PB0   SDA
+                 +--------------+
+```
 
-**Pins of the ATtiny85:**
+- **SDA, SCL** are the I2C bus. The bus has two devices: the SSD1306 display controller at address `0x3C` and the DS3231M real-time clock at address `0x68`. The pull-up resistors are on the PCB.
+- **RES#** is the reset input of the display controller. `LCD::Init()` pulses it low before it configures the display.
+- **KEYS** is the output of the resistor network of the keyboard. The ADC reads it on channel ADC2. A key push also wakes up the microcontroller through this pin.
+- **STAT** is the status output of the MCP73832 charger. It is an open-drain output: the charger pulls it low while it charges the battery. A change of the status also wakes up the microcontroller.
+- **RESET** is used only for programming through the ICSP connector.
+- **VCC** connects directly to the battery. There is no voltage regulator, so VCC changes from approximately 4.2 V (full battery) to 3.5 V (empty battery).
 
-| Pin | Function | Module |
-| --- | --- | --- |
-| PB0 | I2C SDA | I2C |
-| PB1 | Display reset (RES#) | LCD |
-| PB2 | I2C SCL | I2C |
-| PB3 | Charger status (STAT), wake-up source | PWR |
-| PB4 | Keyboard (ADC2), wake-up source | KBD |
-| PB5 | RESET | — |
-
-**Devices on the I2C bus:**
-
-| Address | Device | Module |
-| --- | --- | --- |
-| `0x3C` | SSD1306 display controller | LCD |
-| `0x68` | DS3231M real-time clock | RTC |
-
-**Interrupts:** the library uses the vectors `ADC_vect`, `WDT_vect` and `PCINT0_vect`. Do not define these vectors in a sketch. The library does not use the timers 0 and 1.
+The library uses three interrupt vectors: `ADC_vect`, `WDT_vect` and `PCINT0_vect`. Do not define them in a sketch. Timer 0 and timer 1 are free: the library does not use them.
 
 ## 3. Installation
 
 ### 3.1 Install the library
 
-**Tools:** Windows, Arduino IDE 1.8.x.
+On Windows, run [`TinyRPNCalculator_Install.bat`](../TinyRPNCalculator_Install.bat) as administrator. The script makes the symbolic link `Documents\Arduino\libraries\TinyRPNCalculator` to the library folder. The Arduino IDE then compiles the library directly from this folder, and every change in the library has an effect on the next build. Restart the IDE after the installation.
 
-1. Run `firmware/libraries/TinyRPNCalculator_Install.bat` as administrator. The script makes the symbolic link `Documents\Arduino\libraries\TinyRPNCalculator` to the library folder of the repository.
-2. Restart the Arduino IDE.
-
-The sketches then use the library from the repository: a change in the library has an effect on the next build.
-
-> [!TIP]
-> On other systems, copy the folder `firmware/libraries/TinyRPNCalculator` to the `libraries` folder of your Arduino sketchbook.
+On other systems, copy the library folder to the `libraries` folder of your Arduino sketchbook, or make a symbolic link there.
 
 ### 3.2 Install the board package
 
-Install one of these board packages with **Tools → Board → Boards Manager**:
+The library works with two board packages. Add the URL of the package in **File → Preferences → Additional Boards Manager URLs**, and then install the package with **Tools → Board → Boards Manager**.
 
-| Package | Boards Manager URL |
-| --- | --- |
-| [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) 1.5.2 | `http://drazzy.com/package_drazzy.com_index.json` |
-| [TinyCore](https://github.com/MCUdude/TinyCore) (MCUdude) 0.8.0 | `https://mcudude.github.io/TinyCore/package_MCUdude_TinyCore_index.json` |
+- ATTinyCore 1.5.2: `http://drazzy.com/package_drazzy.com_index.json`
+- TinyCore 0.8.0 (MCUdude): `https://mcudude.github.io/TinyCore/package_MCUdude_TinyCore_index.json`
 
 ### 3.3 Set the board options
 
-**ATTinyCore:**
+For **ATTinyCore**, select:
 
-| Option | Value |
-| --- | --- |
-| Board | ATtiny25/45/85 (No bootloader) |
-| Chip | ATtiny85 |
-| Clock Source | 16 MHz (PLL) |
-| Timer 1 Clock | CPU (CPU frequency) |
-| LTO | Enabled |
-| millis()/micros() | Disabled (saves flash) |
-| Save EEPROM | EEPROM retained |
-| B.O.D. Level | B.O.D. Disabled (saves power) |
+- Board: **ATtiny25/45/85 (No bootloader)**, Chip: **ATtiny85**
+- Clock Source: **16 MHz (PLL)**, Timer 1 Clock: **CPU (CPU frequency)**
+- LTO: **Enabled**, millis()/micros(): **Disabled (saves flash)**
+- Save EEPROM: **EEPROM retained**, B.O.D. Level: **B.O.D. Disabled (saves power)**
 
-**TinyCore:**
+<details>
+<summary>Screenshot of the ATTinyCore options</summary>
+<img src="../TinyRPNCalculator_ATTinyCore.png" alt="Tools menu of the Arduino IDE with the ATTinyCore options of the list above">
+</details>
 
-| Option | Value |
-| --- | --- |
-| Board | ATtiny25/45/85 |
-| Clock | 16 MHz internal PLL osc. |
-| BOD | BOD disabled |
-| EEPROM | EEPROM retained |
-| Chip | ATtiny85 |
-| Bootloader | No bootloader |
+For **TinyCore**, select:
 
-The library folder contains screenshots of these settings: `TinyRPNCalculator_ATTinyCore.png` and `TinyRPNCalculator_TinyCore.png`.
+- Board: **ATtiny25/45/85**, Chip: **ATtiny85**, Bootloader: **No bootloader**
+- Clock: **16 MHz internal PLL osc.**
+- BOD: **BOD disabled**, EEPROM: **EEPROM retained**
 
-### 3.4 Fuses
+<details>
+<summary>Screenshot of the TinyCore options</summary>
+<img src="../TinyRPNCalculator_TinyCore.png" alt="Tools menu of the Arduino IDE with the TinyCore options of the list above">
+</details>
 
-The device needs these fuses:
+### 3.4 Program the device
 
-| Fuse | Value | Settings |
-| --- | --- | --- |
-| Low | `0xF1` | Clock from the internal PLL, 16 MHz, no clock divider |
-| High | `0xD7` | SPI programming enabled, EEPROM retained during chip erase, no brown-out detection |
-| Extended | `0xFF` | Self-programming disabled |
-
-For the ICSP connector and the avrdude commands, refer to [Firmware installation](../../../documents/manuals/hp35-firmware-user-manual.md#14-firmware-installation) in the HP-35 Firmware — User Manual.
-
-### 3.5 Write the sketch to the device
-
-1. Select **Sketch → Export compiled binary**. The IDE writes the files to the `build` folder of the sketch.
-2. Write the `.ino.hex` file to the flash memory.
-3. If the sketch sets `ENABLE_OPT_DATAMEM` to `1`, write the `.ino.eep` file to the EEPROM too.
+The device has a standard 6-pin AVR ICSP connector. Any ICSP programmer that avrdude supports is good, for example a USBasp.
 
 > [!CAUTION]
-> With `ENABLE_OPT_DATAMEM`, the constant data of the sketch and of the library is in the EEPROM. If you write only the `.hex` file, the sketch reads incorrect data.
+> VCC of the device connects directly to the battery. Do not supply 5 V from the programmer: use a programmer that does not supply power, or set it to 3.3 V. Do not connect the programmer and the USB cable at the same time.
 
-## 4. Use the library
+A new ATtiny85 needs the fuses first:
 
-### 4.1 Minimal sketch
+```text
+avrdude -c usbasp -p t85 -B 32 -U lfuse:w:0xF1:m -U hfuse:w:0xD7:m -U efuse:w:0xFF:m
+```
+
+- Low `0xF1` selects the 16 MHz PLL clock without the divider by 8.
+- High `0xD7` keeps SPI programming on and the RESET pin as reset, keeps the EEPROM during a chip erase and turns off the brown-out detector (it saves power).
+- Extended `0xFF` is the default value.
+
+A new microcontroller runs at 1 MHz before you write the fuses. The option `-B 32` makes the programmer slow enough for it.
+
+To program a sketch, select **Sketch → Export compiled binary**. The IDE puts the files into the `build` folder of the sketch. Then write the flash, and the EEPROM if the sketch uses `ENABLE_OPT_DATAMEM`:
+
+```text
+avrdude -c usbasp -p t85 -U flash:w:MySketch.ino.hex:i -U eeprom:w:MySketch.ino.eep:i
+```
+
+> [!IMPORTANT]
+> With `ENABLE_OPT_DATAMEM`, a part of the constant data is in the `.eep` file. If you write only the `.hex` file, the sketch reads old or empty EEPROM data and does not operate correctly.
+
+## 4. Getting started
+
+### 4.1 First sketch
+
+This sketch shows a text and then waits in a loop of frames:
 
 ```cpp
 #define PCB_REVISION 15
@@ -159,411 +148,839 @@ For the ICSP connector and the avrdude commands, refer to [Firmware installation
 
 int main()
 {
-	SYS::Init();
-	LCD::TurnOn();
-	TMR::Start(TMR::TIMEOUT_64MS);
+    SYS::Init();
+    LCD::TurnOn();
+    TMR::Start(TMR::TIMEOUT_64MS);
 
-	LCD::Clear();
-	TXT::SetFont(FNT::Font5x8);
-	TXT::PrintString(F("Hello!"), 0, 0);
-	LCD::Flip();
+    LCD::Clear();
+    TXT::SetFont(FNT::Font5x8);
+    TXT::PrintString(F("Hello!"), 0, 0);
+    LCD::Flip();
 
-	while (true)
-	{
-		// read the keys, update the display, etc.
-		TMR::Sync();
-	}
-	return 0;
+    while (true)
+    {
+        // read the keys, update the state, draw the screen
+        TMR::Sync();
+    }
+    return 0;
 }
 ```
 
-1. Define the compile-time options (refer to [4.2](#42-compile-time-options)).
-2. Include `TinyRPNCalculator.h`. Then include the extras that the sketch uses (refer to [7](#7-extras)).
-3. Define `int main()`. The sketch does not need the Arduino functions `setup()` and `loop()`, and the Arduino core does not start its timer.
-4. Call `SYS::Init()` first.
-5. Turn on the display and start the frame timer.
-6. In the main loop, do the work of one frame. Then call `TMR::Sync()`. The MCU sleeps until the next frame.
+There are some things to note here:
+
+- The sketch defines its own `int main()`, not `setup()` and `loop()`. Thus, the Arduino core does not start its timer, and no timer interrupt wakes up the microcontroller between the frames. All the examples use this structure.
+- `SYS::Init()` must be the first call. It prepares all the modules, but it does not turn on the display and does not start the timer: the sketch does this when it is ready.
+- Text goes to a hidden screen buffer. The user sees it only after `LCD::Flip()` (refer to [6.5](#65-lcd-display)).
+- `TMR::Sync()` puts the microcontroller into sleep until the next frame. The device is in sleep for most of the time, and this saves the battery.
 
 ### 4.2 Compile-time options
 
-Define the options in the sketch before the `#include <TinyRPNCalculator.h>` line.
+Define the options in the sketch before the line `#include <TinyRPNCalculator.h>`:
 
-| Option | Values | Effect |
-| --- | --- | --- |
-| `PCB_REVISION` | `15` | Selects the PCB. `15` is PCB rev 1.5: display reset on PB1, charger status on PB3. You must set `15`: the default value `14` is not for PCB rev 1.5. |
-| `ENABLE_OPT_DATAMEM` | `0` (default), `1` | `1` puts the `DATAMEM` data into the EEPROM, not into the flash (refer to [4.4](#44-constant-data)). |
-| `ENABLE_OPT_NOINLINE` | `0` (default), `1` | `1` makes the functions with the `NOINLINE` mark real calls, not inline code. The code becomes smaller and a little slower. |
+```cpp
+#define PCB_REVISION        15 // PCB rev 1.5, always set it
+#define ENABLE_OPT_DATAMEM  1  // DATAMEM data in the EEPROM (default 0)
+#define ENABLE_OPT_NOINLINE 1  // NOINLINE functions are calls (default 0)
 
-### 4.3 Main loop and power
+#include <TinyRPNCalculator.h>
+```
 
-The device has no ON/OFF switch. A sketch turns the device off after a time without key pushes:
+`PCB_REVISION` selects the board. The value `15` is PCB rev 1.5: the display reset is on PB1 and the charger status is on PB3. Always set this value: the default value `14` is not for PCB rev 1.5, and with it the display and the charging state do not operate correctly.
 
-1. Restart the timer with `TMR::Start()` when the user pushes a key. `TMR::Millis` then gives the time without key pushes.
-2. When `TMR::Millis` is more than the time limit, call `SYS::Down()`. The MCU stops in power-down sleep.
-3. A key push or a change of the charger status wakes up the MCU. `SYS::Down()` then returns.
-4. Turn on the display with `LCD::TurnOn()` and start the timer with `TMR::Start()` again.
+`ENABLE_OPT_DATAMEM` moves the small constant tables of the sketch and the library from the flash to the EEPROM. For example, a calculator firmware can keep several hundred bytes of key maps, menus and strings there. The cost: you must write the `.eep` file too, and an EEPROM read is a little slower. Refer to [4.4](#44-constant-data).
 
-RAM keeps its data during the sleep. Thus, the sketch continues with the same state.
+`ENABLE_OPT_NOINLINE` makes the functions with the `NOINLINE` mark real calls. Without it the compiler can copy their code into each place of use. With it the code becomes smaller and a little slower.
 
-Only some keys wake up the MCU: the keys that give a voltage above the input high level of PB4. On PCB rev 1.5, these are the keys of the two bottom rows.
+### 4.3 Frames and power
+
+A sketch does its work in frames of a fixed time, for example 64 ms. In each frame it reads the keys, updates its state and draws the screen if something changed. Then it calls `TMR::Sync()` and sleeps until the next frame.
+
+The device has no ON/OFF switch, so the sketch must turn it off. The usual method is a timeout after the last key push:
+
+```cpp
+void powerUp()
+{
+    LCD::TurnOn();
+    TMR::Start(TMR::TIMEOUT_64MS);
+}
+
+int main()
+{
+    SYS::Init();
+    powerUp();
+
+    u08 last = KBD::Read();
+    while (true)
+    {
+        u08 key = KBD::Read();
+
+        // each key push starts the timer again, thus
+        // TMR::Millis is the time after the last key push
+        if (key != KBD::NONE) TMR::Start(TMR::TIMEOUT_64MS);
+
+        if (TMR::Millis >= 20000)
+        {
+            SYS::Down(); // sleeps until a key push
+            powerUp();
+
+            // the key that woke up the device is still pushed:
+            // remember it, so that it does not do an operation
+            last = KBD::Read();
+            continue;
+        }
+
+        if (key != last && key != KBD::NONE)
+        {
+            // a new key push: do the operation of the key
+        }
+        last = key;
+
+        TMR::Sync();
+    }
+    return 0;
+}
+```
+
+`SYS::Down()` stops the timer, turns off the display and stops the microcontroller in power-down sleep. In this mode the device uses almost no energy, but the RAM keeps all its data. When the user pushes a key, `SYS::Down()` returns, and the sketch continues with the same state. Only the display and the timer must be started again.
+
+Not all keys can wake up the device. In power-down sleep the microcontroller sees only a logic level on PB4, and a pin is sure to read as high only above 0.6 × VCC. Only the keys of the two bottom rows (<kbd>±</kbd> <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> and <kbd>C</kbd> <kbd>0</kbd> <kbd>.</kbd> <kbd>↑</kbd>) give such a voltage. The other keys are read correctly by the ADC when the device is on, but they cannot turn it on.
+
+A change of the charger status also wakes up the device: when the user connects or disconnects the USB cable, and when the charge is complete. If the sketch shows the charge, it can check `PWR::Charging()` after the wake-up.
 
 > [!NOTE]
-> `SYS::Down()` does not return while the battery voltage is at `PWR::BAT_EMPTY` or less. A wake-up with an empty battery puts the MCU to sleep again.
-
-For a full example, refer to the `Keyboard` example (refer to [5](#5-examples)).
+> `SYS::Down()` does not return while the battery voltage is at 3.5 V (`PWR::BAT_EMPTY`) or less. A key push with an empty battery wakes up the microcontroller for a moment, and it goes back to sleep. This protects the battery from a deep discharge.
 
 ### 4.4 Constant data
 
-The library has three kinds of memory for constant data:
+On AVR, a usual `const` table wastes RAM: the startup code copies it from the flash to RAM. To keep constant data out of RAM, put it into the flash or the EEPROM, and read it with special functions. The library has two marks for this:
 
-| Mark | Memory | Read with | Use for |
-| --- | --- | --- | --- |
-| (none) | RAM | Direct access | Variables |
-| `PROGMEM` | Flash | `MEM::ProgRead()`, `MEM::ProgCopy()` | Large tables: fonts, ROMs |
-| `DATAMEM` | Flash, or EEPROM if `ENABLE_OPT_DATAMEM` is `1` | `MEM::DataRead()`, `MEM::DataCopy()` | Small tables: key maps, menus, strings |
+- `PROGMEM` keeps the data in the flash. Read it with `MEM::ProgRead()` and `MEM::ProgCopy()`. Use it for large data: fonts and ROMs.
+- `DATAMEM` keeps the data in the flash, or in the EEPROM if `ENABLE_OPT_DATAMEM` is `1`. Read it with `MEM::DataRead()` and `MEM::DataCopy()`. Use it for small tables: key maps, menus, strings.
 
-Strings have the same three kinds. `TXT::PrintString()` accepts all of them:
+The same code works for both places of `DATAMEM`:
 
-| Macro | String in | Example |
-| --- | --- | --- |
-| (none) | RAM | `TXT::PrintString(buffer, x, y)` with `const u08* buffer` |
-| `F("...")` | Flash | `TXT::PrintString(F("TIME"), x, y)` |
-| `D("...")` | `DATAMEM` | `TXT::PrintString(D("TIME"), x, y)` |
+```cpp
+// operation for each key code, in DATAMEM
+const u08 key_ops[16] DATAMEM = { /* ... */ };
 
-`FPSTR(p)` and `DPSTR(p)` change a pointer to a `PROGMEM` or `DATAMEM` array into a string pointer of the same kind. `DSTR("...")` gives a pointer to a string in `DATAMEM`.
+u08 op = MEM::DataRead(key_ops + key); // correct
+u08 op = key_ops[key];                 // wrong: reads RAM
+```
+
+The direct access `key_ops[key]` compiles without a warning, but it reads RAM at the address of the table, and gives incorrect data.
+
+Strings follow the same rules. `TXT::PrintString()` has a version for each kind of string:
+
+```cpp
+TXT::PrintString(buffer, x, y);       // const u08* buffer in RAM
+TXT::PrintString(F("TIME"), x, y);    // string in the flash
+TXT::PrintString(D("TIME"), x, y);    // string in DATAMEM
+
+const u08 label[] DATAMEM = "TIME";   // named string in DATAMEM
+TXT::PrintString(DPSTR(label), x, y); // DPSTR() gives its type
+```
+
+`F()` and `FPSTR()` do the same for the flash. `DSTR("...")` gives a plain pointer to a new string in `DATAMEM`.
 
 > [!IMPORTANT]
-> The EEPROM has 512 bytes. The Arduino IDE does not show the EEPROM data size and does not report an overflow. After a change to the `DATAMEM` data, examine the size of the `.ino.eep` file.
+> The EEPROM has only 512 bytes. The Arduino IDE does not show the size of the EEPROM data and does not report an overflow. After a change to the `DATAMEM` data, examine the size of the data in the `.ino.eep` file.
 
-### 4.5 Data types and macros
+### 4.5 Types and macros
 
-Use the types of the library:
+The library defines short names for the integer types. The sketches use them too:
 
-| Type | Definition |
-| --- | --- |
-| `b08` | `bool`: flags, results of tests, boolean parameters |
-| `u08`, `u16`, `u32` | `uint8_t`, `uint16_t`, `uint32_t` |
-| `s08`, `s16`, `s32` | `int8_t`, `int16_t`, `int32_t` |
-| `w16` | Union of `u16 val` and its two bytes `u08 lsb, msb` |
+```cpp
+using b08 = bool;     // flags, results of tests, boolean parameters
+using u08 = uint8_t;  // the usual type: the AVR is an 8-bit CPU
+using u16 = uint16_t;
+using u32 = uint32_t;
+using s08 = int8_t;
+using s16 = int16_t;
+using s32 = int32_t;
 
-| Macro | Function |
-| --- | --- |
-| `set_bit(sfr, bit)` | Sets a bit |
-| `clr_bit(sfr, bit)` | Clears a bit |
-| `isb_set(sfr, bit)` | True if the bit is set |
-| `isb_clr(sfr, bit)` | True if the bit is clear |
-| `NOINLINE` | Function attribute `noinline` if `ENABLE_OPT_NOINLINE` is `1`. Put it on its own line above the function. |
+union w16 { u16 val; struct { u08 lsb, msb; }; }; // 16 bits and bytes
 
-The library removes the Arduino definitions of `ADC`, `F` and `FPSTR`. The namespace `ADC` replaces the register macro `ADC`. Use `ADCL` and `ADCH` for the register.
+#define set_bit(sfr, bit)  // sets a bit:          set_bit(PORTB, PB3)
+#define clr_bit(sfr, bit)  // clears a bit:        clr_bit(DDRB, PB4)
+#define isb_set(sfr, bit)  // true if the bit is 1: isb_set(PINB, PB3)
+#define isb_clr(sfr, bit)  // true if the bit is 0
+#define NOINLINE           // noinline attribute, see ENABLE_OPT_NOINLINE
+```
+
+Use `u08` where the values fit into 8 bits. On an 8-bit CPU, each 16-bit operation needs two or more instructions.
+
+Put `NOINLINE` on its own line above the function. Then you can easily comment it out to compare the size and the speed:
+
+```cpp
+NOINLINE
+void drawFrame() { /* ... */ }
+```
+
+The library removes the Arduino definitions of `ADC`, `F` and `FPSTR`. `F` and `FPSTR` get new definitions with the same function. `ADC` becomes the name of a module: to read the 16-bit ADC register directly, use `ADCL` and `ADCH`.
 
 ## 5. Examples
 
-Open the examples with **File → Examples → TinyRPNCalculator**. The examples do not use `ENABLE_OPT_DATAMEM`, thus write only the `.hex` file.
+The examples are in the [`examples`](examples) folder, and the Arduino IDE shows them in **File → Examples → TinyRPNCalculator**. They do not use `ENABLE_OPT_DATAMEM`, so you write only the `.hex` file.
 
-| Example | Function | Flash | RAM |
-| --- | --- | ---: | ---: |
-| [Display](examples/Display/Display.ino) | Text with the built-in font: scales x1, x2, x4 and inverse | 1928 | 16 |
-| [Keyboard](examples/Keyboard/Keyboard.ino) | Code of the pushed key, battery voltage and level, charging state, power-down after 10 s | 2176 | 16 |
-| [Watch](examples/Watch/Watch.ino) | Time, date and temperature of the real-time clock | 2368 | 22 |
-| [TOTP](examples/TOTP/TOTP.ino) | Codes of the RFC 6238 test key | 4004 | 149 |
-| [HP35](examples/HP35/HP35.ino) | HP-35 calculator with the F key as a shift key | 4214 | 180 |
+- [**Display**](examples/Display/Display.ino) shows the built-in font at the scales x1, x2 and x4, and in inverse. 1928 bytes of flash, 16 bytes of RAM.
+- [**Keyboard**](examples/Keyboard/Keyboard.ino) shows the code of the pushed key, the battery voltage and level and the charging state. It turns off the device after 10 s without key pushes. 2176 bytes of flash, 16 bytes of RAM.
+- [**Watch**](examples/Watch/Watch.ino) shows the time, the date and the temperature of the real-time clock. 2368 bytes of flash, 22 bytes of RAM.
+- [**TOTP**](examples/TOTP/TOTP.ino) shows the one-time passwords of the RFC 6238 test key. 4004 bytes of flash, 149 bytes of RAM.
+- [**HP35**](examples/HP35/HP35.ino) is a simple HP-35 calculator: the virtual machine runs the original ROM, and the F key selects the second function of the next key. 4214 bytes of flash, 180 bytes of RAM.
 
-Flash and RAM are in bytes, with TinyCore 0.8.0 and the options of [3.3](#33-set-the-board-options).
-
-For the full firmware, refer to the sketches [hp35](../../sketches/hp35) and [hp21](../../sketches/hp21).
+The sizes are for TinyCore 0.8.0 with the options of [3.3](#33-set-the-board-options).
 
 ## 6. Module reference
 
-Coordinates on the display: `x` is the pixel column (0 to 127). `y` is the page (0 to 3). A page is a row of 8 pixels.
+Each module below starts with a block of pseudo-code: the public part of the module as C++ declarations, with comments. The modules also have internal functions and variables. Their names start with a lowercase letter (for example, `LCD::draw_buf`). Do not use them: they can change.
 
 ### 6.1 SYS: system
 
-| Function | Description |
-| --- | --- |
-| `void Init()` | Initializes ADC, I2C, LCD, KBD and PWR. Enables the pin-change interrupt and the interrupts. The display stays off and the timer stays stopped. |
-| `void Down()` | Stops the timer, turns off the display and puts the MCU into power-down sleep (refer to [4.3](#43-main-loop-and-power)). |
+```cpp
+namespace SYS
+{
+    // Initializes ADC, I2C, LCD, KBD and PWR, enables the pin-change
+    // wake-up and the interrupts. The display stays off and the timer
+    // stays stopped.
+    void Init();
+
+    // Stops the timer, turns off the display and stops the MCU in
+    // power-down sleep until a key push or a charger status change.
+    // Sleeps again while the battery is empty.
+    void Down();
+}
+```
+
+`SYS` connects the other modules. Use `SYS::Init()` once, at the start of `main()`. For the use of `SYS::Down()`, refer to [4.3](#43-frames-and-power).
 
 ### 6.2 TMR: frame timer
 
-The watchdog timer gives an interrupt at the end of each frame.
+```cpp
+namespace TMR
+{
+    enum // frame times for Start()
+    {
+        TIMEOUT_16MS,  // about 60 frames per second
+        TIMEOUT_32MS,  // about 30
+        TIMEOUT_64MS,  // about 15
+        TIMEOUT_125MS  // about 8, Millis counts 128 ms per frame
+    };
 
-| Item | Description |
-| --- | --- |
-| `TIMEOUT_16MS`, `TIMEOUT_32MS`, `TIMEOUT_64MS`, `TIMEOUT_125MS` | Frame times |
-| `void Start(u08 t)` | Starts the timer with the frame time `t` and sets `Millis` to 0 |
-| `void Stop()` | Stops the timer |
-| `void Sync()` | Puts the MCU into idle sleep until the end of the frame |
-| `volatile u16 Millis` | Time from `Start()` in milliseconds. It increases by the frame time (16, 32, 64 or 128 ms) at the end of each frame and overflows after 65535 ms. |
-| `volatile u08 Timeout` | Frame time in milliseconds |
+    volatile u16 Millis;  // ms from Start(), wraps after 65535 ms
+    volatile u08 Timeout; // frame time in ms: 16, 32, 64 or 128
 
-> [!NOTE]
-> The watchdog oscillator is not accurate: the real frame time can be different by some percent. Use the real-time clock to measure long times.
+    void Start(u08 t);    // starts the timer with frame time t,
+                          // sets Millis to 0
+    void Stop();          // stops the timer
+    void Sync();          // idle sleep until the end of the frame
+}
+```
+
+The timer uses the watchdog of the ATtiny85 in interrupt mode. At the end of each frame the interrupt adds the frame time to `Millis` and ends `Sync()`. If the work of a frame takes more time than the frame, `Sync()` waits for the end of the next frame.
+
+`Millis` is a simple tool for timeouts and animations. Its bits change at fixed intervals, so a blink needs no extra variable:
+
+```cpp
+// bit 9 of Millis changes every 512 ms: a blink at about 1 Hz
+if (TMR::Millis & 0x200) TXT::PrintChar(':', x, y);
+```
+
+The watchdog has its own 128 kHz oscillator, and its frequency changes with the voltage and the temperature. Thus, the real frame time can be different from the nominal time by several percent. For long times, use the real-time clock.
 
 ### 6.3 PWR: power
 
-| Item | Description |
-| --- | --- |
-| `BAT_MAX`, `BAT_FULL`, `BAT_EMPTY` | Battery voltages in mV: 4200, 4100, 3500 |
-| `UNIT_VOLTAGE` | Resolution of the voltage measurement: 20 mV |
-| `u16 Voltage()` | Supply voltage in mV. The ADC measures the internal 1.1 V reference against VCC. |
-| `u08 Level()` | Battery level from 0 to 100 %: 0 at `BAT_EMPTY` or less, 100 at `BAT_FULL` or more, linear between them |
-| `b08 Charging()` | True while the charger charges the battery |
-| `void Idle()` | Idle sleep until the next interrupt |
-| `void Down()` | Power-down sleep until a pin change. The MCU sleeps again while the voltage is at `BAT_EMPTY` or less. Use `SYS::Down()`. |
-| `void Init()` | Sets PB3 as an input with pull-up and as a wake-up source. `SYS::Init()` calls it. |
+```cpp
+namespace PWR
+{
+    const u16 BAT_MAX      = 4200; // mV, fully charged battery
+    const u16 BAT_FULL     = 4100; // mV, level 100 % and more
+    const u16 BAT_EMPTY    = 3500; // mV, level 0 %, Down() sleeps
+    const u08 UNIT_VOLTAGE = 20;   // mV, resolution of the measurement
+
+    u16 Voltage();  // supply voltage in mV
+    u08 Level();    // battery level 0..100 %, linear from BAT_EMPTY
+                    // to BAT_FULL
+    b08 Charging(); // true while the charger charges the battery
+
+    void Idle();    // idle sleep until the next interrupt
+    void Down();    // power-down sleep, use SYS::Down()
+    void Init();    // charger status pin, called by SYS::Init()
+}
+```
+
+The microcontroller has no pin for its own supply voltage. Instead, `Voltage()` uses VCC as the reference of the ADC and measures the internal 1.1 V bandgap reference: VCC = 1.1 V × 1023 / ADC value. The bandgap voltage of each chip is between 1.0 V and 1.2 V, so the result can be different from the real voltage by some percent.
+
+A battery indicator of five bars:
+
+```cpp
+u08 bars = (PWR::Level() + 10) / 20; // 0..5 bars, rounded
+```
+
+`Charging()` reads the status output of the charger. The charger releases it when the charge is complete and when there is no USB power. Thus, `Charging()` is false in both cases.
 
 ### 6.4 KBD: keyboard
 
-The keys connect resistor dividers to PB4. The ADC measures the voltage, and the library finds the key from a table of thresholds. The compiler calculates the thresholds from the resistor values (`KBD_RG1`..`KBD_RG4`, `KBD_RV1`..`KBD_RV4`).
+```cpp
+namespace KBD
+{
+    enum // key codes, in the positions of the keys on the device
+    {
+        FUNC = 15, NUM7 = 7, NUM8 = 8, NUM9 = 9,  // F 7 8 9
+        EEX  = 14, NUM4 = 4, NUM5 = 5, NUM6 = 6,  // E 4 5 6
+        CHS  = 13, NUM1 = 1, NUM2 = 2, NUM3 = 3,  // ± 1 2 3
+        CLR  = 12, NUM0 = 0, DOT = 10, DUP = 11,  // C 0 . ↑
 
-| Function | Description |
-| --- | --- |
-| `u08 Read()` | Code of the pushed key, or `NONE`. While the user holds the key, `Read()` gives the code of the first measurement. |
-| `void Init()` | Sets PB4 as an input and as a wake-up source. `SYS::Init()` calls it. |
+        NONE = 0xFF, // no key
 
-**Key codes**, in the positions of the keys on the device:
+        // aliases for menu keys
+        ROTU = EEX,  ROTD = CHS,
+        SEL1 = NUM1, SEL2 = NUM2, SEL3 = NUM3,
+        MATH = FUNC, TRIG = NUM7, PROG = NUM8,
+        CONS = NUM4, SETS = DOT
+    };
 
-| Column 1 | Column 2 | Column 3 | Column 4 |
-| --- | --- | --- | --- |
-| <kbd>F</kbd> `FUNC` (15) | <kbd>7</kbd> `NUM7` (7) | <kbd>8</kbd> `NUM8` (8) | <kbd>9</kbd> `NUM9` (9) |
-| <kbd>E</kbd> `EEX` (14) | <kbd>4</kbd> `NUM4` (4) | <kbd>5</kbd> `NUM5` (5) | <kbd>6</kbd> `NUM6` (6) |
-| <kbd>±</kbd> `CHS` (13) | <kbd>1</kbd> `NUM1` (1) | <kbd>2</kbd> `NUM2` (2) | <kbd>3</kbd> `NUM3` (3) |
-| <kbd>C</kbd> `CLR` (12) | <kbd>0</kbd> `NUM0` (0) | <kbd>.</kbd> `DOT` (10) | <kbd>↑</kbd> `DUP` (11) |
+    u08 Read();  // code of the pushed key or NONE
+    void Init(); // keyboard pin, called by SYS::Init()
+}
+```
 
-The digit keys have the codes 0 to 9. Thus, a sketch can use the code as a digit or as an index into a table of 16 items.
+All 16 keys connect to one pin. Each key connects a different resistor divider between VCC and GND, so each key gives a different voltage. `Read()` measures the voltage with the ADC and finds the key in a table of thresholds. The compiler calculates the thresholds from the resistor values, at the midpoints between the voltages of the adjacent keys.
 
-The aliases `ROTU`, `ROTD`, `SEL1`..`SEL3`, `MATH`, `TRIG`, `PROG`, `CONS` and `SETS` are names of the same keys for menus.
+The digit keys have the codes 0 to 9, and all the codes are in the range 0 to 15. Thus, a sketch can use the code directly as a digit or as an index into a table of 16 items:
+
+```cpp
+if (key <= KBD::NUM9) value = value * 10 + key; // digit key
+```
+
+`Read()` gives the code while the user holds the key. The code does not change during the push, even if the voltage changes a little. To find a new push, compare the code with the code of the previous frame:
+
+```cpp
+u08 key = KBD::Read();
+b08 pushed = (key != last && key != KBD::NONE);
+last = key;
+```
+
+Only the keys of the two bottom rows can wake up the device (refer to [4.3](#43-frames-and-power)).
 
 ### 6.5 LCD: display
 
-The SSD1306 has RAM for 64 rows, and the display shows 32 rows. The library uses the two halves as two screen buffers: it writes to the hidden buffer, and `Flip()` shows it. Thus, the user does not see a partly drawn screen.
+```cpp
+namespace LCD
+{
+    constexpr u08 I2C_ADDR = 0x3C;
+    constexpr u08 WIDTH    = 128; // columns, x = 0..127
+    constexpr u08 PAGES    = 4;   // pages of 8 pixel rows, y = 0..3
 
-| Item | Description |
-| --- | --- |
-| `I2C_ADDR`, `WIDTH`, `PAGES` | `0x3C`, 128 columns, 4 pages |
-| `void Init()` | Resets and configures the controller. The display stays off. `SYS::Init()` calls it. |
-| `void TurnOn()`, `void TurnOff()` | Turns the display on or off |
-| `void Brightness(u08 brightness)` | Sets the contrast from 0 to 255 |
-| `void Clear()` | Clears the hidden buffer |
-| `void Flip()` | Shows the hidden buffer. The buffer that was on the display becomes hidden. |
-| `void BeginWrite(u08 x, u08 y)` | Starts to write bytes to the hidden buffer from column `x` of page `y` |
-| `void Write(u08 b, u08 s)` | Writes the byte `b` `s` times. Each byte is a column of 8 pixels, bit 0 at the top. |
-| `void EndWrite()` | Ends the write |
-| `void EndWrite(u08 b, u08 s)` | Writes the byte `b` `s` times and ends the write |
+    void Init();                    // called by SYS::Init()
+    void TurnOn();                  // display on
+    void TurnOff();                 // display off, its RAM is kept
+    void Brightness(u08 level);     // contrast 0..255
 
-A typical screen update:
+    void Clear();                   // clears the hidden buffer
+    void Flip();                    // shows the hidden buffer
+
+    void BeginWrite(u08 x, u08 y);  // starts a write at column x,
+                                    // page y of the hidden buffer
+    void Write(u08 b, u08 s);       // writes byte b s times
+    void EndWrite();                // ends the write
+    void EndWrite(u08 b, u08 s);    // writes b s times, ends the write
+}
+```
+
+The display is organized in pages. A page is a row of 8 pixels in height and 128 columns in width. Each byte that you write is one column of a page: bit 0 is the top pixel and bit 7 is the bottom pixel. Thus, `x` is a pixel position, but `y` is a page number from 0 to 3.
+
+The SSD1306 controller has RAM for 64 rows, but the display shows only 32 of them. The library uses the two halves of the RAM as two screen buffers. It always writes to the hidden buffer, and `Flip()` swaps the buffers in one command. The user never sees a partly drawn screen.
+
+> [!IMPORTANT]
+> After `Flip()`, the hidden buffer contains the screen of the frame before the last one, not the last screen. Thus, always draw the full screen: start with `Clear()`, draw everything, end with `Flip()`.
+
+Text is the usual content of the screen (refer to [6.6](#66-txt-text)). For lines and bars, write bytes directly:
 
 ```cpp
 LCD::Clear();
-// draw the screen with TXT or LCD::BeginWrite() ... LCD::EndWrite()
+
+// line across the screen in page 1, pixel row 12 (bit 4)
+LCD::BeginWrite(0, 1);
+LCD::EndWrite(0x10, LCD::WIDTH);
+
+// filled box 10 pixels wide in page 3, x = 20..29
+LCD::BeginWrite(20, 3);
+LCD::EndWrite(0xFF, 10);
+
 LCD::Flip();
 ```
 
+`Brightness()` sets the contrast in 256 steps. At 0 the display is dim, but you can still read it. This is good for a watch display, and it saves energy.
+
 ### 6.6 TXT: text
 
-**Fonts.** A font is a `TXT::Font` structure in `PROGMEM`:
-
-| Field | Description |
-| --- | --- |
-| `bytesInRow` | Width of a character in pixels |
-| `rowsOfBytes` | Height of a character in pages |
-| `asciiFirst`, `asciiLast` | Character codes in the font |
-| `bytes` | Pointer to the character data in `PROGMEM`: for each character, `rowsOfBytes` rows of `bytesInRow` column bytes |
-
-`TXT` shows a character that is not in the font as a space. The tool `firmware/tools/lcd2hex` makes the font data from `.lcd` files.
-
-| Item | Description |
-| --- | --- |
-| `void SetFont(const Font& f)` | Selects the font (a `PROGMEM` structure) and sets the scale to x1 |
-| `void SetScale(u08 sx, u08 sy)` | Sets the horizontal scale `sx` (1 or more) and the vertical scale `sy` (`x1`, `x2` or `x4`) |
-| `void SetInverse(b08 enable)` | Selects dark characters on a light background |
-| `u08 char_dx` | Distance between characters in pixels: width × `sx` + 1. Read it, do not change it. |
-| `void PrintChar(u08 ch, u08 x, u08 y)` | Shows a character and one column of space after it |
-| `void PrintString(s, x, y)` | Shows a string from RAM, `F()` or `D()` (refer to [4.4](#44-constant-data)) |
-| `void PrintString(s, i, x, y)` | Shows item `i` of a string array in `PROGMEM` or `DATAMEM`. The first byte of the array is the length of each item, then the items follow without separators. |
-| `void PrintBCD(u08 n, u08 x, u08 y)` | Shows two digits of a packed BCD number |
-
-The vertical scale shows each page of the font on 2 or 4 pages of the display.
-
-**String array** for `PrintString(s, i, x, y)`:
-
 ```cpp
-const u08 strMonth[] DATAMEM = "\03" "JAN" "FEB" "MAR"; // 3 characters in each item
-TXT::PrintString(DPSTR(strMonth), 1, x, y);             // shows FEB
+namespace TXT
+{
+    struct Font                // a font, always in PROGMEM
+    {
+        u08 bytesInRow;        // character width in pixels
+        u08 rowsOfBytes;       // character height in pages
+        u08 asciiFirst;        // first character code in the font
+        u08 asciiLast;         // last character code in the font
+        const u08* bytes;      // character data in PROGMEM
+    };
+
+    enum { x1 = 1, x2 = 2, x4 = 4 };   // scales
+
+    u08 char_dx;               // character step in pixels, read only
+
+    void SetFont(const Font& f);       // also sets the scale x1
+    void SetScale(u08 sx, u08 sy);     // sx: 1 or more, sy: x1/x2/x4
+    void SetInverse(b08 enable);       // dark text on a light ground
+
+    void PrintChar(u08 ch, u08 x, u08 y);
+    void PrintString(s, u08 x, u08 y);        // RAM, F() or D()
+    void PrintString(s, u08 i, u08 x, u08 y); // item i of an array
+    void PrintBCD(u08 n, u08 x, u08 y);       // two BCD digits
+
+    // 7-segment digits
+    enum { SEG_0, ..., SEG_9, SEG_A, SEG_b, SEG_C, SEG_d, SEG_E,
+           SEG_F, SEG_H, SEG_o, SEG_P, SEG_r,
+           SEG_SPACE, SEG_DASH, SEG_DOT };  // segment patterns
+    u08 NumToSeg(u08 n);                     // pattern of 0..18
+    void PrintSeg(u08 seg, u08 x, u08 y);    // shows a pattern
+    void PrintSegBCD(u08 n, u08 x, u08 y);   // two BCD digits
+}
 ```
 
-**7-segment digits.** In a 7-segment font, the first 8 characters are the images of the segments a to g and of the dot. `PrintSeg()` shows the segments of a pattern together. The scale and the inverse have no effect on it.
+**Characters and positions.** `PrintChar()` draws the character and one empty column after it. Thus, the step between characters is the width × `sx` + 1 pixels. `TXT::char_dx` holds this value for the current font and scale. Use it to calculate the positions:
 
-| Item | Description |
-| --- | --- |
-| `SEG_0`..`SEG_9`, `SEG_A`, `SEG_b`, `SEG_C`, `SEG_d`, `SEG_E`, `SEG_F`, `SEG_H`, `SEG_o`, `SEG_P`, `SEG_r`, `SEG_SPACE`, `SEG_DASH`, `SEG_DOT` | Segment patterns: bit 0 is segment a, bit 6 is segment g, bit 7 is the dot |
-| `u08 NumToSeg(u08 n)` | Pattern of `n`: 0 to 15 are the hexadecimal digits, 16 is a space, 17 is a dash, 18 is a dot |
-| `void PrintSeg(u08 seg, u08 x, u08 y)` | Shows a pattern |
-| `void PrintSegBCD(u08 n, u08 x, u08 y)` | Shows two digits of a packed BCD number as patterns |
+```cpp
+// number n = 0..999 as 3 digits at the right edge of the display
+TXT::SetFont(FNT::Font5x8);
+u08 x = LCD::WIDTH - 3 * TXT::char_dx;
+TXT::PrintChar('0' + n / 100,      x, 0);
+TXT::PrintChar('0' + n / 10 % 10,  x + TXT::char_dx, 0);
+TXT::PrintChar('0' + n % 10,       x + 2 * TXT::char_dx, 0);
+```
+
+A character that is not in the font shows as an empty place. For example, the built-in font starts at `!`, and a space shows as an empty place too.
+
+**Scale.** `SetScale()` makes the characters larger without a larger font. The horizontal scale `sx` repeats each column, and any value is possible. The vertical scale `sy` puts each page of the font on 2 or 4 pages of the display, so only `x1`, `x2` and `x4` are possible. The 5 × 8 font at `x2` is 10 × 16 pixels and uses two pages: `y` is then the top page.
+
+**Inverse.** `SetInverse(true)` draws dark characters on a light ground, for example for a selected menu item. The empty column after each character is light too, so a string becomes one light bar.
+
+**Fonts.** A font is a `Font` structure and a byte array, both in `PROGMEM`. `SetFont()` reads the structure from the flash, so the structure must not be in RAM. Each character has `rowsOfBytes` rows of `bytesInRow` column bytes, top row first. This font has two 8 × 8 symbols for the characters `0` and `1`:
+
+```cpp
+const u08 box_bytes[] PROGMEM =
+{
+    0xFF, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0xFF, // '0': empty box
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // '1': full box
+};
+
+const TXT::Font boxes PROGMEM =
+{
+    .bytesInRow  = 8,
+    .rowsOfBytes = 1,
+    .asciiFirst  = '0',
+    .asciiLast   = '1',
+    .bytes       = box_bytes
+};
+
+TXT::SetFont(boxes);
+TXT::PrintString(F("1100"), 0, 0); // two full and two empty boxes
+```
+
+**String arrays.** `PrintString(s, i, x, y)` shows item `i` of a string array in the flash or in `DATAMEM`. The first byte of the array is the length of each item. The items follow it without separators and without zeros. This saves memory for menus and names of months:
+
+```cpp
+const u08 months[] DATAMEM =
+    "\03" "JAN" "FEB" "MAR" "APR" "MAY" "JUN"
+          "JUL" "AUG" "SEP" "OCT" "NOV" "DEC";
+
+u08 m = BCD::Decode(RTC::Month);                    // 1..12
+TXT::PrintString(DPSTR(months), m - 1, x, y);       // "JAN".."DEC"
+```
+
+**7-segment digits.** A 7-segment font draws the digits like the display of an old calculator. In such a font, the first 8 characters are images of single segments: a, b, c, d, e, f, g and the dot. `PrintSeg()` draws all the segments of a pattern on top of each other. Bit 0 of the pattern is segment a, bit 6 is segment g and bit 7 is the dot, as in the `SEG_*` constants. A digit with a dot after it is one pattern:
+
+```cpp
+TXT::SetFont(digits7x16); // a 7-segment font of the sketch
+TXT::PrintSeg(TXT::SEG_5 | TXT::SEG_DOT, x, y); // "5."
+TXT::PrintSeg(TXT::NumToSeg(n), x, y);          // digit n
+```
+
+`NumToSeg()` gives the pattern of a number: 0 to 15 are the hexadecimal digits, 16 is a space, 17 is a dash and 18 is a dot. The scale and the inverse have no effect on `PrintSeg()`.
+
+The font can have more characters after the 8 segments, for example a colon for a watch. `PrintChar()` shows them as usual characters, by their codes.
 
 ### 6.7 FNT: fonts
 
-| Item | Description |
-| --- | --- |
-| `FNT::Font5x8` | 5 × 8 pixels, one page high, characters `!` to `~` (0x21 to 0x7E), 470 bytes |
+```cpp
+namespace FNT
+{
+    const TXT::Font Font5x8; // 5 x 8 pixels, '!'..'~', 470 bytes
+}
+```
 
-The linker includes the font only if the sketch uses it.
+The library has one built-in font: 5 × 8 pixels, one page high, with all the printable ASCII characters from `!` to `~` (lowercase letters too). At scale x1 a line has 21 characters, and the display has 4 lines. The linker adds the font only to the sketches that use it.
 
 ### 6.8 RTC: real-time clock
 
-The variables keep the time and the date in packed BCD (for example, `0x59` is 59). At start, they contain the build time of the sketch (refer to [7.3](#73-buildtime)). Thus, a sketch can call `WriteTimeDate()` after a reset to set the clock.
+```cpp
+namespace RTC
+{
+    constexpr u08 I2C_ADDR = 0x68;
+    enum { REG_SECONDS, ..., REG_STATUS, ..., REG_TEMP_LSB }; // registers
 
-| Item | Description |
-| --- | --- |
-| `u08 Seconds`, `Minutes`, `Hours` | 0 to 59, 0 to 59, 0 to 23 (24-hour format) |
-| `u08 Date`, `Month`, `Year` | 1 to 31, 1 to 12, 0 to 99 (2000 to 2099) |
-| `void ReadTimeDate()` | Reads the clock into the variables |
-| `void WriteTimeDate()` | Writes the variables to the clock |
-| `w16 ReadTemperature()` | Temperature of the clock chip: `msb` is the signed value in °C, bits 7..6 of `lsb` are the fraction in 0.25 °C steps |
-| `b08 IsLeapYear()` | True if `Year` is a leap year |
-| `u08 GetDaysInMonth()` | Number of days in `Month` of `Year` |
-| `u32 GetTimestamp(s08 GMTTimeZone)` | Unix time in seconds. The clock keeps the local time: `GMTTimeZone` is the time zone in hours (for example, `+3`). Gives 0 if the date is not valid. |
+    // time and date in packed BCD, start values = build time
+    u08 Seconds; // 0x00..0x59
+    u08 Minutes; // 0x00..0x59
+    u08 Hours;   // 0x00..0x23, always 24-hour format
+    u08 Date;    // 0x01..0x31
+    u08 Month;   // 0x01..0x12
+    u08 Year;    // 0x00..0x99, years 2000..2099
+
+    void ReadTimeDate();   // clock -> variables
+    void WriteTimeDate();  // variables -> clock, all 6 values
+
+    w16 ReadTemperature(); // msb: signed degrees C,
+                           // lsb bits 7..6: quarters of a degree
+    b08 IsLeapYear();      // for Year
+    u08 GetDaysInMonth();  // for Month and Year
+
+    u32 GetTimestamp(s08 GMTTimeZone); // Unix time in seconds,
+                                       // 0 if the date is not valid
+}
+```
+
+The DS3231M keeps the time with an accuracy of ±5 ppm, which is approximately ±0.4 seconds per day. It gets its power from the battery of the device, so it continues to count while the device is off.
+
+**BCD values.** The clock keeps the time in packed BCD: one decimal digit in each half of a byte. The value 59 is `0x59`, not `59`. The library keeps this format, because the display needs the digits, not the numbers. For calculations, change the format with the `BCD` module:
+
+```cpp
+u08 m = BCD::Decode(RTC::Minutes);      // 0x59 -> 59
+RTC::Minutes = BCD::Encode((m + 1) % 60);
+```
+
+**Set the clock.** `WriteTimeDate()` always writes all six values. To change only the time, read the clock first, so that the date stays correct:
+
+```cpp
+RTC::ReadTimeDate();
+RTC::Hours   = 0x12;
+RTC::Minutes = 0x30;
+RTC::Seconds = 0x00;
+RTC::WriteTimeDate(); // 12:30:00, the date does not change
+```
+
+The variables start with the date and the time of the build. Thus, a sketch can call `WriteTimeDate()` right after the start to set the clock to the build time. This is easy, but the clock is then late by the time between the build and the start of the device.
+
+**Unix time.** `GetTimestamp()` gives the number of seconds from 1970-01-01 00:00 UTC, for example for one-time passwords. The clock keeps the local time, so you give the time zone in whole hours: `+3` for UTC+3. Time zones with 30 or 45 minutes are not possible.
+
+**Temperature.** The clock has a temperature sensor for its own frequency correction. It measures once per second with a resolution of 0.25 °C and an accuracy of ±3 °C:
+
+```cpp
+w16 t = RTC::ReadTemperature();
+s08 degrees  = s08(t.msb);  // -128..127
+u08 quarters = t.lsb >> 6;  // 0..3: +0.00, +0.25, +0.50, +0.75
+```
+
+The RTC module does not use the day of the week, the 12-hour format, the century bit and the alarms. For other registers of the clock, use `I2C` directly (refer to [6.9](#69-i2c-bus)).
 
 ### 6.9 I2C: bus
 
-The library makes the I2C signals in software on PB0 (SDA) and PB2 (SCL). The pins operate as open-drain outputs, with the pull-up resistors of the PCB. A half period of the clock is approximately 2 µs.
+```cpp
+namespace I2C
+{
+    void Init();                  // frees the bus, called by SYS::Init()
+    void StartWrite(u08 addr);    // start + 7-bit address for a write
+    void StartRead(u08 addr);     // (repeated) start + address, read
+    void Write(u08 data);         // writes a byte
+    void ReadAck(u08& data);      // reads a byte, more bytes follow
+    void ReadNack(u08& data);     // reads the last byte
+    void Stop();                  // stop condition
+}
+```
 
-| Function | Description |
-| --- | --- |
-| `void Init()` | Releases the bus. If a device holds SDA low, up to 9 clock pulses release it. `SYS::Init()` calls it. |
-| `void StartWrite(u08 addr)` | Start condition and the 7-bit address for a write |
-| `void StartRead(u08 addr)` | Start condition (or repeated start) and the 7-bit address for a read |
-| `void Write(u08 data)` | Writes a byte |
-| `void ReadAck(u08& data)` | Reads a byte and sends ACK: more bytes follow |
-| `void ReadNack(u08& data)` | Reads a byte and sends NACK: the last byte |
-| `void Stop()` | Stop condition |
+The library does not use the USI of the ATtiny85: it makes the I2C signals completely in software. It operates the pins as open-drain outputs: it pulls a line low, or it releases the line and the pull-up resistor of the PCB pulls it high. One half of a clock period is approximately 2 µs.
 
-The functions do not examine the ACK bit from the device.
+`Init()` frees the bus if a device holds SDA low, for example after a reset during a transfer. It gives up to 9 clock pulses for this.
+
+A read of a register is a write of the register address and then a read with a repeated start. This example reads the status register of the clock. Its bit 7 (OSF) is set when the oscillator of the clock stopped, for example when power was applied for the first time. A sketch can use it to know that the time is not valid:
+
+```cpp
+u08 status;
+I2C::StartWrite(RTC::I2C_ADDR);
+I2C::Write(RTC::REG_STATUS);
+I2C::StartRead(RTC::I2C_ADDR);
+I2C::ReadNack(status);
+I2C::Stop();
+
+b08 timeLost = isb_set(status, 7);
+```
+
+The bit stays set until a sketch writes 0 to it. The functions do not examine the ACK bit of the device, so a missing device does not give an error: a read then gives `0xFF`.
 
 ### 6.10 ADC: analog-to-digital converter
 
-| Item | Description |
-| --- | --- |
-| `A0_PB5`, `A1_PB2`, `A2_PB4`, `A3_PB3` | Input pins, reference VCC |
-| `VCC` | Internal 1.1 V reference, measured against VCC |
-| `TEMP` | Internal temperature sensor, reference 1.1 V |
-| `w16 Read(u08 channel)` | Makes one 10-bit conversion. The MCU sleeps in the ADC noise reduction mode during the conversion. Add `_BV(ADLAR)` to the channel to get the 8 high bits in `msb`. |
-| `void Init()` | Sets the ADC clock to 125 kHz and turns off the ADC. `SYS::Init()` calls it. |
+```cpp
+namespace ADC
+{
+    enum // channels for Read()
+    {
+        A0_PB5, A1_PB2, A2_PB4, A3_PB3, // pins, reference VCC
+        VCC,                            // 1.1 V bandgap, reference VCC
+        TEMP                            // temperature, reference 1.1 V
+    };
 
-The ADC is off between conversions, to decrease the power consumption.
+    w16 Read(u08 channel); // one 10-bit conversion
+    void Init();           // called by SYS::Init()
+}
+```
+
+`Read()` turns on the ADC, makes one conversion and turns off the ADC again, so the ADC uses no energy between the measurements. During the conversion the microcontroller sleeps in the ADC noise reduction mode: this gives a more stable result.
+
+The result is right-aligned: 0 to 1023 in `val`. If 8 bits are sufficient, add the `ADLAR` bit to the channel. The result is then left-aligned, and `msb` holds the 8 high bits:
+
+```cpp
+u08 level = ADC::Read(ADC::A2_PB4 | _BV(ADLAR)).msb; // 0..255
+```
+
+The internal temperature sensor gives approximately 1 LSB per °C, about 300 at 25 °C. Its offset is different on each chip, so it needs a calibration. For the temperature, the real-time clock is a better choice.
 
 ### 6.11 BCD: binary-coded decimals
 
-| Function | Description |
-| --- | --- |
-| `constexpr u08 Encode(u08 data)` | Binary 0 to 99 to packed BCD |
-| `constexpr u08 Decode(u08 data)` | Packed BCD to binary |
+```cpp
+namespace BCD
+{
+    constexpr u08 Encode(u08 data); // 0..99 -> 0x00..0x99
+    constexpr u08 Decode(u08 data); // 0x00..0x99 -> 0..99
+}
+```
+
+Both functions are `constexpr`, so they can calculate constants at compile time:
+
+```cpp
+const u08 limits[] DATAMEM = { BCD::Encode(23), BCD::Encode(59) };
+```
 
 ### 6.12 MEM: constant data
 
-| Item | Description |
-| --- | --- |
-| `DATAMEM` | Variable attribute: `EEMEM` if `ENABLE_OPT_DATAMEM` is `1`, else `PROGMEM` |
-| `u08 ProgRead(const u08* src)` | Reads a byte from the flash |
-| `void ProgCopy(void* dst, const void* src, size_t size)` | Copies bytes from the flash to RAM |
-| `u08 DataRead(const u08* src)` | Reads a byte from `DATAMEM` |
-| `void DataCopy(void* dst, const void* src, size_t size)` | Copies bytes from `DATAMEM` to RAM |
+```cpp
+#define DATAMEM // EEMEM if ENABLE_OPT_DATAMEM is 1, else PROGMEM
+
+namespace MEM
+{
+    u08  ProgRead(const u08* src);                         // flash
+    void ProgCopy(void* dst, const void* src, size_t size);
+    u08  DataRead(const u08* src);                         // DATAMEM
+    void DataCopy(void* dst, const void* src, size_t size);
+}
+```
+
+For the use of these functions, refer to [4.4](#44-constant-data).
 
 ## 7. Extras
 
-The extras are in `src/Extras`. Include them after `TinyRPNCalculator.h`:
+The extras are in the `src/Extras` folder. They are not part of `TinyRPNCalculator.h` (except `BuildTime.h`, which the RTC module includes). Include them after it, only if the sketch needs them.
 
 ```cpp
 #include <TinyRPNCalculator.h>
-#include <Extras/HP35Model.h>   // model first
+#include <Extras/HP35Model.h>   // HP-35 model: first
 #include <Extras/HPVMClassic.h> // then the CPU of the model
 #include <Extras/TOTP.h>        // includes SHA1.h
 ```
 
 ### 7.1 HPVM: HP virtual machine
 
-The virtual machine runs the original ROM of an HP calculator on a copy of its CPU. Each calculator has two headers. Include them in this sequence:
+The HP calculators of the 1970s have a small CPU that runs a program from ROM. HPVM is a copy of this CPU in software. It runs the original ROM, so the results, the errors and the display format are the same as on the original calculator.
 
-1. The model header: the operations, the key codes of the model and the ROM.
-2. The CPU header: the CPU that runs the ROM.
+Each calculator has two headers. The **model header** contains the ROM, the list of operations and the codes of the keys. The **CPU header** contains the CPU that runs this ROM. Include the model header first:
 
-| Calculator | Model header | CPU header | Display | Status |
-| --- | --- | --- | --- | --- |
-| HP-35 | `HP35Model.h` | `HPVMClassic.h` (Classic CPU) | `Display[15]`: character codes `DIGIT` + digit, `BLANK`, `DASH`, `DOT` | Used in the hp35 firmware |
-| HP-21 | `HP21Model.h` | `HPVMWoodstock.h` (Woodstock CPU) | `Display[12]`: 7-segment patterns (`TXT::SEG_*`, dot in bit 7) | Tested on the PC only |
+- HP-35: `HP35Model.h` and `HPVMClassic.h` (the Classic CPU). This pair is used in the HP-35 firmware of the device.
+- HP-21: `HP21Model.h` and `HPVMWoodstock.h` (the Woodstock CPU). This pair is tested on a PC, not yet on the device.
 
-**Operations.** The model header defines the operations `Op*` in the sequence of the keys of the calculator (for example, `HPVM::OpNUM7`, `HPVM::OpSIN_`). A shifted operation is `FlSHFT` + the operation of the key (for example, `HPVM::OpASIN`). `Operation()` pushes the shift key and then the key.
-
-| Item | Description |
-| --- | --- |
-| `void Operation(u08 op)` | Pushes the key of the operation. If the ROM is busy, the function first runs it until it waits for a key. |
-| `void OpAndWait(u08 op)` | Pushes the key and runs the ROM until it waits for the next key |
-| `b08 Cycle()` | Runs one CPU cycle. Gives true if the display changed. |
-| `b08 Idling()` | True if the ROM waits for a key |
-| `void DisplayY(u08 (&disp)[sizeof(Display)])` | Puts the Y register, in the format of `Display`, into `disp` |
-| `void Error()` | Clears the stack and shows the error of the calculator |
-| `CYCLES_PER_SEC` | CPU cycles in one second of the original calculator |
-| `A`, `B`, `C`, ... | CPU registers: arrays of 14 BCD digits. `C` is the X register. |
-
-**Real speed.** To run the calculator at the speed of the original, run `CYCLES_PER_SEC / frames per second` cycles in each frame:
+Both CPUs have the same interface:
 
 ```cpp
-for (u16 n = HPVM::CYCLES_PER_SEC / 15; n > 0; --n)
+namespace HPVM
 {
-	if (HPVM::Cycle())
-	{
-		// show HPVM::Display
-		break;
-	}
+    constexpr u16 CYCLES_PER_SEC; // CPU cycles in one second of the
+                                  // original calculator
+
+    enum { OpNUM0, OpADD_, OpSIN_, ..., FlSHFT = 0x80, OpASIN, ... };
+
+    void Operation(u08 op);  // pushes the key of the operation
+    void OpAndWait(u08 op);  // pushes the key, waits for the result
+    b08  Cycle();            // runs one CPU cycle,
+                             // true if the display changed
+    b08  Idling();           // true if the ROM waits for a key
+
+    void DisplayY(u08 (&disp)[sizeof(Display)]); // Y in display format
+    void Error();            // clears the stack, shows the error
+
+    using reg = u08[14];     // a register: 14 BCD digits
+    reg A, B, C, ...;        // CPU registers, C is the X register
+
+    // HP-35 (Classic): 15 places of character codes
+    enum { DIGIT = 0x00, BLANK = 0x10, DASH = 0x11, DOT = 0x12 };
+    u08 Display[15];
+
+    // HP-21 (Woodstock): 12 places of 7-segment patterns (TXT::SEG_*)
+    u08 Display[12];
+    b08 F1;                  // false: battery is good (sets S5)
+    b08 F2;                  // true: angles in radians (sets S3)
 }
 ```
 
-**Woodstock flags.** `HPVM::F1` and `HPVM::F2` are inputs of the Woodstock CPU. For the HP-21: `F1 = true` shows the low battery indicator, `F2 = true` selects radians.
+**Operations.** The model header gives a name to each key of the original calculator: `OpNUM7`, `OpSIN_`, `OpPUSH` (ENTER↑) and so on. A shifted function is `FlSHFT` + the operation of its key, for example `OpASIN`. For these, `Operation()` pushes the shift key first. If the ROM is still busy with the previous key, `Operation()` first runs the ROM until it waits for a key. Thus, no key push is lost.
 
-For the Woodstock CPU, refer to [HP-21 Woodstock architecture](../../../documents/firmware/hp21-woodstock-architecture.md) (in Russian). The tool `firmware/tools/hpvmtest` runs the virtual machines on a PC, with the same headers.
+**Run in real time.** `Operation()` only gives the key to the ROM. The ROM does the calculation in the next `Cycle()` calls. To run the calculator at the speed of the original, run the cycles of one frame in each frame, and draw the display when it changes:
+
+```cpp
+constexpr u16 CYCLES_PER_FRAME = HPVM::CYCLES_PER_SEC / 15;
+
+for (u16 n = CYCLES_PER_FRAME; n > 0; --n)
+{
+    if (HPVM::Cycle())
+    {
+        drawDisplay();
+        break; // the rest of the cycles in the next frame
+    }
+}
+```
+
+**Show the display.** The HP-35 gives character codes, and the sketch draws them with its font:
+
+```cpp
+for (u08 i = 0, x = 0; i < 15; ++i, x += TXT::char_dx)
+{
+    u08 c = HPVM::Display[i];
+    if      (c == HPVM::BLANK) c = ' ';
+    else if (c == HPVM::DASH)  c = '-';
+    else if (c == HPVM::DOT)   c = '.';
+    else c += '0'; // DIGIT + digit
+    TXT::PrintChar(c, x, 1);
+}
+```
+
+The codes are also the numbers of `TXT::NumToSeg()`, so `TXT::PrintSeg(TXT::NumToSeg(c), x, y)` draws them with a 7-segment font. The HP-21 gives segment patterns, which go directly to `TXT::PrintSeg()`.
+
+**Scripts of operations.** `OpAndWait()` runs the ROM until the result is ready. With it, a sketch can add new functions as sequences of the original keys. For example, the square of X, as on the original calculator with <kbd>ENTER↑</kbd> <kbd>×</kbd>:
+
+```cpp
+HPVM::OpAndWait(HPVM::OpPUSH); // ENTER↑: copies X to Y
+HPVM::OpAndWait(HPVM::OpMUL_); // ×: X = X * X
+```
+
+**Registers.** The registers are arrays of 14 BCD digits, `C[0]` is the lowest digit. On the HP-35, X (register `C`) has this format:
+
+```text
+digit:  13   12 .. 3     2   1 0
+        S    mantissa    E   exponent
+```
+
+`S` is the sign of the mantissa and `E` is the sign of the exponent: 0 for plus, 9 for minus. The mantissa has 10 digits with the decimal point after the first digit. A negative exponent is in tens complement. Some numbers, with the digits from 13 to 0:
+
+```text
+128      0 1280000000 002   1.28 x 10^2
+-3       9 3000000000 000   -3 x 10^0
+.005     0 5000000000 997   5 x 10^-3 (997 = -3)
+```
+
+The sketch can read the registers to get numbers for its own functions, or write them to give numbers to the ROM. Do this only while `Idling()` is true.
+
+**HP-21 flags.** The Woodstock CPU reads two external inputs in each cycle. On the HP-21, `F1` is the battery monitor and `F2` is the DEG/RAD switch. The sketch sets them as it needs, for example `HPVM::F1 = PWR::Level() < 10;` tells the ROM that the battery is low.
 
 ### 7.2 SHA1 and TOTP
 
-**SHA1** (`SHA1.h`): SHA-1 (FIPS 180-2) and HMAC-SHA1 (RFC 2104). The message length is up to 65535 bytes, the key length is up to 64 bytes. The module uses 90 bytes of static RAM.
+```cpp
+namespace SHA1
+{
+    constexpr u08 BLOCK_SIZE = 64;
+    constexpr u08 HASH_SIZE  = 20;
 
-| Function | Description |
-| --- | --- |
-| `void Init()` | Starts a hash |
-| `void Write(u08 data)`, `void Write(const u08* data, u08 size)` | Adds message bytes |
-| `const u08* Result()` | Ends the hash. Gives a pointer to the 20 bytes of the hash. |
-| `void InitHmac(const u08* key, u08 keyLength)` | Starts an HMAC. The key must stay in RAM until `ResultHmac()`. |
-| `const u08* ResultHmac()` | Ends the HMAC. Gives a pointer to the 20 bytes of the HMAC. |
+    void Init();                              // starts a hash
+    void Write(u08 data);                     // adds message bytes
+    void Write(const u08* data, u08 size);
+    const u08* Result();                      // ends, 20 bytes of hash
 
-The result pointer is valid until the next `Init()` or `InitHmac()`.
+    void InitHmac(const u08* key, u08 keyLength); // starts an HMAC
+    const u08* ResultHmac();                  // ends, 20 bytes of HMAC
+}
 
-**TOTP** (`TOTP.h`): time-based one-time passwords (RFC 6238) with HMAC-SHA1, a period of 30 seconds and 6 digits.
+namespace TOTP
+{
+    constexpr u08 PERIOD     = 30; // seconds
+    constexpr u08 LABEL_SIZE = 4;
+    constexpr u08 KEY_MAX    = 32;
 
-| Item | Description |
-| --- | --- |
-| `PERIOD` | 30 seconds |
-| `struct Key` | `length` (1 to `KEY_MAX` = 32), `label[4]`, `data[32]` |
-| `u32 GetCode(const Key& key, u32 counter)` | Code from 0 to 999999. The counter is the Unix time / `PERIOD`. |
-| `b08 ReadKey(const u08* area, u08 index, Key& key)` | Copies key `index` from the keys area in `DATAMEM`. Gives false if the key does not exist. |
+    struct Key
+    {
+        u08  length;               // 1..KEY_MAX
+        char label[LABEL_SIZE];    // name, padded with spaces
+        u08  data[KEY_MAX];        // secret key bytes
+    };
 
-**Keys area.** The tool `firmware/tools/totp` makes the keys area from labels and Base32 secrets. It can also replace the area in a compiled `.eep` file: the tool finds the area by its signature. Thus, the area must have this layout:
+    u32 GetCode(const Key& key, u32 counter); // 6 digits, 0..999999
+    b08 ReadKey(const u08* area, u08 index, Key& key);
+}
+```
 
-| Bytes | Content |
-| --- | --- |
-| 5 | Signature: `T`, `O`, `T`, `P` and the size of the area in bytes |
-| 1 + 4 + length | Key: length, label of 4 characters (padded with spaces), key bytes. Repeated for each key. |
-| 1 | 0: end of the keys, if there is space |
+`SHA1` calculates SHA-1 (FIPS 180-2) and HMAC-SHA1 (RFC 2104). It is made for a small RAM: it uses 90 bytes of static RAM, a message can have up to 65535 bytes and an HMAC key up to 64 bytes. The result pointer is valid until the next `Init()` or `InitHmac()`. The HMAC key must stay in RAM until `ResultHmac()`.
+
+```cpp
+SHA1::Init();
+SHA1::Write((const u08*)"abc", 3);
+const u08* hash = SHA1::Result(); // a9 99 3e 36 47 06 81 6a ...
+```
+
+`TOTP` gives the time-based one-time passwords (RFC 6238) of two-factor authentication: HMAC-SHA1, a period of 30 seconds and 6 digits. The counter is the Unix time divided by the period:
+
+```cpp
+u32 time = RTC::GetTimestamp(+3); // the clock keeps UTC+3
+u32 code = TOTP::GetCode(key, time / TOTP::PERIOD);
+u08 left = TOTP::PERIOD - time % TOTP::PERIOD; // seconds to next
+```
+
+**Keys area.** A sketch keeps its keys in a keys area in `DATAMEM`, and copies one of them to RAM with `ReadKey()` when it needs it. The area starts with a signature, then the keys follow:
+
+```cpp
+const u08 totp_keys[] DATAMEM =
+{
+    'T', 'O', 'T', 'P', 31,     // signature, size of the area
+    20, 'T', 'E', 'S', 'T',     // key length, label
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', // key bytes
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+    0                           // end of the keys
+};
+
+TOTP::Key key;
+for (u08 i = 0; TOTP::ReadKey(totp_keys, i, key); ++i)
+{
+    // key.label, TOTP::GetCode(key, counter)
+}
+```
+
+The size in the signature includes the signature itself, so the area can have up to 255 bytes. The zero at the end is necessary only if the area has free space after the last key. A fixed layout with a signature lets a tool find the area in a compiled `.eep` file and replace the keys without a new build. Thus, the real secret keys need not be in the source code.
 
 ### 7.3 BuildTime
 
-`BuildTime.h` gives the date and the time of the build as compile-time constants: `BUILD_YEAR` (0 to 99), `BUILD_MONTH`, `BUILD_DAY`, `BUILD_HOUR`, `BUILD_MIN`, `BUILD_SEC`. The RTC module uses them for the start values of its variables.
+```cpp
+#define BUILD_YEAR   // 0..99
+#define BUILD_MONTH  // 1..12
+#define BUILD_DAY    // 1..31
+#define BUILD_HOUR   // 0..23
+#define BUILD_MIN    // 0..59
+#define BUILD_SEC    // 0..59
+```
+
+`BuildTime.h` calculates the date and the time of the build from `__DATE__` and `__TIME__` at compile time. The RTC module includes this header and uses the values as the start values of its variables (refer to [6.8](#68-rtc-real-time-clock)). The values are of the compilation of the sketch on your computer, in its time zone.
 
 ## 8. Limits
 
 - The library supports only the ATtiny85 at 16 MHz from the PLL, on PCB rev 1.5.
-- `TMR::Millis` overflows after 65535 ms. Restart the timer for longer intervals, or use the real-time clock.
-- The RTC module does not use the day of the week, the century bit and the alarms. It supports the years 2000 to 2099.
+- `TMR::Millis` has 16 bits and wraps after 65535 ms. For longer times, count the minutes yourself or use the real-time clock.
+- The RTC module supports only the years 2000 to 2099, the 24-hour format and time zones in whole hours.
 - The I2C module does not examine the ACK bit.
-- The library takes some names of the global namespace: the module namespaces, the types `b08`..`w16`, the macros `set_bit`, `clr_bit`, `isb_set`, `isb_clr`, `F`, `FPSTR`, `D`, `DPSTR`, `DSTR`, `DATAMEM`, `NOINLINE` and the `I2C_*`, `KBD_*`, `LCD_*`, `PWR_*` macros.
+- The library takes some global names: the module namespaces, the types `b08`..`w16`, the macros `set_bit`, `clr_bit`, `isb_set`, `isb_clr`, `F`, `FPSTR`, `D`, `DPSTR`, `DSTR`, `DATAMEM`, `NOINLINE` and the `I2C_*`, `KBD_*`, `LCD_*`, `PWR_*` macros.
 
 ## 9. License
 

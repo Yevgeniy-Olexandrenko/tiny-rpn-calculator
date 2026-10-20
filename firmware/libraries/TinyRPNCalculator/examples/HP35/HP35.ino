@@ -9,8 +9,7 @@
 //   F C  clear all       F +- ln            F E  tangent      F F  y^x
 //
 // Without a key push for 60 seconds the device powers down, a key push powers
-// it up again with the same stack. For the full calculator with menus, watch
-// and TOTP codes, refer to the hp35 sketch of the project.
+// it up again with the same stack.
 // -----------------------------------------------------------------------------
 
 #define PCB_REVISION 15 // 15 - PCB rev 1.5
