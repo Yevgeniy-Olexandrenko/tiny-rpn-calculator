@@ -385,6 +385,21 @@ int main(int argc, char** argv)
 		expect("exponent rule", got, exp);
 	}
 
+	// Constant(): a number in the register layout enters X as a number key
+	// would: no stack lift after ENTER, a lift after a number
+	{
+		static const u08 c[7] PROGMEM = { 0x02, 0x99, 0x79, 0x24, 0x58, 0x00, 0x08 }; // 2.99792458 08
+		keys("CLR DSP . 2 3 ENTER"); HPVM::Constant(c);
+		expect("constant after ENTER", seg2str(HPVM::Display, sizeof(HPVM::Display)), " 299792458.0");
+		expect("constant: Y = 3", reg2str(HPVM::Y), "03000000000000");
+		keys("CLR 3"); HPVM::Constant(c);
+		expect("constant after 3: Y = 3", reg2str(HPVM::Y), "03000000000000");
+		check("constant * 3", "*", " 899377374.0");
+		HPVM::Constant(c);
+		check("digit after constant", "1", " 1.");
+		expect("constant lifted to Y", reg2str(HPVM::Y), "02997924580008");
+	}
+
 	// Reset(): the power-on state (FIX 2, memory clear), also while the ROM is
 	// busy with a key; the F2 input (DEG/RAD switch) is kept
 	keys("CLR DSP 4 5 STO 2 ENTER 3");

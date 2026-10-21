@@ -322,19 +322,28 @@ const TXT::Font digits7x16 PROGMEM =
 enum
 {
 	BASE = 0xFF,
-	KEY_NOP   = BASE - 0,
-	KEY_FUNC  = BASE - 1,
-	KEY_LAST  = BASE - 2,
-	KEY_ROTU  = BASE - 3,
-	MENU_MATH = BASE - 4,
-	MENU_TRIG = BASE - 5,
-	MENU_PROG = BASE - 6,
-	PROG_RAD  = BASE - 7,
-	PROG_DEG  = BASE - 8,
-	PROG_TIME = BASE - 9,
-	PROG_DATE = BASE - 10,
-	KEY_MEM   = BASE - 11,
-	PROG_OFF  = BASE - 12
+	KEY_NOP    = BASE - 0,
+	KEY_FUNC   = BASE - 1,
+	KEY_LAST   = BASE - 2,
+	KEY_ROTU   = BASE - 3,
+	MENU_MATH  = BASE - 4,
+	MENU_TRIG  = BASE - 5,
+	MENU_PROG  = BASE - 6,
+	MENU_CONST = BASE - 7,
+	PROG_RAD   = BASE - 8,
+	PROG_DEG   = BASE - 9,
+	PROG_TIME  = BASE - 10,
+	PROG_DATE  = BASE - 11,
+	KEY_MEM    = BASE - 12,
+	PROG_OFF   = BASE - 13,
+	CONST_E    = BASE - 14, // the constants go down in the order of constants[]
+	CONST_G    = BASE - 15,
+	CONST_C    = BASE - 16,
+	CONST_H    = BASE - 17,
+	CONST_QE   = BASE - 18,
+	CONST_D2R  = BASE - 19,
+	CONST_MI   = BASE - 20,
+	CONST_IN   = BASE - 21
 };
 
 const u08 mainOps[] DATAMEM =
@@ -344,7 +353,7 @@ const u08 mainOps[] DATAMEM =
 	HPVM::OpNUM8, HPVM::OpNUM9, HPVM::OpDOT_, HPVM::OpPUSH, HPVM::OpCLX_, HPVM::OpCHS_, HPVM::OpEEX_, KEY_FUNC,
 
 	// F-shifted operations
-	KEY_LAST,     HPVM::OpRCL_, HPVM::OpSTO_, HPVM::OpSUB_, HPVM::OpPI__, KEY_MEM,      HPVM::OpMUL_, MENU_TRIG,
+	KEY_LAST,     HPVM::OpRCL_, HPVM::OpSTO_, HPVM::OpSUB_, MENU_CONST,   KEY_MEM,      HPVM::OpMUL_, MENU_TRIG,
 	MENU_PROG,    HPVM::OpDIV_, HPVM::OpSWAP, HPVM::OpADD_, HPVM::OpCLR_, HPVM::OpROT_, KEY_ROTU,     MENU_MATH
 };
 
@@ -367,11 +376,38 @@ const u08 progOps[] DATAMEM =
 	PROG_TIME,    PROG_DATE, PROG_OFF
 };
 
+const u08 constOps[] DATAMEM =
+{
+	HPVM::OpPI__, CONST_E,   CONST_G,
+	CONST_C,      CONST_H,   CONST_QE,
+	CONST_D2R,    CONST_MI,  CONST_IN
+};
+
+// -----------------------------------------------------------------------------
+// Constants in the register layout of X: mantissa sign, 10 digits of the
+// mantissa, exponent sign and 2 digits (a negative exponent is 1000 - e)
+// -----------------------------------------------------------------------------
+
+const u08 constants[][7] PROGMEM =
+{
+	{ 0x02, 0x71, 0x82, 0x81, 0x82, 0x80, 0x00 }, // e  = 2.718281828
+	{ 0x09, 0x80, 0x66, 0x50, 0x00, 0x00, 0x00 }, // g  = 9.80665 m/s^2 (standard gravity, exact)
+	{ 0x02, 0x99, 0x79, 0x24, 0x58, 0x00, 0x08 }, // c  = 2.99792458E8 m/s (speed of light, exact)
+	{ 0x06, 0x62, 0x60, 0x70, 0x15, 0x09, 0x66 }, // h  = 6.62607015E-34 J s (Planck constant, exact)
+	{ 0x01, 0x60, 0x21, 0x76, 0x63, 0x49, 0x81 }, // qe = 1.602176634E-19 C (elementary charge, exact)
+	{ 0x01, 0x74, 0x53, 0x29, 0x25, 0x29, 0x98 }, // pi / 180 = 1.745329252E-2 (degrees to radians)
+	{ 0x01, 0x60, 0x93, 0x44, 0x00, 0x00, 0x00 }, // 1.609344 (miles to kilometers, exact)
+	{ 0x02, 0x54, 0x00, 0x00, 0x00, 0x00, 0x01 }, // 25.4 (inches to millimeters, exact)
+};
+
+static_assert(CONST_E - CONST_IN + 1 == sizeof(constants) / sizeof(constants[0]),
+	"executeOperation() finds the constant as CONST_E - operation");
+
 // -----------------------------------------------------------------------------
 // String arrays
 // -----------------------------------------------------------------------------
 
-const u08 strMonth[] DATAMEM = 
+const u08 strMonth[] DATAMEM =
 	"\03"
 	"JAN" "FEB" "MAR" "APR" "MAY" "JUN"
 	"JUL" "AUG" "SEP" "OCT" "NOV" "DEC";
@@ -392,6 +428,12 @@ const u08 strMenuProg[] DATAMEM =
 	" DSP  " " RAD  " " DEG  "  // Display format (DSP n: SCI, DSP . n: FIX), angle mode
 	" TIME " " DATE " " OFF  "; // Set clock time (H M S), date (D M Y), power off with reset
 
+const u08 strMenuConst[] DATAMEM =
+	"\06"
+	" PI   " " E    " " G    "  // Pi, e, standard gravity
+	" C    " " H    " " QE   "   // Speed of light, Planck constant, elementary charge
+	" D=R  " " MILE " " INCH "; // Degrees to radians ('=' is a dash), km in a mile, mm in an inch
+
 // -----------------------------------------------------------------------------
 // Menu structures
 // -----------------------------------------------------------------------------
@@ -405,12 +447,13 @@ struct Menu
 
 const Menu menus[] PROGMEM =
 {
-	{ sizeof(mathOps) / MENU_ITEMS_PER_LINE - 1, strMenuMath, mathOps },
-	{ sizeof(trigOps) / MENU_ITEMS_PER_LINE - 1, strMenuTrig, trigOps },
-	{ sizeof(progOps) / MENU_ITEMS_PER_LINE - 1, strMenuProg, progOps },
+	{ sizeof(mathOps)  / MENU_ITEMS_PER_LINE - 1, strMenuMath,  mathOps  },
+	{ sizeof(trigOps)  / MENU_ITEMS_PER_LINE - 1, strMenuTrig,  trigOps  },
+	{ sizeof(progOps)  / MENU_ITEMS_PER_LINE - 1, strMenuProg,  progOps  },
+	{ sizeof(constOps) / MENU_ITEMS_PER_LINE - 1, strMenuConst, constOps },
 };
 
-enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS };
+enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS, MENU_CONST_OPS };
 
-static_assert(MENU_MATH - MENU_TRIG == MENU_TRIG_OPS && MENU_MATH - MENU_PROG == MENU_PROG_OPS,
-	"executeOperation() finds the menu as MENU_MATH - operation");
+static_assert(MENU_MATH - MENU_TRIG == MENU_TRIG_OPS && MENU_MATH - MENU_PROG == MENU_PROG_OPS &&
+	MENU_MATH - MENU_CONST == MENU_CONST_OPS, "executeOperation() finds the menu as MENU_MATH - operation");

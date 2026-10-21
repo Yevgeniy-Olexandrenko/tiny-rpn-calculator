@@ -276,14 +276,14 @@ Each key has two functions:
 | <kbd>F</kbd> <kbd>2</kbd> | STO | <kbd>STO</kbd> | Copy X to the memory |
 | <kbd>F</kbd> <kbd>1</kbd> | RCL | <kbd>RCL</kbd> | Copy the memory to X |
 | <kbd>F</kbd> <kbd>5</kbd> | MEM+ | <kbd>M+</kbd> <kbd>M−</kbd> <kbd>M×</kbd> <kbd>M÷</kbd> | Start an operation with the memory and X (refer to [8.9](#89-memory-arithmetic)) |
-| <kbd>F</kbd> <kbd>4</kbd> | CONST | <kbd>π</kbd> | Enter π |
+| <kbd>F</kbd> <kbd>4</kbd> | CONST | — | Open the CONST menu (refer to [9.6](#96-const-menu-f-4)) |
 | <kbd>F</kbd> <kbd>0</kbd> | LAST | — | <img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle"> Do the last menu operation again |
 | <kbd>F</kbd> <kbd>F</kbd> | MATH | — | Open the MATH menu |
 | <kbd>F</kbd> <kbd>7</kbd> | TRIG | — | Open the TRIG menu |
 | <kbd>F</kbd> <kbd>8</kbd> | PROG | — | Open the PROG menu |
 
 > [!NOTE]
-> - <kbd>F</kbd> <kbd>0</kbd> (LAST) repeats only an operation that you selected in a menu (MATH, TRIG or PROG) or an operation with the memory (refer to [8.9](#89-memory-arithmetic)). It does not repeat the operations of the keyboard, for example <kbd>F</kbd> <kbd>↑</kbd> (+). If you did not use a menu operation before, it does nothing.
+> - <kbd>F</kbd> <kbd>0</kbd> (LAST) repeats only an operation that you selected in a menu (MATH, TRIG, PROG or CONST) or an operation with the memory (refer to [8.9](#89-memory-arithmetic)). It does not repeat the operations of the keyboard, for example <kbd>F</kbd> <kbd>↑</kbd> (+). If you did not use a menu operation before, it does nothing.
 > - <kbd>F</kbd> <kbd>C</kbd> (AC) does not clear the memory. To clear the memory, push <kbd>C</kbd> <kbd>F</kbd> <kbd>2</kbd> (STO). This also clears X.
 
 ## 7. Watch mode
@@ -379,7 +379,7 @@ To select the display format, use the operation DSP of the PROG menu (refer to [
 
 | Keys | HP-21 keys | Display format | Display |
 | --- | --- | --- | --- |
-| <kbd>F</kbd> <kbd>4</kbd> (CONST) | <kbd>π</kbd> | FIX 2 | `3.14` |
+| <kbd>F</kbd> <kbd>4</kbd> <kbd>1</kbd> (PI) | <kbd>π</kbd> | FIX 2 | `3.14` |
 | <kbd>F</kbd> <kbd>8</kbd> <kbd>1</kbd> (DSP) <kbd>.</kbd> <kbd>4</kbd> | <kbd>DSP</kbd> <kbd>.</kbd> <kbd>4</kbd> | FIX 4 | `3.1416` |
 | <kbd>F</kbd> <kbd>8</kbd> <kbd>1</kbd> (DSP) <kbd>.</kbd> <kbd>9</kbd> | <kbd>DSP</kbd> <kbd>.</kbd> <kbd>9</kbd> | FIX 9 | `3.141592654` |
 | <kbd>F</kbd> <kbd>8</kbd> <kbd>1</kbd> (DSP) <kbd>.</kbd> <kbd>0</kbd> | <kbd>DSP</kbd> <kbd>.</kbd> <kbd>0</kbd> | FIX 0 | `3.` |
@@ -514,7 +514,7 @@ A menu shows on the bottom line of the display. The top line shows X with small 
 
 In a menu, only these keys operate:
 
-<img src="images/rpn-calc-keyboard-menu.svg" alt="Keyboard: the keys that operate in a menu (F, 7, 8, E, ±, 1, 2, 3); the other keys are dim">
+<img src="images/rpn-calc-hp21-keyboard-menu.svg" alt="Keyboard: the keys that operate in a menu (F, 7, 8, E, 4, ±, 1, 2, 3); the other keys are dim">
 
 | Key | Function |
 | --- | --- |
@@ -524,6 +524,7 @@ In a menu, only these keys operate:
 | <kbd>F</kbd> | Open the MATH menu |
 | <kbd>7</kbd> | Open the TRIG menu |
 | <kbd>8</kbd> | Open the PROG menu |
+| <kbd>4</kbd> | Open the CONST menu |
 | Other keys | Close the menu. No operation occurs. |
 
 > [!TIP]
@@ -594,6 +595,31 @@ To look at the second result in Y, push <kbd>F</kbd>, or push <kbd>F</kbd> <kbd>
 | <kbd>±</kbd> <kbd>2</kbd> | DATE | — | Set the date (refer to [10.2](#102-set-the-date)) |
 | <kbd>±</kbd> <kbd>3</kbd> | OFF | OFF/ON switch | Turn off the device. Clear the stack and the memory, set FIX 2 (refer to [4.3](#43-automatic-power-off-and-power-on)) |
 
+### 9.6 CONST menu: <kbd>F</kbd> <kbd>4</kbd>
+
+<img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle"> The HP-21 has only π. The CONST menu adds common constants, physical constants and factors to convert units. The menu has three lines.
+
+<img src="images/rpn-calc-hp21-screen-menu-const.svg" alt="CONST menu. Line 1: PI, E, G. Line 2: C, H, QE. Line 3: D-R, MILE, INCH">
+
+| Keys in the menu | Item | Constant | Value |
+| --- | :---: | --- | --- |
+| <kbd>1</kbd> | PI | π (<kbd>π</kbd> of the HP-21) | 3.141592654 |
+| <kbd>2</kbd> | E | e, the base of the natural logarithm | 2.718281828 |
+| <kbd>3</kbd> | G | g, the standard acceleration of gravity, m/s² | 9.80665 |
+| <kbd>±</kbd> <kbd>1</kbd> | C | c, the speed of light in vacuum, m/s | 2.99792458 × 10⁸ |
+| <kbd>±</kbd> <kbd>2</kbd> | H | h, the Planck constant, J·s | 6.62607015 × 10⁻³⁴ |
+| <kbd>±</kbd> <kbd>3</kbd> | QE | e, the elementary charge, C | 1.602176634 × 10⁻¹⁹ |
+| <kbd>±</kbd> <kbd>±</kbd> <kbd>1</kbd> | D-R | Degrees to radians: π ÷ 180 | 1.745329252 × 10⁻² |
+| <kbd>±</kbd> <kbd>±</kbd> <kbd>2</kbd> | MILE | Miles to kilometers: kilometers in one mile | 1.609344 |
+| <kbd>±</kbd> <kbd>±</kbd> <kbd>3</kbd> | INCH | Inches to millimeters: millimeters in one inch | 25.4 |
+
+- A constant goes into X the same as a number that you enter. The stack lifts, but not after <kbd>↑</kbd> and <kbd>C</kbd> (refer to [8.1](#81-rpn-and-the-stack)).
+- The values of g, c, h, the elementary charge and the conversion factors are exact by definition. The calculator keeps all 10 digits. The display shows them in the display format, for example `299792458.0` for c in FIX 2.
+- To convert a value, enter it, select the factor, then push <kbd>F</kbd> <kbd>6</kbd> (×). For the opposite conversion, push <kbd>F</kbd> <kbd>9</kbd> (÷). For example, 60° in radians: <kbd>6</kbd> <kbd>0</kbd> <kbd>F</kbd> <kbd>4</kbd> <kbd>±</kbd> <kbd>±</kbd> <kbd>1</kbd> (D-R) <kbd>F</kbd> <kbd>6</kbd> (×) shows `1.05`.
+
+> [!NOTE]
+> The menu font has no arrow. The item D-R shows a dash for "to".
+
 ## 10. Set the time and the date
 
 > [!IMPORTANT]
@@ -656,7 +682,7 @@ Calculate π × 2.5².
 | 1 | <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> | <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> | `2.5` |
 | 2 | <kbd>↑</kbd> | <kbd>ENTER↑</kbd> | `2.50` |
 | 3 | <kbd>F</kbd> <kbd>6</kbd> (×) | <kbd>×</kbd> | `6.25` |
-| 4 | <kbd>F</kbd> <kbd>4</kbd> (CONST) | <kbd>π</kbd> | `3.14` |
+| 4 | <kbd>F</kbd> <kbd>4</kbd> <kbd>1</kbd> (PI) | <kbd>π</kbd> | `3.14` |
 | 5 | <kbd>F</kbd> <kbd>6</kbd> (×) | <kbd>×</kbd> | `19.63` |
 
 </details>
@@ -891,6 +917,9 @@ The left column shows the keys that open each menu. In the open menu, <kbd>1</kb
 | | 2: <kbd>±</kbd> | ASIN | ACOS | ATAN |
 | PROG<br><kbd>F</kbd> <kbd>8</kbd> | 1 | DSP | RAD | DEG |
 | | 2: <kbd>±</kbd> | TIME | DATE | OFF |
+| CONST<br><kbd>F</kbd> <kbd>4</kbd> | 1 | PI | E | G |
+| | 2: <kbd>±</kbd> | C | H | QE |
+| | 3: <kbd>±</kbd> <kbd>±</kbd> | D-R | MILE | INCH |
 
 **Memory arithmetic**
 

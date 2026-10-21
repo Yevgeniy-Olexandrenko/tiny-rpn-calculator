@@ -230,6 +230,21 @@ int main(int argc, char** argv)
 	expect("two keys X", display(), " 1.414213562");
 	expect("two keys Y", reg2str(HPVM::D), "05000000000999");
 
+	// Constant(): a number in the register layout enters X as a number key
+	// would: no stack lift after ENTER, a lift after a number
+	{
+		static const u08 c[7] PROGMEM = { 0x02, 0x99, 0x79, 0x24, 0x58, 0x00, 0x08 }; // 2.99792458 08
+		keys("CLR 3 ENTER"); HPVM::Constant(c);
+		expect("constant after ENTER", display(), " 299792458.");
+		expect("constant: Y = 3", reg2str(HPVM::D), "03000000000000");
+		keys("CLR 3"); HPVM::Constant(c);
+		expect("constant after 3: Y = 3", reg2str(HPVM::D), "03000000000000");
+		check("constant * 3", "*", " 899377374.");
+		HPVM::Constant(c);
+		check("digit after constant", "1", " 1.");
+		expect("constant lifted to Y", reg2str(HPVM::D), "02997924580008");
+	}
+
 	// Reset(): the power-on state, also while the ROM is busy with a key
 	keys("CLR 5 STO 2 ENTER 3");
 	HPVM::Operation(HPVM::OpSIN_);

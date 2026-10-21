@@ -678,5 +678,10 @@ menu_svg('rpn-calc-hp21-screen-menu-math.svg', 'MATH menu: line 1 y^x, square ro
     'strMenuMath', menu21(' 2.'));
 menu_svg('rpn-calc-hp21-screen-menu-trig.svg', 'TRIG menu: line 1 SIN, COS, TAN; line 2 ASIN, ACOS, ATAN', 'strMenuTrig', menu21(' 30.'));
 menu_svg('rpn-calc-hp21-screen-menu-prog.svg', 'PROG menu: line 1 DSP, RAD, DEG; line 2 TIME, DATE, OFF', 'strMenuProg', menu21(' 0.00'));
+menu_svg('rpn-calc-hp21-screen-menu-const.svg', 'CONST menu: line 1 PI, E, G; line 2 C, H, QE; line 3 D-R, MILE, INCH', 'strMenuConst', menu21(' 0.00'));
+
+# hp21 code.h: updateCalcMode() in a menu: F 4 7 8 open a menu, E ± change the line, 1 2 3 select an item
+write_svg('rpn-calc-hp21-keyboard-menu.svg', 'Keys that work in a menu: F, 7, 8, E, 4, ±, 1, 2, 3', $kbd_viewbox,
+    keyboard() . dim_keys('the other keys close the menu', [0, 3], [1, 2], [1, 3], [3, 0], [3, 1], [3, 2], [3, 3]));
 
 write_svg('rpn-calc-hp21-parts.svg', 'Business Card RPN Calculator with Watch: primary parts', '-10 -10 875 560', device($device_screen21) . $part_numbers);

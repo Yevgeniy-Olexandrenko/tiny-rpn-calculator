@@ -167,7 +167,11 @@ void executeOperation(u08 operation)
 	switch (operation)
 	{
 		default:
-			HPVM::Operation(operation);
+			// a constant of the CONST menu, otherwise a key of the ROM
+			if (operation >= CONST_IN && operation <= CONST_E)
+				HPVM::Constant(constants[CONST_E - operation]);
+			else
+				HPVM::Operation(operation);
 			break;
 
 		case KEY_FUNC:
@@ -201,6 +205,7 @@ void executeOperation(u08 operation)
 		case MENU_MATH:
 		case MENU_TRIG:
 		case MENU_PROG:
+		case MENU_CONST:
 			// the menu operations go down in the order of the menus
 			enterMenu(MENU_MATH - operation);
 			break;
@@ -337,6 +342,7 @@ void updateCalcMode()
 				case KBD::MATH: enterMenu(MENU_MATH_OPS); break;
 				case KBD::TRIG: enterMenu(MENU_TRIG_OPS); break;
 				case KBD::PROG: enterMenu(MENU_PROG_OPS); break;
+				case KBD::CONS: enterMenu(MENU_CONST_OPS); break;
 				case KBD::SEL1: case KBD::SEL2: case KBD::SEL3:
 					u08 index = select * MENU_ITEMS_PER_LINE + (newKey - KBD::SEL1);
 					u08 op = MEM::DataRead(menu.opsBase + index);

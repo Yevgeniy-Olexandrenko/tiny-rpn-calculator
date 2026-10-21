@@ -19,6 +19,7 @@ namespace HPVM
 	void OpAndWait(u08 op); // key press and wait for its result
 	void WaitIdle(); // runs the ROM until it waits for a key
 	void DisplayY(u08 (&disp)[sizeof(Display)]); // Y rendered as Display
+	void Constant(const u08* k); // enters a number of 7 bytes (PROGMEM) into X
 	void Error(); // clears the stack, shows the error
 	void Reset(); // power-on state, the ROM starts again
 	b08 Idling(); // true if idling
@@ -51,8 +52,8 @@ namespace HPVM
 	enum { COPY = 0, SWAP = 1 };
 
 	// operands of the P set and P test instructions are encoded differently
-	const u08 p_set_map[]  DATAMEM = { 0xE, 0x4, 0x7, 0x8, 0xB, 0x2, 0xA, 0xC, 0x1, 0x3, 0xD, 0x6, 0x0, 0x9, 0x5, 0xE };
-	const u08 p_test_map[] DATAMEM = { 0x4, 0x8, 0xC, 0x2, 0x9, 0x1, 0x6, 0x3, 0x1, 0xD, 0x5, 0x0, 0xB, 0xA, 0x7, 0x4 };
+	const u08 p_set_map[]  PROGMEM = { 0xE, 0x4, 0x7, 0x8, 0xB, 0x2, 0xA, 0xC, 0x1, 0x3, 0xD, 0x6, 0x0, 0x9, 0x5, 0xE };
+	const u08 p_test_map[] PROGMEM = { 0x4, 0x8, 0xC, 0x2, 0x9, 0x1, 0x6, 0x3, 0x1, 0xD, 0x5, 0x0, 0xB, 0xA, 0x7, 0x4 };
 
 	// registers, stored contiguously in this order: A..T are cleared together,
 	// stack registers C..T are moved and rotated by multi-register reg_move()
@@ -224,6 +225,24 @@ namespace HPVM
 		memcpy(disp, Display, sizeof(Display));
 		OpAndWait(OpSWAP);
 		s[STATUS_BIT_LIFT] = lift;
+	}
+
+	// enters a constant the way a number key does it: pi of the ROM (the
+	// model provides OpPI__) lifts the stack by the rules of the ROM and ends
+	// the number entry, then X gets the 14 digits of k (PROGMEM, 2 digits in
+	// a byte, the mantissa sign first, the register layout of X) and the ROM
+	// redraws it in the display format with x<>y twice of DisplayY()
+	void Constant(const u08* k)
+	{
+		OpAndWait(OpPI__);
+		for (u08 i = 0; i < 7; ++i)
+		{
+			u08 b = MEM::ProgRead(k + i);
+			C[13 - 2 * i] = b >> 4;
+			C[12 - 2 * i] = b & 0x0F;
+		}
+		u08 disp[sizeof(Display)];
+		DisplayY(disp);
 	}
 
 	// puts the calculator into the error state the way its ROM shows it:
@@ -409,18 +428,18 @@ namespace HPVM
 					pc = (u16(nnnn) << 8) | (pc & 0xFF);
 					break;
 				case 0x09: // IF P = n
-					carry = (p != MEM::DataRead(p_test_map + nnnn));
+					carry = (p != MEM::ProgRead(p_test_map + nnnn));
 					then_goto = 1;
 					break;
 				case 0x0B: // IF P # n
-					carry = (p == MEM::DataRead(p_test_map + nnnn));
+					carry = (p == MEM::ProgRead(p_test_map + nnnn));
 					then_goto = 1;
 					break;
 				case 0x0D: // DELAYED SELECT ROM n
 					del_rom = 0x10 | nnnn; // 0x10 marks the request
 					break;
 				case 0x0F: // n -> P
-					p = MEM::DataRead(p_set_map + nnnn);
+					p = MEM::ProgRead(p_set_map + nnnn);
 					break;
 			}
 		}

@@ -894,6 +894,7 @@ namespace HPVM
     b08  Idling();                                // true: ROM waits for a key
 
     void DisplayY(u08 (&disp)[sizeof(Display)]);  // Y in display format
+    void Constant(const u08* k);                  // enters 7 bytes (PROGMEM) as X
     void Error();                                 // clears stack, shows error
     void Reset();                                 // power-on state: all clear, ROM idle
 
@@ -923,8 +924,15 @@ namespace HPVM
 | `BP_IDLE` | The ROM address of the loop that waits for a key |
 | `STATUS_BIT_IDLE` | Classic only: the status bit that is set together with `BP_IDLE` in the idle state |
 | `STATUS_BIT_LIFT` | The status bit for "stack lift is on", used by `DisplayY()` |
-| `OpSWAP`, `OpINV_` | x↔y for `DisplayY()`, 1/x for `Error()` |
+| `OpSWAP`, `OpINV_`, `OpPI__` | x↔y for `DisplayY()`, 1/x for `Error()`, π for `Constant()` |
 | `char_gen` | Woodstock only: the 7-segment pattern of each digit value |
+
+**Constants.** `Constant(k)` enters a number as a number key does: it pushes π of the ROM, so the ROM lifts the stack by its own rules (not after <kbd>ENTER↑</kbd> and <kbd>CLx</kbd>) and ends the number entry, then it puts the number into X and lets the ROM redraw it. The number is 7 bytes in PROGMEM in the layout of X: 2 digits in a byte, the mantissa sign digit first (0 or 9), 10 digits of the mantissa, the exponent sign digit and 2 digits of the exponent (a negative exponent is 1000 − e). The model header provides `OpPI__`.
+
+```cpp
+const u08 light[7] PROGMEM = { 0x02, 0x99, 0x79, 0x24, 0x58, 0x00, 0x08 }; // 2.99792458 x 10^8
+HPVM::Constant(light);
+```
 
 **Power-on state.** `Reset()` puts the CPU into its state after power-on: all registers (the memory too) and the status are clear. Then it runs the ROM until the ROM waits for a key, so `Display` shows the start value: `0.` on the HP-35, `0.00` on the HP-21. The Woodstock inputs `F1` and `F2` do not change, because they are hardware, for example the DEG/RAD switch of the HP-21. A sketch can use `Reset()` for an OFF operation that clears the calculator as the power switch of the original.
 
