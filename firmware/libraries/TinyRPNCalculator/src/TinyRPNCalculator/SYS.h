@@ -6,6 +6,11 @@ namespace SYS
 {
 	void Init()
 	{
+		// after a watchdog reset WDRF forces WDE on, so the watchdog would
+		// reset the mcu again: the flag is cleared, TMR::Start() then sets
+		// the interrupt mode only
+		MCUSR = 0;
+
 		ADC::Init();
 		I2C::Init();
 		LCD::Init();

@@ -19,9 +19,11 @@ namespace TMR
 	NOINLINE
 	void wdt_setup(u08 wdtr)
 	{
+		// the timed sequence keeps WDIE set, so the watchdog is never
+		// in the plain reset mode, even for the 4 cycles of the change
 		const u08 sreg = SREG;
 		cli();
-		WDTCR = _BV(WDCE) | _BV(WDE);
+		WDTCR |= _BV(WDCE) | _BV(WDE);
 		WDTCR = wdtr;
 		SREG = sreg;
 	}
