@@ -408,3 +408,6 @@ const Menu menus[] PROGMEM =
 };
 
 enum { MENU_MATH_OPS, MENU_TRIG_OPS, MENU_PROG_OPS };
+
+static_assert(MENU_MATH - MENU_TRIG == MENU_TRIG_OPS && MENU_MATH - MENU_PROG == MENU_PROG_OPS,
+	"executeOperation() finds the menu as MENU_MATH - operation");

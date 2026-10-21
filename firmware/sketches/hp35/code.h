@@ -248,6 +248,10 @@ b08 getBCD(const HPVM::reg& r, u08& out, u08 min, u08 max)
 
 void executeOperation(u08 operation)
 {
+	// the sketch reads and changes the registers of the VM directly,
+	// so the previous operation must be finished first
+	HPVM::WaitIdle();
+
 	isFunc = false;
 	isMenu = false;
 	// repeat the last menu operation, including extended ones
@@ -286,15 +290,10 @@ void executeOperation(u08 operation)
 			break;
 
 		case MENU_MATH:
-			enterMenu(MENU_MATH_OPS);
-			break;
-
 		case MENU_TRIG:
-			enterMenu(MENU_TRIG_OPS);
-			break;
-
 		case MENU_PROG:
-			enterMenu(MENU_PROG_OPS);
+			// the menu operations go down in the order of the menus
+			enterMenu(MENU_MATH - operation);
 			break;
 
 		case PROG_TIME:
@@ -414,9 +413,9 @@ void renderCalcMode()
 
 void updateCalcMode()
 {
-	if (isMenu)
+	if (newKey != KBD::NONE)
 	{
-		if (newKey != KBD::NONE)
+		if (isMenu)
 		{
 			switch(newKey)
 			{
@@ -432,30 +431,27 @@ void updateCalcMode()
 					executeOperation(lastOp = op);
 					break;
 			}
-			renderCalcMode();
 		}
-	}
-	else
-	{
-		if (newKey != KBD::NONE)
+		else
 		{
 			u08 op = MEM::DataRead(mainOps + (isFunc ? 16 : 0) + newKey);
 			executeOperation(op);
-			renderCalcMode();
 		}
-
-		// local counter, unused cycles are carried to the next frame
-		u16 n = cycles + HPVM_CYCLES_PER_FRAME;
-		for (; n > 0; --n)
-		{
-			if (HPVM::Cycle())
-			{
-				renderCalcMode();
-				break;
-			}
-		}
-		cycles = n;
+		renderCalcMode();
 	}
+
+	// the ROM runs also while a menu is open, so that it finishes the
+	// calculation, local counter, unused cycles go to the next frame
+	u16 n = cycles + HPVM_CYCLES_PER_FRAME;
+	for (; n > 0; --n)
+	{
+		if (HPVM::Cycle())
+		{
+			renderCalcMode();
+			break;
+		}
+	}
+	cycles = n;
 }
 
 void enterCalcMode()

@@ -887,6 +887,7 @@ namespace HPVM
 
     void Operation(u08 op);                       // pushes the key
     void OpAndWait(u08 op);                       // and waits for the result
+    void WaitIdle();                              // waits until ROM is idle
     b08  Cycle();                                 // true if display changed
     b08  Idling();                                // true: ROM waits for a key
 
@@ -986,6 +987,8 @@ digit:  13   12 .. 3     2   1 0
 The registers of the stack are `C` (X), `D` (Y), `E` (Z) and `F` (T). The sketch can read them to get numbers for its own functions, and change them to do what the original keys cannot do.
 
 **Wait for the result.** `OpAndWait()` is necessary when the sketch itself uses the registers after an operation. `Operation()` only gives the key to the ROM, and the ROM changes the registers later. If the sketch reads a register at once, it gets the old value. If it changes a register at once, the ROM then uses the changed value, or writes over it. `OpAndWait()` runs the ROM until the result is ready and the ROM waits for the next key. After it, the registers are stable.
+
+The same is true before the sketch uses the registers. A long operation, for example a sine, takes approximately 3000 cycles, that is, many frames. During this time the registers contain intermediate values. Thus, call `WaitIdle()` before the sketch reads or changes the registers in reply to a key: it runs the ROM until the previous operation is complete. `DisplayY()` and `Error()` call `WaitIdle()` themselves, so you can call them at any time.
 
 For example, the HP-35 has no key that drops X from the stack. The ROM rolls the stack down with <kbd>R↓</kbd>, and then the sketch copies Z to T, so that T keeps its value:
 

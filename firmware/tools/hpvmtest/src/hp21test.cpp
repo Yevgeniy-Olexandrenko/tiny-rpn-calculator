@@ -284,6 +284,21 @@ int main(int argc, char** argv)
 	expect("error keeps M1", reg2str(HPVM::M1), "05000000000000");
 	check("after error", "3 ENTER RCL", " 5.00");
 
+	// DisplayY() and Error() while the ROM is still busy with a key
+	keys("CLR 3 0");
+	HPVM::Operation(HPVM::OpSIN_);
+	for (int i = 0; i < 50; ++i) HPVM::Cycle();
+	HPVM::Error();
+	run_to_idle();
+	expect("busy error shown", seg2str(HPVM::Display, sizeof(HPVM::Display)), " Error");
+	keys("CLR 3");
+	HPVM::Operation(HPVM::OpPUSH);
+	for (int i = 0; i < 5; ++i) HPVM::Cycle();
+	HPVM::DisplayY(hidden);
+	keys("PI");
+	expect("busy func lift Y", reg2str(HPVM::Y), "03000000000000");
+	expect("busy func lift Z", reg2str(HPVM::Z), "00000000000000");
+
 	// low battery: F1 high keeps S5 clear, ROM lights all dots
 	HPVM::F1 = true; HPVM::s[HPVM::STATUS_BIT_F1] = 0;
 	check("low battery", "CLR 1 2 ENTER", " 1.20.0. . . . .");

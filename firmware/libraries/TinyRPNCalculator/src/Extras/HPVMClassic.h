@@ -18,6 +18,7 @@ namespace HPVM
 	// public interface
 	void Operation(u08 op); // key press, the previous one is finished first
 	void OpAndWait(u08 op); // key press and wait for its result
+	void WaitIdle(); // runs the ROM until it waits for a key
 	void DisplayY(u08 (&disp)[sizeof(Display)]); // Y rendered as Display
 	void Error(); // clears the stack, shows the error
 	b08 Idling(); // true if idling
@@ -166,8 +167,7 @@ namespace HPVM
 		p = (p - 1) & 0x0F;
 	}
 
-	// runs the ROM until it waits for a key
-	void wait_idle()
+	void WaitIdle()
 	{
 		while (!Idling()) Cycle();
 	}
@@ -186,7 +186,7 @@ namespace HPVM
 		}
 
 		// finish the previous key and handle operation key
-		wait_idle();
+		WaitIdle();
 		key_pc = MEM::DataRead(key_tokens + op);
 		s[STATUS_BIT_KEY] = 1;
 		bp_idle = 0;
@@ -195,7 +195,7 @@ namespace HPVM
 	void OpAndWait(u08 op)
 	{
 		Operation(op);
-		wait_idle();
+		WaitIdle();
 	}
 
 	// renders Y the same way as Display, by x<>y twice (the model provides
@@ -204,6 +204,7 @@ namespace HPVM
 	// next operation still replaces X
 	void DisplayY(u08 (&disp)[sizeof(Display)])
 	{
+		WaitIdle();
 		u08 lift = s[STATUS_BIT_LIFT];
 		OpAndWait(OpSWAP);
 		memcpy(disp, Display, sizeof(Display));
@@ -216,6 +217,7 @@ namespace HPVM
 	// (the model provides OpINV_), memory registers are kept
 	void Error()
 	{
+		WaitIdle();
 		for (u08 i = rC * sizeof(reg); i < (rC + 4) * sizeof(reg); ++i) ((bcd*)regs)[i] = 0;
 		Operation(OpINV_);
 	}
