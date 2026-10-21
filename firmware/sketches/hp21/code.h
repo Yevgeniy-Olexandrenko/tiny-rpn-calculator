@@ -230,9 +230,20 @@ void executeOperation(u08 operation)
 
 void renderCalcNumber(const u08 * segs, u08 y)
 {
+	// the exponent is in positions 9..11 (sign, 2 digits): then the sign
+	// position is blank or a dash, a mantissa digit is never there; as on
+	// hp35, the exponent is drawn by the small font in the last 3 cells
+	u08 sign = segs[9];
+	b08 isExp = (sign == TXT::SEG_SPACE || sign == TXT::SEG_DASH) && (segs[10] | segs[11]);
+
 	// the dot is a part of the display position, but drawn as a separate char
 	for (u08 i = 0, x = 0; i < sizeof(HPVM::Display); ++i)
 	{
+		if (i == 9 && isExp)
+		{
+			TXT::SetFont(digits7x16);
+			x = CALC_POS_EXPONENT;
+		}
 		u08 seg = segs[i];
 		TXT::PrintSeg(seg & ~TXT::SEG_DOT, x, y);
 		TXT::NextPos(x);
@@ -263,22 +274,26 @@ void renderCalcMode()
 	LCD::Clear();
 	TXT::SetFont(digits7x16);
 
-	u08 flagsY = isMenu ? 0 : 2;
+	// indicators at the right edge: the top place shows F, else R, else S
+	// in a menu (the menu covers the bottom place), the bottom place shows S
+	b08 isStorage = false;
 	for (u08 i = 0; i < sizeof(HPVM::M1); ++i)
 	{
-		if (HPVM::M1[i])
-		{
-			TXT::PrintChar(FLAG_STORAGE, FLAG_POS, flagsY);
-			break;
-		}
+		if (HPVM::M1[i]) isStorage = true;
 	}
-	if (HPVM::F2) TXT::PrintChar(FLAG_RADIANS, FLAG_POS_2, flagsY);
+	if (isFunc)
+		TXT::PrintChar(FLAG_FUNCTION, FLAG_POS, 0);
+	else if (HPVM::F2)
+		TXT::PrintChar(FLAG_RADIANS, FLAG_POS, 0);
+	else if (isMenu && isStorage)
+		TXT::PrintChar(FLAG_STORAGE, FLAG_POS, 0);
+	if (!isMenu && isStorage)
+		TXT::PrintChar(FLAG_STORAGE, FLAG_POS, 2);
 
 	if (isFunc)
 	{
 		renderCalcNumber(hidden, 0);
 		renderCalcNumber(HPVM::Display, 2);
-		TXT::PrintChar(FLAG_FUNCTION, FLAG_POS, 0);
 	}
 	else if (isMenu)
 	{

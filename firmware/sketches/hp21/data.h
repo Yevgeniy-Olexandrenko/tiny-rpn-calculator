@@ -9,10 +9,13 @@
 
 #define FLAG_CHAR_W           (7)
 #define FLAG_POS              (LCD::WIDTH - FLAG_CHAR_W)
-#define FLAG_POS_2            (FLAG_POS - FLAG_CHAR_W - 1)
 #define FLAG_FUNCTION         'i'
 #define FLAG_STORAGE          'j'
 #define FLAG_RADIANS          'k'
+
+// cells of a number as on hp35: the exponent after sign, 10 digits and dot
+#define CALC_CHAR_W           (7 + 1)
+#define CALC_POS_EXPONENT     (12 * CALC_CHAR_W)
 
 #define MENU_CHAR_W           (5 + 1)
 #define MENU_ITEM_W           ((1 + 4 + 1) * MENU_CHAR_W)

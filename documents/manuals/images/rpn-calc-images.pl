@@ -230,11 +230,15 @@ sub display21 {
     return \@segs;
 }
 
-# hp21 code.h: renderCalcNumber(), renderCalcMode(); the dot is a separate char
+# hp21 code.h: renderCalcNumber(), renderCalcMode(); the dot is a separate char,
+# the exponent (positions 9..11, its sign blank or a dash) is small in the last 3 cells
 sub render_number21 {
     my ($segs, $y) = @_;
     my $x = 0;
-    for my $seg (@$segs) {
+    my $exp = ($segs->[9] == 0x00 || $segs->[9] == 0x40) && ($segs->[10] | $segs->[11]);
+    for my $i (0 .. $#$segs) {
+        my $seg = $segs->[$i];
+        if ($i == 9 && $exp) { set_font('digits7x16'); $x = def('CALC_POS_EXPONENT') }
         print_seg($seg & 0x7F, $x, $y);
         next_pos($x);
         if ($seg & 0x80) { print_seg(0x80, $x, $y); next_pos($x) }
@@ -244,13 +248,14 @@ sub render_calc21 {
     my (%a) = @_;   # as render_calc(), radians => 1
     lcd_clear();
     set_font('digits7x16');
-    my $flags_y = $a{menu} ? 0 : 2;
-    print_char(def('FLAG_STORAGE'), def('FLAG_POS'), $flags_y) if $a{memory};
-    print_char(def('FLAG_RADIANS'), def('FLAG_POS_2'), $flags_y) if $a{radians};
+    # the top place: F, else R, else S in a menu; the bottom place: S
+    if    ($a{y})                     { print_char(def('FLAG_FUNCTION'), def('FLAG_POS'), 0) }
+    elsif ($a{radians})               { print_char(def('FLAG_RADIANS'),  def('FLAG_POS'), 0) }
+    elsif ($a{menu} && $a{memory})    { print_char(def('FLAG_STORAGE'),  def('FLAG_POS'), 0) }
+    print_char(def('FLAG_STORAGE'), def('FLAG_POS'), 2) if $a{memory} && !$a{menu};
     if ($a{y}) {
         render_number21($a{y}, 0);
         render_number21($a{x}, 2);
-        print_char(def('FLAG_FUNCTION'), def('FLAG_POS'), 0);
     }
     elsif ($a{menu}) {
         render_number21($a{x}, 0);

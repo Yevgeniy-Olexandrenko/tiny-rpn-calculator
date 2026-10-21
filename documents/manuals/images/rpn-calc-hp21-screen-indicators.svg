@@ -5,5 +5,5 @@
     .screen   { fill: #151b23; stroke: #3d444d; stroke-width: 1; }
   </style>
   <rect class="screen" x="0.5" y="0.5" width="543" height="159" rx="8"/>
-  <path class="pixel" transform="translate(16 16) scale(4)" d="M9 1v1h5v-1zM9 15v1h5v-1zM9 29v1h5v-1zM14 2v13h1v-13zM14 16v13h1v-13zM18 26v3h3v-3zM30 2v13h1v-13zM30 16v13h1v-13zM32 2v13h1v-13zM33 15v1h5v-1zM38 2v13h1v-13zM38 16v13h1v-13zM113 17v13h1v-13zM114 17v1h4v-1zM114 29v1h2v-1zM116 20v2h1v-2zM116 24v6h1v-6zM117 29v1h2v-1zM118 17v2h1v-2zM118 23v1h1v-1zM119 17v13h1v-13zM121 17v13h1v-13zM122 17v2h1v-2zM122 23v4h1v-4zM122 29v1h4v-1zM123 17v1h4v-1zM123 24v3h2v-3zM124 20v2h2v-2zM126 20v3h1v-3zM126 28v2h1v-2zM127 17v13h1v-13z"/>
+  <path class="pixel" transform="translate(16 16) scale(4)" d="M9 1v1h5v-1zM9 15v1h5v-1zM9 29v1h5v-1zM14 2v13h1v-13zM14 16v13h1v-13zM18 26v3h3v-3zM30 2v13h1v-13zM30 16v13h1v-13zM32 2v13h1v-13zM33 15v1h5v-1zM38 2v13h1v-13zM38 16v13h1v-13zM121 1v13h1v-13zM121 17v13h1v-13zM122 1v1h4v-1zM122 13v1h2v-1zM122 17v2h1v-2zM122 23v4h1v-4zM122 29v1h4v-1zM123 17v1h4v-1zM123 24v3h2v-3zM124 4v2h1v-2zM124 8v6h1v-6zM124 20v2h2v-2zM125 13v1h2v-1zM126 1v2h1v-2zM126 7v1h1v-1zM126 20v3h1v-3zM126 28v2h1v-2zM127 1v13h1v-13zM127 17v13h1v-13z"/>
 </svg>

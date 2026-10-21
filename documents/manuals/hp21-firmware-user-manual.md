@@ -338,7 +338,7 @@ For more data about RPN, read the [HP-21 Owner's Handbook](hp21-oh-en.pdf).
 
 ### 8.2 Display
 
-The display shows the number in X with large digits. It has the 12 positions of the HP-21 display. The decimal point shows between two positions.
+The display shows the number in X with large digits. It has the 12 positions of the HP-21 display. The decimal point shows between two positions. The exponent shows with small digits at the top right.
 
 <img src="images/rpn-calc-hp21-screen-number.svg" alt="Calculator screens: 3.14 in fixed point notation; 6.0221408 with the exponent 23 in scientific notation">
 
@@ -416,6 +416,8 @@ Indicators show on the right side of the display:
 | **F** (box with the letter F) | The <kbd>F</kbd> key is active. The next key does its shifted function. |
 | **S** (box with the letter S, from "Store") | The memory contains a value that is not zero. |
 | **R** (box with the letter R, from "Radians") | The angle mode is radians (refer to [8.8](#88-angles)). |
+
+The indicators have two places at the right edge. **S** uses the bottom place. The top place shows **F** when <kbd>F</kbd> is active, otherwise **R**. In a menu, the menu covers the bottom place: if R does not show, S shows in the top place.
 
 <img src="images/rpn-calc-hp21-screen-indicators.svg" alt="Calculator screen: 3.14 and the R and S indicators">
 

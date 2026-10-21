@@ -336,6 +336,53 @@ int main(int argc, char** argv)
 	keys("CLR 1 2 3 . 5");
 	expect("entry 123.5 C", reg2str(HPVM::C), "01235000000002");
 
+	// the sketch (renderCalcNumber() of hp21 code.h) finds the exponent by the
+	// display only: position 9 blank or a dash, something in positions 10..11;
+	// the ROM marks the exponent sign position by B bit 1 (positions 0..11 are
+	// A/B digits 13..2, position 9 is B[4]); compare both after every key of
+	// all display formats and numbers of different kinds, also during entry
+	{
+		const char* numbers[] =
+		{
+			"1", "1 2 3 4 5 6 7 8 9 0", "1 2 3 4 5 6 7 8 9 0 1 2", ". 0 0 0 1 2 3", "0", "CHS 5",
+			"1 2 3 4 5 6 7 8 . 9 EEX 2 1", "1 EEX 9 9", "1 EEX 9 9 CHS", "1 . 5 CHS EEX 5 CHS",
+			"EEX 3", "9 EEX 9 9 ENTER 1 0 *", "1 EEX 9 9 CHS ENTER 1 0 /", "0 1/x", "1 EEX 9 ENTER",
+			"1 EEX 1 0 ENTER", "1 EEX 5 CHS ENTER", "2 SQRT", "PI CHS", "3 ENTER 1 2 /", "1 ENTER 7 /",
+		};
+		int n = 0, bad = 0, with_exp = 0;
+		for (int sci = 0; sci < 2; ++sci)
+		{
+			for (int digits = 0; digits <= 9; ++digits)
+			{
+				for (const char* num : numbers)
+				{
+					std::string dsp = std::string("CLR DSP ") + (sci ? "" : ". ") + char('0' + digits);
+					keys(dsp.c_str());
+					std::istringstream in(std::string(num) + " ENTER");
+					std::string t;
+					while (in >> t)
+					{
+						keys(t.c_str());
+						const u08* d = HPVM::Display;
+						bool digits_10_11 = (d[10] | d[11]) != 0;
+						bool sketch = (d[9] == TXT::SEG_SPACE || d[9] == TXT::SEG_DASH) && digits_10_11;
+						bool rom = (HPVM::B[4] & 2) && digits_10_11;
+						++n; with_exp += rom;
+						if (sketch != rom)
+						{
+							if (++bad <= 5) printf("  %s, %s, after '%s': [%s] sketch %d, ROM %d\n", dsp.c_str(), num,
+								t.c_str(), seg2str(d, sizeof(HPVM::Display)).c_str(), sketch, rom);
+						}
+					}
+				}
+			}
+		}
+		char got[64]; sprintf(got, "%d of %d displays differ", bad, n);
+		char exp[64]; sprintf(exp, "0 of %d displays differ", n);
+		printf("     %d displays with an exponent, %d without\n", with_exp, n - with_exp);
+		expect("exponent rule", got, exp);
+	}
+
 	// key timing
 	long c0 = total_cycles; keys("CLR 3 0 SIN");
 	printf("CLR 3 0 SIN: %ld cycles\n", total_cycles - c0);
