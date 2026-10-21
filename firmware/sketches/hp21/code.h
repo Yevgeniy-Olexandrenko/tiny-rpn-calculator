@@ -507,7 +507,7 @@ int main()
 			// power down and go to sleeping
 			SYS::Down();
 
-			// power up an switch to rtc operation mode
+			// power up and switch to rtc operation mode
 			enterRTCMode();
 		}
 

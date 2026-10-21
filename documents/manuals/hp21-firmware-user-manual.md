@@ -49,6 +49,7 @@ The device has a different keyboard, display and power supply. The table shows t
 | --- | --- |
 | 30 keys. The blue shift key selects the functions on the front faces of the keys. | 16 keys. The <kbd>F</kbd> key selects the shifted functions and opens the menus (refer to [6](#6-keyboard) and [9](#9-menus)). |
 | DEG/RAD switch. | The items RAD and DEG of the PROG menu, and the R indicator (refer to [8.8](#88-angles)). |
+| Four keys for the arithmetic in the memory: <kbd>M+</kbd>, <kbd>M−</kbd>, <kbd>M×</kbd>, <kbd>M÷</kbd>. | <kbd>F</kbd> <kbd>5</kbd> (MEM+), then the key of the arithmetic operation (refer to [8.9](#89-memory-arithmetic)). |
 | OFF/ON switch. When you turn the HP-21 off and on again, it clears the stack and the memory, and sets the display format FIX 2. | The device turns off automatically. It keeps the stack, the memory, the display format and the angle mode. The item OFF of the PROG menu turns it off and clears it as the OFF/ON switch (refer to [4.3](#43-automatic-power-off-and-power-on)). |
 | Low-power warning: all decimal points light. | The battery indicator on the watch screen (refer to [4.2](#42-battery-indicator)). |
 | LED display with 12 positions. | OLED display. In calculator mode, it shows the same 12 positions (refer to [8.2](#82-display)). |
@@ -277,7 +278,7 @@ Each key has two functions:
 | <kbd>F</kbd> <kbd>1</kbd> | RCL | <kbd>RCL</kbd> | Copy the memory to X |
 | <kbd>F</kbd> <kbd>5</kbd> | MEM+ | <kbd>M+</kbd> <kbd>M−</kbd> <kbd>M×</kbd> <kbd>M÷</kbd> | Start an operation with the memory and X (refer to [8.9](#89-memory-arithmetic)) |
 | <kbd>F</kbd> <kbd>4</kbd> | CONST | — | Open the CONST menu (refer to [9.6](#96-const-menu-f-4)) |
-| <kbd>F</kbd> <kbd>0</kbd> | LAST | — | <img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle"> Do the last menu operation again |
+| <kbd>F</kbd> <kbd>0</kbd> | LAST | — | <img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle"> Do the last menu or memory operation again |
 | <kbd>F</kbd> <kbd>F</kbd> | MATH | — | Open the MATH menu |
 | <kbd>F</kbd> <kbd>7</kbd> | TRIG | — | Open the TRIG menu |
 | <kbd>F</kbd> <kbd>8</kbd> | PROG | — | Open the PROG menu |

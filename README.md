@@ -28,7 +28,7 @@ Each firmware emulates one HP calculator. The source code of each firmware is an
 | Firmware | Calculator | Added functions | Status |
 | --- | --- | --- | --- |
 | [HP-35 Firmware](firmware/sketches/hp35) | HP-35 (1972), the first pocket calculator with scientific functions | Watch, TOTP codes for two-factor authentication | Ready |
-| [HP-21 Firmware](firmware/sketches/hp21) | HP-21 (1975) | Watch | Not tested on the device |
+| [HP-21 Firmware](firmware/sketches/hp21) | HP-21 (1975) | Watch, menu of constants, x², root of order X, remainder (MOD), exchange of X and the memory, OFF with a reset | Not tested on the device |
 
 To install the firmware, refer to the firmware installation section of its manual: [HP-35 Firmware](documents/manuals/hp35-firmware-user-manual.md#14-firmware-installation), [HP-21 Firmware](documents/manuals/hp21-firmware-user-manual.md#13-firmware-installation).
 
