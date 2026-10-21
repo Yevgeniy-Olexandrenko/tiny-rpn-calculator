@@ -333,7 +333,8 @@ enum
 	PROG_DEG  = BASE - 8,
 	PROG_TIME = BASE - 9,
 	PROG_DATE = BASE - 10,
-	KEY_MEM   = BASE - 11
+	KEY_MEM   = BASE - 11,
+	PROG_OFF  = BASE - 12
 };
 
 const u08 mainOps[] DATAMEM =
@@ -363,7 +364,7 @@ const u08 trigOps[] DATAMEM =
 const u08 progOps[] DATAMEM =
 {
 	HPVM::OpDSP_, PROG_RAD,  PROG_DEG,
-	PROG_TIME,    PROG_DATE, KEY_NOP
+	PROG_TIME,    PROG_DATE, PROG_OFF
 };
 
 // -----------------------------------------------------------------------------
@@ -389,7 +390,7 @@ const u08 strMenuTrig[] DATAMEM =
 const u08 strMenuProg[] DATAMEM =
 	"\06"
 	" DSP  " " RAD  " " DEG  "  // Display format (DSP n: SCI, DSP . n: FIX), angle mode
-	" TIME " " DATE " "      "; // Set clock time (H M S), date (D M Y)
+	" TIME " " DATE " " OFF  "; // Set clock time (H M S), date (D M Y), power off with reset
 
 // -----------------------------------------------------------------------------
 // Menu structures

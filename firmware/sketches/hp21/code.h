@@ -98,6 +98,7 @@ void setupAndEnterRTCMode()
 b08 isFunc;
 b08 isMenu;
 b08 isMem; // storage arithmetic: the next key selects the operation with M1
+b08 powerOff; // OFF: power down in the next frame, the calculator starts again
 
 Menu menu;
 u08  select;
@@ -191,6 +192,10 @@ void executeOperation(u08 operation)
 
 		case PROG_RAD:
 			HPVM::F2 = true;
+			break;
+
+		case PROG_OFF:
+			powerOff = true;
 			break;
 
 		case MENU_MATH:
@@ -402,9 +407,18 @@ int main()
 		// handle display contrast change
 		LCD::Contrast(mode == MODE_RTC || timeout >= DIMOUT_MILLIS ? 0x00 : 0xFF);
 
-		// handle power down condition
-		if (timeout >= POWEROFF_MILLIS)
+		// handle power down condition: the timeout or OFF of the PROG menu
+		if (timeout >= POWEROFF_MILLIS || powerOff)
 		{
+			// OFF clears the calculator, as the power-off of the original;
+			// the DEG/RAD switch (F2) is kept
+			if (powerOff)
+			{
+				HPVM::Reset();
+				lastOp = KEY_NOP;
+				powerOff = false;
+			}
+
 			// power down and go to sleeping
 			SYS::Down();
 

@@ -49,7 +49,7 @@ The device has a different keyboard, display and power supply. The table shows t
 | --- | --- |
 | 30 keys. The blue shift key selects the functions on the front faces of the keys. | 16 keys. The <kbd>F</kbd> key selects the shifted functions and opens the menus (refer to [6](#6-keyboard) and [9](#9-menus)). |
 | DEG/RAD switch. | The items RAD and DEG of the PROG menu, and the R indicator (refer to [8.8](#88-angles)). |
-| OFF/ON switch. When you turn the HP-21 off and on again, it clears the stack and the memory, and sets the display format FIX 2. | The device turns off automatically. It keeps the stack, the memory, the display format and the angle mode (refer to [4.3](#43-automatic-power-off-and-power-on)). |
+| OFF/ON switch. When you turn the HP-21 off and on again, it clears the stack and the memory, and sets the display format FIX 2. | The device turns off automatically. It keeps the stack, the memory, the display format and the angle mode. The item OFF of the PROG menu turns it off and clears it as the OFF/ON switch (refer to [4.3](#43-automatic-power-off-and-power-on)). |
 | Low-power warning: all decimal points light. | The battery indicator on the watch screen (refer to [4.2](#42-battery-indicator)). |
 | LED display with 12 positions. | OLED display. In calculator mode, it shows the same 12 positions (refer to [8.2](#82-display)). |
 
@@ -126,7 +126,7 @@ The device has the size and the proportions of a credit card. The drawing shows 
 For the types of the parts, refer to [14](#14-technical-data).
 
 > [!NOTE]
-> The device has no ON/OFF switch. The firmware turns the device off automatically (refer to [4.3](#43-automatic-power-off-and-power-on)).
+> The device has no ON/OFF switch. The firmware turns the device off automatically, or when you select OFF in the PROG menu (refer to [4.3](#43-automatic-power-off-and-power-on)).
 
 ## 4. Power and battery
 
@@ -179,6 +179,13 @@ The device always starts in watch mode.
 > - The keys in the two top rows do not turn on the device. The voltage from these keys is too low to start the microcontroller.
 > - The key that turns on the device does not do an operation.
 > - When the device is off, the calculator keeps the stack (X, Y, Z, T), the memory, the display format and the angle mode. When you go back to calculator mode, you can continue your calculation.
+
+**Turn off with a reset.** The HP-21 loses the stack and the memory when you turn it off. To do the same on this calculator, push <kbd>F</kbd> <kbd>8</kbd> <kbd>±</kbd> <kbd>3</kbd> (OFF):
+
+- The device turns off at once.
+- The calculator clears the stack (X, Y, Z, T) and the memory, and sets the display format FIX 2.
+- The angle mode does not change, the same as the DEG/RAD switch of the HP-21.
+- To turn on the device, push a key in the two bottom rows. The device starts in watch mode, as after an automatic power-off.
 
 ### 4.4 Empty battery
 
@@ -576,7 +583,7 @@ To look at the second result in Y, push <kbd>F</kbd>, or push <kbd>F</kbd> <kbd>
 
 ### 9.5 PROG menu: <kbd>F</kbd> <kbd>8</kbd>
 
-<img src="images/rpn-calc-hp21-screen-menu-prog.svg" alt="PROG menu. Line 1: DSP, RAD, DEG. Line 2: TIME, DATE">
+<img src="images/rpn-calc-hp21-screen-menu-prog.svg" alt="PROG menu. Line 1: DSP, RAD, DEG. Line 2: TIME, DATE, OFF">
 
 | Keys in the menu | Item | HP-21 key | Function |
 | --- | :---: | --- | --- |
@@ -585,6 +592,7 @@ To look at the second result in Y, push <kbd>F</kbd>, or push <kbd>F</kbd> <kbd>
 | <kbd>3</kbd> | DEG | DEG/RAD switch | Use degrees (refer to [8.8](#88-angles)) |
 | <kbd>±</kbd> <kbd>1</kbd> | TIME | — | Set the time (refer to [10.1](#101-set-the-time)) |
 | <kbd>±</kbd> <kbd>2</kbd> | DATE | — | Set the date (refer to [10.2](#102-set-the-date)) |
+| <kbd>±</kbd> <kbd>3</kbd> | OFF | OFF/ON switch | Turn off the device. Clear the stack and the memory, set FIX 2 (refer to [4.3](#43-automatic-power-off-and-power-on)) |
 
 ## 10. Set the time and the date
 
@@ -882,7 +890,7 @@ The left column shows the keys that open each menu. In the open menu, <kbd>1</kb
 | TRIG<br><kbd>F</kbd> <kbd>7</kbd> | 1 | SIN | COS | TAN |
 | | 2: <kbd>±</kbd> | ASIN | ACOS | ATAN |
 | PROG<br><kbd>F</kbd> <kbd>8</kbd> | 1 | DSP | RAD | DEG |
-| | 2: <kbd>±</kbd> | TIME | DATE | — |
+| | 2: <kbd>±</kbd> | TIME | DATE | OFF |
 
 **Memory arithmetic**
 

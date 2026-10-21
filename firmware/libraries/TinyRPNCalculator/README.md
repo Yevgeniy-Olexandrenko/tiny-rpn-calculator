@@ -895,6 +895,7 @@ namespace HPVM
 
     void DisplayY(u08 (&disp)[sizeof(Display)]);  // Y in display format
     void Error();                                 // clears stack, shows error
+    void Reset();                                 // power-on state: all clear, ROM idle
 
     using reg = u08[14];                          // 14 BCD digits
     reg& A, B, C, ...;                            // registers, C is X
@@ -924,6 +925,8 @@ namespace HPVM
 | `STATUS_BIT_LIFT` | The status bit for "stack lift is on", used by `DisplayY()` |
 | `OpSWAP`, `OpINV_` | x↔y for `DisplayY()`, 1/x for `Error()` |
 | `char_gen` | Woodstock only: the 7-segment pattern of each digit value |
+
+**Power-on state.** `Reset()` puts the CPU into its state after power-on: all registers (the memory too) and the status are clear. Then it runs the ROM until the ROM waits for a key, so `Display` shows the start value: `0.` on the HP-35, `0.00` on the HP-21. The Woodstock inputs `F1` and `F2` do not change, because they are hardware, for example the DEG/RAD switch of the HP-21. A sketch can use `Reset()` for an OFF operation that clears the calculator as the power switch of the original.
 
 **Run in real time.** `Operation()` only gives the key to the ROM, and the ROM does the work in the next `Cycle()` calls. To run the calculator at the speed of the original, give it the cycles of one frame in each frame. A redraw of the display takes time, so draw at most once per frame: when the display changes, stop, and keep the rest of the cycles for the next frame:
 

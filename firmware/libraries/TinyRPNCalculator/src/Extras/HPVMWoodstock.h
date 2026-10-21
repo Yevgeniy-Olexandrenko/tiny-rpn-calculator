@@ -20,6 +20,7 @@ namespace HPVM
 	void WaitIdle(); // runs the ROM until it waits for a key
 	void DisplayY(u08 (&disp)[sizeof(Display)]); // Y rendered as Display
 	void Error(); // clears the stack, shows the error
+	void Reset(); // power-on state, the ROM starts again
 	b08 Idling(); // true if idling
 	b08 Cycle();  // true if display updated
 
@@ -233,6 +234,23 @@ namespace HPVM
 		WaitIdle();
 		for (u08 i = rC * sizeof(reg); i < (rC + 4) * sizeof(reg); ++i) ((bcd*)regs)[i] = 0;
 		Operation(OpINV_);
+	}
+
+	// the state after power-on: the ROM starts again from address 0 with all
+	// registers (the memory too) and the status clear, as the original loses
+	// them without power, and runs until it waits for a key, so the display
+	// is drawn; the ROM sets the rest before use (the return stack, the key
+	// code, the field); F1 and F2 are inputs (HP-21: a switch), kept
+	NOINLINE
+	void Reset()
+	{
+		memset(regs, 0, sizeof(regs));
+		memset(s, 0, sizeof(s));
+		pc = 0;
+		del_rom = carry = p = f = 0;
+		base = 10;
+		disp_enable = key_hit = then_goto = false;
+		WaitIdle();
 	}
 
 	b08 Idling()

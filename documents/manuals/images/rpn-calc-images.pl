@@ -677,6 +677,6 @@ sub menu21 { my $x = shift; sub { render_calc21(x => display21($x), menu => shif
 menu_svg('rpn-calc-hp21-screen-menu-math.svg', 'MATH menu: line 1 y^x, square root, 1/x; line 2 LOG, LN, e^x; line 3 10^x, REC, POL',
     'strMenuMath', menu21(' 2.'));
 menu_svg('rpn-calc-hp21-screen-menu-trig.svg', 'TRIG menu: line 1 SIN, COS, TAN; line 2 ASIN, ACOS, ATAN', 'strMenuTrig', menu21(' 30.'));
-menu_svg('rpn-calc-hp21-screen-menu-prog.svg', 'PROG menu: line 1 DSP, RAD, DEG; line 2 TIME, DATE', 'strMenuProg', menu21(' 0.00'));
+menu_svg('rpn-calc-hp21-screen-menu-prog.svg', 'PROG menu: line 1 DSP, RAD, DEG; line 2 TIME, DATE, OFF', 'strMenuProg', menu21(' 0.00'));
 
 write_svg('rpn-calc-hp21-parts.svg', 'Business Card RPN Calculator with Watch: primary parts', '-10 -10 875 560', device($device_screen21) . $part_numbers);

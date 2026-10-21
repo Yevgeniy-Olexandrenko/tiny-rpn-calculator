@@ -214,6 +214,8 @@ int main(int argc, char** argv)
 	// power on
 	if (!run_to_idle()) printf("!!! no idle after power on\n");
 	printf("power on: [%s] cycles=%ld f=%u\n", seg2str(HPVM::Display, sizeof(HPVM::Display)).c_str(), total_cycles, HPVM::f);
+	std::string boot = seg2str(HPVM::Display, sizeof(HPVM::Display)); // power-on display, without the trailing blanks
+	while (!boot.empty() && boot.back() == ' ') boot.pop_back();
 
 	check("entry",       "1 2 3 . 4 5",                 " 123.45");
 	check("enter add",   "CLR 2 ENTER 3 +",             " 5.00");
@@ -382,6 +384,21 @@ int main(int argc, char** argv)
 		printf("     %d displays with an exponent, %d without\n", with_exp, n - with_exp);
 		expect("exponent rule", got, exp);
 	}
+
+	// Reset(): the power-on state (FIX 2, memory clear), also while the ROM is
+	// busy with a key; the F2 input (DEG/RAD switch) is kept
+	keys("CLR DSP 4 5 STO 2 ENTER 3");
+	HPVM::F2 = true;
+	HPVM::Operation(HPVM::OpSIN_);
+	for (int i = 0; i < 50; ++i) HPVM::Cycle();
+	HPVM::Reset();
+	run_to_idle();
+	expect("reset display", seg2str(HPVM::Display, sizeof(HPVM::Display)), boot.c_str());
+	expect("reset clears M1", reg2str(HPVM::M1), "00000000000000");
+	expect("reset clears Y", reg2str(HPVM::Y), "00000000000000");
+	expect("reset keeps F2", HPVM::F2 ? "1" : "0", "1");
+	check("after reset: FIX 2, RAD", "3 0 SIN", "-0.99");
+	HPVM::F2 = false;
 
 	// key timing
 	long c0 = total_cycles; keys("CLR 3 0 SIN");

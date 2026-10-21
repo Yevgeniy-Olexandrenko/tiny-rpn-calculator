@@ -149,6 +149,8 @@ int main(int argc, char** argv)
 		return 0;
 	}
 	printf("CYCLES_PER_SEC = %u\n", HPVM::CYCLES_PER_SEC);
+	std::string boot = display(); // power-on display, without the trailing blanks
+	while (!boot.empty() && boot.back() == ' ') boot.pop_back();
 	printf("power on: [%s] cycles=%ld\n", display().c_str(), total_cycles);
 
 	// operations and display formats, the values of the user manual
@@ -227,6 +229,17 @@ int main(int argc, char** argv)
 	run_to_idle();
 	expect("two keys X", display(), " 1.414213562");
 	expect("two keys Y", reg2str(HPVM::D), "05000000000999");
+
+	// Reset(): the power-on state, also while the ROM is busy with a key
+	keys("CLR 5 STO 2 ENTER 3");
+	HPVM::Operation(HPVM::OpSIN_);
+	for (int i = 0; i < 50; ++i) HPVM::Cycle();
+	HPVM::Reset();
+	run_to_idle();
+	expect("reset display", display(), boot.c_str());
+	expect("reset clears M", reg2str(HPVM::M), "00000000000000");
+	expect("reset clears Y", reg2str(HPVM::D), "00000000000000");
+	check("after reset", "2 ENTER 3 +", " 5.");
 
 	printf("%d failures\n", fails);
 	return fails;
