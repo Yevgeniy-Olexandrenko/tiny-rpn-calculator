@@ -115,7 +115,7 @@ The text uses these conventions:
 
 The device has the size and the proportions of a credit card. The drawing shows the primary parts. The positions of the small parts are approximate. The drawing does not show the ICSP connector and the POWER jumper.
 
-<img src="images/rpn-calc-parts.svg" alt="Business Card RPN Calculator with Watch: display (1), microcontroller (2), real-time clock (3), USB-C connector (4), charger (5), battery (6), keyboard (7)">
+<img src="images/rpn-calc-hp35-parts.svg" alt="Business Card RPN Calculator with Watch: display (1), microcontroller (2), real-time clock (3), USB-C connector (4), charger (5), battery (6), keyboard (7)">
 
 | No. | Part | Function |
 | :---: | --- | --- |
@@ -146,7 +146,7 @@ For the types of the parts, refer to [15](#15-technical-data).
 
 The watch screen during the charge:
 
-<img src="images/rpn-calc-screen-charge.svg" alt="Watch screen during the charge: 14:30:00, OCT 17/26, battery indicator with 3 bars, the last bar flashes">
+<img src="images/rpn-calc-hp35-screen-charge.svg" alt="Watch screen during the charge: 14:30:00, OCT 17/26, battery indicator with 3 bars, the last bar flashes">
 
 > [!NOTE]
 > - A full charge can take some hours.
@@ -295,7 +295,7 @@ Each key has two functions:
 
 The watch screen shows:
 
-<img src="images/rpn-calc-screen-watch.svg" alt="Watch screen: 14:30:00, OCT 17/26, battery level, HP-35">
+<img src="images/rpn-calc-hp35-screen-watch.svg" alt="Watch screen: 14:30:00, OCT 17/26, battery level, HP-35">
 
 | Element | Description |
 | --- | --- |
@@ -350,7 +350,7 @@ For more data about RPN, read the [HP-35 Operating Manual](hp35-om-en-remake.pdf
 
 The display shows the number in X with large digits. The exponent shows with small digits at the top right.
 
-<img src="images/rpn-calc-screen-number.svg" alt="Calculator screen: 6.02214076, exponent 23">
+<img src="images/rpn-calc-hp35-screen-number.svg" alt="Calculator screen: 6.02214076, exponent 23">
 
 The example shows 6.02214076 × 10²³.
 
@@ -393,13 +393,13 @@ Indicators show on the right side of the display:
 | **F** (box with the letter F) | The <kbd>F</kbd> key is active. The next key does its shifted function. |
 | **S** (box with the letter S, from "Store") | The memory contains a value that is not zero. |
 
-<img src="images/rpn-calc-screen-memory.svg" alt="Calculator screen: 3.141592654 and the S indicator">
+<img src="images/rpn-calc-hp35-screen-memory.svg" alt="Calculator screen: 3.141592654 and the S indicator">
 
 ### 8.5 Look at the Y register
 
 When you push <kbd>F</kbd>, the display changes:
 
-<img src="images/rpn-calc-screen-function.svg" alt="Calculator screen with F active: Y (12.5) on the top line, X (3.) on the bottom line, F and S indicators">
+<img src="images/rpn-calc-hp35-screen-function.svg" alt="Calculator screen with F active: Y (12.5) on the top line, X (3.) on the bottom line, F and S indicators">
 
 - The top line shows **Y**.
 - The bottom line shows **X**.
@@ -424,7 +424,7 @@ These operations are not possible:
 
 If you try one of these operations, a flashing `0.` shows:
 
-<img src="images/rpn-calc-screen-error.svg" alt="Calculator screen with an error: 0. flashes">
+<img src="images/rpn-calc-hp35-screen-error.svg" alt="Calculator screen with an error: 0. flashes">
 
 To stop the error, push <kbd>C</kbd>.
 
@@ -440,7 +440,7 @@ The trigonometric functions use **degrees** only. This is the same as on the ori
 
 A menu shows on the bottom line of the display. The top line shows X with small digits. Each menu has two lines of up to three items. The display shows one line at a time.
 
-<img src="images/rpn-calc-screen-menu.svg" alt="Calculator screen with a menu: X (30.) on the top line, the items SIN, COS and TAN on the bottom line">
+<img src="images/rpn-calc-hp35-screen-menu.svg" alt="Calculator screen with a menu: X (30.) on the top line, the items SIN, COS and TAN on the bottom line">
 
 In a menu, only these keys operate:
 
@@ -461,7 +461,7 @@ In a menu, only these keys operate:
 
 ### 9.2 MATH menu: <kbd>F</kbd> <kbd>F</kbd>
 
-<img src="images/rpn-calc-screen-menu-math.svg" alt="MATH menu. Line 1: xʸ, √x, 1/x. Line 2: LOG, LN, eˣ">
+<img src="images/rpn-calc-hp35-screen-menu-math.svg" alt="MATH menu. Line 1: xʸ, √x, 1/x. Line 2: LOG, LN, eˣ">
 
 | Keys in the menu | Item | Function |
 | --- | :---: | --- |
@@ -484,7 +484,7 @@ In a menu, only these keys operate:
 
 ### 9.3 TRIG menu: <kbd>F</kbd> <kbd>7</kbd>
 
-<img src="images/rpn-calc-screen-menu-trig.svg" alt="TRIG menu. Line 1: SIN, COS, TAN. Line 2: ASIN, ACOS, ATAN">
+<img src="images/rpn-calc-hp35-screen-menu-trig.svg" alt="TRIG menu. Line 1: SIN, COS, TAN. Line 2: ASIN, ACOS, ATAN">
 
 | Keys in the menu | Item | Function |
 | --- | :---: | --- |
@@ -497,7 +497,7 @@ In a menu, only these keys operate:
 
 ### 9.4 PROG menu: <kbd>F</kbd> <kbd>8</kbd>
 
-<img src="images/rpn-calc-screen-menu-prog.svg" alt="PROG menu. Line 1: TIME, DATE, ZONE. Line 2: TOTP">
+<img src="images/rpn-calc-hp35-screen-menu-prog.svg" alt="PROG menu. Line 1: TIME, DATE, ZONE. Line 2: TOTP">
 
 | Keys in the menu | Item | Function |
 | --- | :---: | --- |
@@ -580,7 +580,7 @@ The clock keeps the **local time**. The TOTP function needs UTC time. The time z
 
 TOTP (Time-based One-Time Password, RFC 6238) is a 6-digit code for two-factor authentication. Many web sites use these codes. The device shows the same codes as an authenticator application on a phone. The code changes every 30 seconds.
 
-<img src="images/rpn-calc-screen-totp.svg" alt="TOTP screen: code 287 082, 17 seconds left, key label KEY1">
+<img src="images/rpn-calc-hp35-screen-totp.svg" alt="TOTP screen: code 287 082, 17 seconds left, key label KEY1">
 
 The device keeps the keys in a keys area of 126 bytes: 5 bytes for the header and 121 bytes for the keys. Each key uses 5 bytes plus the length of its secret. Thus, the number of keys is related to the length of the secrets:
 

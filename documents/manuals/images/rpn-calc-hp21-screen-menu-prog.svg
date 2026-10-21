@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 748 340" width="748" height="340" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>PROG menu: line 1 DSP, RAD, DEG; line 2 TIME, DATE</title>
+  <style>
+    .note     { font-size: 22px; fill: #1f2328; }
+    .pixel    { fill: #ffffff; }
+    .screen   { fill: #151b23; stroke: #3d444d; stroke-width: 1; }
+    @media (prefers-color-scheme: dark) {
+      .note     { fill: #e6edf3; }
+    }
+  </style>
+  <rect class="screen" x="0.5" y="0.5" width="543" height="159" rx="8"/>
+  <path class="pixel" transform="translate(16 16) scale(4)" d="M9 1h5v1h-5zM25 1h5v1h-5zM33 1h5v1h-5zM8 2h1v5h-1zM14 2h1v5h-1zM24 2h1v5h-1zM30 2h1v5h-1zM32 2h1v5h-1zM38 2h1v5h-1zM8 8h1v5h-1zM14 8h1v5h-1zM24 8h1v5h-1zM30 8h1v5h-1zM32 8h1v5h-1zM38 8h1v5h-1zM18 11h3v2h-3zM9 13h5v1h-5zM25 13h5v1h-5zM33 13h5v1h-5zM0 16h36v2h-36zM46 16h36v2h-36zM92 16h36v2h-36zM0 18h6v12h-6zM10 18h2v2h-2zM17 18h1v2h-1zM23 18h13v8h-13zM46 18h6v12h-6zM57 18h1v8h-1zM63 18h1v12h-1zM68 18h14v2h-14zM92 18h6v12h-6zM102 18h2v2h-2zM109 18h1v2h-1zM115 18h13v2h-13zM7 20h3v8h-3zM11 20h1v4h-1zM13 20h5v2h-5zM19 20h3v4h-3zM53 20h3v4h-3zM59 20h3v4h-3zM65 20h3v8h-3zM69 20h13v8h-13zM99 20h3v8h-3zM103 20h1v8h-1zM105 20h5v2h-5zM111 20h17v2h-17zM17 22h1v8h-1zM108 22h2v2h-2zM111 22h1v2h-1zM115 22h13v8h-13zM11 24h5v4h-5zM105 24h5v4h-5zM111 24h3v4h-3zM19 26h17v4h-17zM53 26h2v2h-2zM56 26h2v2h-2zM59 26h3v4h-3zM10 28h2v2h-2zM53 28h3v2h-3zM57 28h1v2h-1zM68 28h14v2h-14zM102 28h2v2h-2zM109 28h1v2h-1zM0 30h36v2h-36zM46 30h36v2h-36zM92 30h36v2h-36z"/>
+  <text class="note" x="558" y="118">← line 1</text>
+  <rect class="screen" x="0.5" y="176.5" width="543" height="159" rx="8"/>
+  <path class="pixel" transform="translate(16 192) scale(4)" d="M9 1h5v1h-5zM25 1h5v1h-5zM33 1h5v1h-5zM8 2h1v5h-1zM14 2h1v5h-1zM24 2h1v5h-1zM30 2h1v5h-1zM32 2h1v5h-1zM38 2h1v5h-1zM8 8h1v5h-1zM14 8h1v5h-1zM24 8h1v5h-1zM30 8h1v5h-1zM32 8h1v5h-1zM38 8h1v5h-1zM18 11h3v2h-3zM9 13h5v1h-5zM25 13h5v1h-5zM33 13h5v1h-5zM0 16h36v2h-36zM46 16h36v2h-36zM92 16h36v16h-36zM0 18h6v2h-6zM11 18h1v2h-1zM17 18h1v2h-1zM22 18h2v2h-2zM29 18h7v2h-7zM46 18h6v12h-6zM56 18h2v2h-2zM63 18h1v2h-1zM69 18h1v2h-1zM75 18h7v2h-7zM0 20h8v10h-8zM9 20h5v8h-5zM15 20h3v8h-3zM19 20h1v6h-1zM21 20h1v6h-1zM23 20h1v10h-1zM25 20h11v2h-11zM53 20h3v8h-3zM57 20h1v8h-1zM59 20h3v4h-3zM63 20h3v10h-3zM67 20h3v10h-3zM71 20h11v2h-11zM28 22h8v2h-8zM74 22h8v2h-8zM25 24h11v4h-11zM71 24h11v4h-11zM19 26h3v4h-3zM59 26h3v4h-3zM9 28h3v2h-3zM17 28h1v2h-1zM29 28h7v2h-7zM56 28h2v2h-2zM75 28h7v2h-7zM0 30h36v2h-36zM46 30h36v2h-36z"/>
+  <text class="note" x="558" y="294">← line 2</text>
+</svg>

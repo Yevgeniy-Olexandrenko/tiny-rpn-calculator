@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 748 340" width="748" height="340" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Calculator screens: 3.14 in fixed point notation, 6.0221408 x 10^23 in scientific notation</title>
+  <style>
+    .note     { font-size: 22px; fill: #1f2328; }
+    .pixel    { fill: #ffffff; }
+    .screen   { fill: #151b23; stroke: #3d444d; stroke-width: 1; }
+    @media (prefers-color-scheme: dark) {
+      .note     { fill: #e6edf3; }
+    }
+  </style>
+  <rect class="screen" x="0.5" y="0.5" width="543" height="159" rx="8"/>
+  <path class="pixel" transform="translate(16 16) scale(4)" d="M9 1h5v1h-5zM14 2h1v13h-1zM30 2h1v13h-1zM32 2h1v13h-1zM38 2h1v13h-1zM9 15h5v1h-5zM33 15h5v1h-5zM14 16h1v13h-1zM30 16h1v13h-1zM38 16h1v13h-1zM18 26h3v3h-3zM9 29h5v1h-5z"/>
+  <text class="note" x="558" y="86">← fixed point</text>
+  <rect class="screen" x="0.5" y="176.5" width="543" height="159" rx="8"/>
+  <path class="pixel" transform="translate(16 192) scale(4)" d="M9 1h5v1h-5zM25 1h5v1h-5zM33 1h5v1h-5zM41 1h5v1h-5zM65 1h5v1h-5zM73 1h5v1h-5zM89 1h5v1h-5zM97 1h5v1h-5zM8 2h1v13h-1zM24 2h1v13h-1zM30 2h1v13h-1zM38 2h1v13h-1zM46 2h1v13h-1zM54 2h1v13h-1zM56 2h1v13h-1zM62 2h1v13h-1zM64 2h1v13h-1zM70 2h1v13h-1zM72 2h1v13h-1zM78 2h1v13h-1zM94 2h1v13h-1zM102 2h1v13h-1zM9 15h5v1h-5zM33 15h5v1h-5zM41 15h5v1h-5zM57 15h5v1h-5zM73 15h5v1h-5zM89 15h5v1h-5zM97 15h5v1h-5zM8 16h1v13h-1zM14 16h1v13h-1zM24 16h1v13h-1zM30 16h1v13h-1zM32 16h1v13h-1zM40 16h1v13h-1zM54 16h1v13h-1zM62 16h1v13h-1zM64 16h1v13h-1zM70 16h1v13h-1zM72 16h1v13h-1zM78 16h1v13h-1zM88 16h1v13h-1zM102 16h1v13h-1zM18 26h3v3h-3zM9 29h5v1h-5zM25 29h5v1h-5zM33 29h5v1h-5zM41 29h5v1h-5zM65 29h5v1h-5zM73 29h5v1h-5zM89 29h5v1h-5zM97 29h5v1h-5z"/>
+  <text class="note" x="558" y="262">← scientific</text>
+</svg>

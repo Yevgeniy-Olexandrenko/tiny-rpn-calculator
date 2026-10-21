@@ -1,7 +1,10 @@
 #!/usr/bin/perl
-# Generates the SVG images of the HP-35 user manual next to this script:
-#   perl documents/manuals/images/hp35-images.pl [data.h]
-# Default data.h: firmware/sketches/hp35/data.h.
+# Generates the SVG images of the user manuals next to this script:
+#   perl documents/manuals/images/rpn-calc-images.pl
+# Reads data.h of the sketches firmware/sketches/hp35 and firmware/sketches/hp21.
+# The images of one firmware (its screens, the device with its watch screen) are
+# rpn-calc-<model>-*.svg. The keyboards, the Extension label and the base image
+# rpn-calc.svg (the device with the HP-35 watch screen, for README.md) are common.
 #
 # Units of the device and keyboard drawings: 0.1 mm. Board outline, keys,
 # battery, USB cutout and the lanyard hole are from the Gerber and pick-and-place
@@ -11,11 +14,14 @@
 use strict; use warnings; use utf8;
 use FindBin;
 
-my $data_h = $ARGV[0] // "$FindBin::Bin/../../../firmware/sketches/hp35/data.h";
-open my $fh, '<', $data_h or die "$data_h: $!";
-my $src = do { local $/; <$fh> };
+my $sketches = "$FindBin::Bin/../../../firmware/sketches";
+my $lib_dir  = "$FindBin::Bin/../../../firmware/libraries/TinyRPNCalculator/src";
 
 # ================================================================ data.h
+# use_sketch() reads data.h of a sketch: its fonts, #defines and menu strings
+# are used by the functions below until the next call
+
+my ($data_h, $src, %font, %define, %lib);
 
 sub font_bytes {
     my $name = shift;
@@ -23,17 +29,10 @@ sub font_bytes {
     my $body = $1; $body =~ s{//[^\n]*}{}g;
     return [ map { hex } $body =~ /0x([0-9A-Fa-f]{2})/g ];
 }
-my %font = (
-    menu5x8    => { bytes => font_bytes('menu5x8'),    w => 5, rows => 1, first => 0x2F },
-    digits7x32 => { bytes => font_bytes('digits7x32'), w => 7, rows => 4, first => 0x61 },
-    digits7x16 => { bytes => font_bytes('digits7x16'), w => 7, rows => 2, first => 0x61 },
-);
-$font{$_}{last} = $font{$_}{first} + @{$font{$_}{bytes}} / ($font{$_}{w} * $font{$_}{rows}) - 1 for keys %font;
 
 # layout #defines of data.h: integer expressions of other defines (computed with C
 # integer division), chars and strings; LCD::WIDTH and HPVM::CYCLES_PER_SEC are
-# constants of the library headers
-(my $lib_dir = $data_h) =~ s{[\\/][^\\/]+[\\/][^\\/]+$}{/../libraries/TinyRPNCalculator/src};
+# constants of the library headers, the CPU header is given by the sketch
 sub lib_value {
     my ($file, $re) = @_;
     open my $lf, '<', "$lib_dir/$file" or die "$lib_dir/$file: $!";
@@ -41,12 +40,26 @@ sub lib_value {
     $text =~ $re or die "no $re in $file";
     return $1;
 }
-my %lib = (
-    'LCD::WIDTH'           => lib_value('TinyRPNCalculator/LCD.h', qr/constexpr u08 WIDTH\s*=\s*(\d+);/),
-    'HPVM::CYCLES_PER_SEC' => int(lib_value('Extras/HPVMClassic.h', qr/CLOCK_RATE_KHZ\s*=\s*(\d+);/) * 1000 / (14 * 4)),
-);
-my %define;
-$define{$1} = $2 while $src =~ m{^#define\s+(\w+)\s+(.*?)\s*(?://.*)?\r?$}mg;
+
+sub use_sketch {
+    my ($model, $cpu_h) = @_;
+    $data_h = "$sketches/$model/data.h";
+    open my $fh, '<', $data_h or die "$data_h: $!";
+    $src = do { local $/; <$fh> };
+    %font = (
+        menu5x8    => { bytes => font_bytes('menu5x8'),    w => 5, rows => 1, first => 0x2F },
+        digits7x32 => { bytes => font_bytes('digits7x32'), w => 7, rows => 4, first => 0x61 },
+        digits7x16 => { bytes => font_bytes('digits7x16'), w => 7, rows => 2, first => 0x61 },
+    );
+    $font{$_}{last} = $font{$_}{first} + @{$font{$_}{bytes}} / ($font{$_}{w} * $font{$_}{rows}) - 1 for keys %font;
+    %lib = (
+        'LCD::WIDTH'           => lib_value('TinyRPNCalculator/LCD.h', qr/constexpr u08 WIDTH\s*=\s*(\d+);/),
+        'HPVM::CYCLES_PER_SEC' => int(lib_value("Extras/$cpu_h", qr/CLOCK_RATE_KHZ\s*=\s*(\d+);/) * 1000 / (14 * 4)),
+    );
+    %define = ();
+    $define{$1} = $2 while $src =~ m{^#define\s+(\w+)\s+(.*?)\s*(?://.*)?\r?$}mg;
+}
+
 sub def {
     my $name = shift;
     my $v = $define{$name} // die "no #define $name in $data_h";
@@ -58,14 +71,21 @@ sub def {
     return $n;
 }
 
-# items of a menu string: "\06" " SIN  " " COS  " ...
+# items of a menu string: "\06" " SIN  " " COS  " ...; the literals are read one
+# by one up to the ';', as an item can have a ';' too (a glyph of the menu font)
 sub menu_items {
     my $name = shift;
-    $src =~ /const u08 ${name}\[\] DATAMEM =(.*?);/s or die "no $name in $data_h";
-    my @s = $1 =~ /"([^"]*)"/g;
+    my $text = $src;
+    $text =~ /const u08 ${name}\[\] DATAMEM =/g or die "no $name in $data_h";
+    my @s;
+    push @s, $1 while $text =~ m{\G(?:\s+|//[^\n]*)*"([^"]*)"}gc;
+    $text =~ m{\G(?:\s+|//[^\n]*)*;}gc or die "no end of $name in $data_h";
     shift @s; # item width
     return @s;
 }
+
+# the HP-35 images first, the HP-21 images at the end
+use_sketch('hp35', 'HPVMClassic.h');
 
 # ================================================================ screen
 # TXT and LCD of the library: 128 x 32 pixels, a byte is a column of 8 pixels
@@ -166,6 +186,14 @@ sub render_number {
         next_pos($x);
     }
 }
+sub render_menu {
+    my $items = shift;
+    set_font('menu5x8');
+    set_scale(1, 2);
+    set_inverse(1);
+    print_string($items->[$_], def('MENU_POS_ITEM') * $_, 2) for 0 .. def('MENU_ITEMS_PER_LINE') - 1;
+    set_inverse(0);
+}
 sub render_calc {
     my (%a) = @_;   # x => display, y => display (F active), menu => [3 items], memory => 1
     lcd_clear();
@@ -178,15 +206,59 @@ sub render_calc {
     }
     elsif ($a{menu}) {
         render_number($a{x}, 0);
-        set_font('menu5x8');
-        set_scale(1, 2);
-        set_inverse(1);
-        print_string($a{menu}[$_], def('MENU_POS_ITEM') * $_, 2) for 0 .. def('MENU_ITEMS_PER_LINE') - 1;
-        set_inverse(0);
+        render_menu($a{menu});
     }
     else {
         set_font('digits7x32');
         render_number($a{x}, 0);
+    }
+}
+
+# HP-21: HPVM::Display holds 7-segment patterns of 12 positions, the dot in bit 7
+my %seg21 = ((map { $_ => $num_seg[$_] } 0..9), ' ' => 0x00, '-' => 0x40,
+             'E' => 0x79, 'H' => 0x76, 'o' => 0x5C, 'P' => 0x73, 'r' => 0x50);
+# HP-21 display from text: characters of %seg21, a '.' lights the dot of the position before it
+sub display21 {
+    my $s = shift;
+    my @segs;
+    for my $ch (split //, $s) {
+        if ($ch eq '.') { @segs or die "dot without a position: '$s'"; $segs[-1] |= 0x80; next }
+        push @segs, $seg21{$ch} // die "no segments of '$ch': '$s'";
+    }
+    die "display has 12 positions: '$s'" if @segs > 12;
+    push @segs, 0x00 while @segs < 12;
+    return \@segs;
+}
+
+# hp21 code.h: renderCalcNumber(), renderCalcMode(); the dot is a separate char
+sub render_number21 {
+    my ($segs, $y) = @_;
+    my $x = 0;
+    for my $seg (@$segs) {
+        print_seg($seg & 0x7F, $x, $y);
+        next_pos($x);
+        if ($seg & 0x80) { print_seg(0x80, $x, $y); next_pos($x) }
+    }
+}
+sub render_calc21 {
+    my (%a) = @_;   # as render_calc(), radians => 1
+    lcd_clear();
+    set_font('digits7x16');
+    my $flags_y = $a{menu} ? 0 : 2;
+    print_char(def('FLAG_STORAGE'), def('FLAG_POS'), $flags_y) if $a{memory};
+    print_char(def('FLAG_RADIANS'), def('FLAG_POS_2'), $flags_y) if $a{radians};
+    if ($a{y}) {
+        render_number21($a{y}, 0);
+        render_number21($a{x}, 2);
+        print_char(def('FLAG_FUNCTION'), def('FLAG_POS'), 0);
+    }
+    elsif ($a{menu}) {
+        render_number21($a{x}, 0);
+        render_menu($a{menu});
+    }
+    else {
+        set_font('digits7x32');
+        render_number21($a{x}, 0);
     }
 }
 
@@ -410,13 +482,14 @@ sub screens_svg {
 }
 sub screen_svg { my ($name, $title, @notes) = @_; screens_svg($name, $title, screen(0, @notes)) }
 
-# both lines of a menu with X on the top line, ± shows line 2
+# all lines of a menu with X on the top line, ± shows the next line; $render
+# draws the screen with the items of a line
 sub menu_svg {
-    my ($name, $title, $x, $menu) = @_;
+    my ($name, $title, $menu, $render) = @_;
     my @items = menu_items($menu);
     my @screens;
-    for my $line (0, 1) {
-        render_calc(x => display($x), menu => [ @items[3 * $line .. 3 * $line + 2] ]);
+    for my $line (0 .. @items / 3 - 1) {
+        $render->([ @items[3 * $line .. 3 * $line + 2] ]);
         push @screens, screen($line * ($scr_h + $scr_gap), [23.5, 'line ' . ($line + 1)]);
     }
     screens_svg($name, $title, @screens);
@@ -438,36 +511,40 @@ my %watch = (h => 14, m => 30, s => 0, month => 'OCT', date => 17, year => 26, b
 
 render_rtc(%watch);
 my $device_screen = pixels_path();
-screen_svg('rpn-calc-screen-watch.svg', 'Watch screen: 14:30:00, OCT 17/26, battery level, HP-35');
+screen_svg('rpn-calc-hp35-screen-watch.svg', 'Watch screen: 14:30:00, OCT 17/26, battery level, HP-35');
 
-flash_svg('rpn-calc-screen-charge.svg', 'Watch screen during the charge: the last bar of the battery indicator flashes', 'barflash',
+flash_svg('rpn-calc-hp35-screen-charge.svg', 'Watch screen during the charge: the last bar of the battery indicator flashes', 'barflash',
     sub { render_rtc(%watch, bars => 3) }, sub { render_rtc(%watch, bars => 2) }, [11, 'flashes']);
 
 render_calc(x => display(' 6.02214076  23'));
-screen_svg('rpn-calc-screen-number.svg', 'Calculator screen: 6.02214076 x 10^23', [7.5, 'exponent']);
+screen_svg('rpn-calc-hp35-screen-number.svg', 'Calculator screen: 6.02214076 x 10^23', [7.5, 'exponent']);
 
 render_calc(x => display(' 3.141592654   '), memory => 1);
-screen_svg('rpn-calc-screen-memory.svg', 'Calculator screen: pi, with the S indicator');
+screen_svg('rpn-calc-hp35-screen-memory.svg', 'Calculator screen: pi, with the S indicator');
 
 # the ROM blanks the whole display, HPVM::Error() of the sketch shows the same
-flash_svg('rpn-calc-screen-error.svg', 'Calculator screen with an error: a flashing 0.', 'errflash',
+flash_svg('rpn-calc-hp35-screen-error.svg', 'Calculator screen with an error: a flashing 0.', 'errflash',
     sub { render_calc(x => display(' 0.            ')) }, sub { render_calc(x => display(' ' x 15)) }, [15.5, 'flashes']);
 
 render_calc(y => display(' 12.5          '), x => display(' 3.            '), memory => 1);
-screen_svg('rpn-calc-screen-function.svg', 'Calculator screen with F active: Y on top, X below', [7.5, 'Y'], [23.5, 'X']);
+screen_svg('rpn-calc-hp35-screen-function.svg', 'Calculator screen with F active: Y on top, X below', [7.5, 'Y'], [23.5, 'X']);
 
 render_calc(x => display(' 30.           '), menu => [ (menu_items('strMenuTrig'))[0..2] ]);
-screen_svg('rpn-calc-screen-menu.svg', 'Calculator screen with the TRIG menu', [7.5, 'X'], [23.5, 'menu']);
+screen_svg('rpn-calc-hp35-screen-menu.svg', 'Calculator screen with the TRIG menu', [7.5, 'X'], [23.5, 'menu']);
 
-menu_svg('rpn-calc-screen-menu-math.svg', 'MATH menu: line 1 x^y, square root, 1/x; line 2 LOG, LN, e^x', ' 2.            ', 'strMenuMath');
-menu_svg('rpn-calc-screen-menu-trig.svg', 'TRIG menu: line 1 SIN, COS, TAN; line 2 ASIN, ACOS, ATAN', ' 30.           ', 'strMenuTrig');
-menu_svg('rpn-calc-screen-menu-prog.svg', 'PROG menu: line 1 TIME, DATE, ZONE; line 2 TOTP', ' 0.            ', 'strMenuProg');
+sub menu35 { my $x = shift; sub { render_calc(x => display($x), menu => shift) } }
+menu_svg('rpn-calc-hp35-screen-menu-math.svg', 'MATH menu: line 1 x^y, square root, 1/x; line 2 LOG, LN, e^x', 'strMenuMath', menu35(' 2.            '));
+menu_svg('rpn-calc-hp35-screen-menu-trig.svg', 'TRIG menu: line 1 SIN, COS, TAN; line 2 ASIN, ACOS, ATAN', 'strMenuTrig', menu35(' 30.           '));
+menu_svg('rpn-calc-hp35-screen-menu-prog.svg', 'PROG menu: line 1 TIME, DATE, ZONE; line 2 TOTP', 'strMenuProg', menu35(' 0.            '));
 
 render_totp(code => 287082, left => 17, label => 'KEY1');
-screen_svg('rpn-calc-screen-totp.svg', 'TOTP screen: code 287 082, 17 seconds left, key KEY1', [7.5, 'seconds left'], [23.5, 'key label']);
+screen_svg('rpn-calc-hp35-screen-totp.svg', 'TOTP screen: code 287 082, 17 seconds left, key KEY1', [7.5, 'seconds left'], [23.5, 'key label']);
 
 # ================================================================ device
-my $device = <<"SVG";
+# the device with the pixels path of a watch screen on its display
+sub device {
+    my $screen = shift;
+    return <<"SVG";
   <defs>
     <!-- one side of a SOIC-8 -->
     <g id="soic-pins">
@@ -487,7 +564,7 @@ my $device = <<"SVG";
   <rect class="glass" x="22" y="24" width="303" height="115" rx="3"/>
   <rect class="panel" x="26" y="28" width="246" height="94"/>
   <rect class="ledge" x="26" y="122" width="246" height="13"/>
-  <path class="pixel" transform="translate(36 47) scale(1.75)" d="$device_screen"/>
+  <path class="pixel" transform="translate(36 47) scale(1.75)" d="$screen"/>
 
   <!-- (2) MCU, ATtiny85 in SOIC-8 5.3 mm -->
   <use href="#soic-pins" x="460" y="40"/>
@@ -528,6 +605,7 @@ my $device = <<"SVG";
   <!-- (7) keyboard -->
 @{[ keyboard() ]}
 SVG
+}
 my $part_numbers = <<"SVG";
   <!-- part numbers in reading order: the upper part from left to right, then the keyboard -->
   <circle class="badge" cx="298" cy="81" r="11"/><text class="badgetx" x="298" y="86">1</text>
@@ -538,9 +616,9 @@ my $part_numbers = <<"SVG";
   <circle class="badge" cx="735" cy="140" r="11"/><text class="badgetx" x="735" y="145">6</text>
   <circle class="badge" cx="43.5" cy="355" r="11"/><text class="badgetx" x="43.5" y="360">7</text>
 SVG
-write_svg('rpn-calc-parts.svg', 'Business Card RPN Calculator with Watch: primary parts', '-10 -10 875 560', $device . $part_numbers);
+write_svg('rpn-calc-hp35-parts.svg', 'Business Card RPN Calculator with Watch: primary parts', '-10 -10 875 560', device($device_screen) . $part_numbers);
 # the same drawing without the part numbers, for README.md
-write_svg('rpn-calc.svg', 'Business Card RPN Calculator with Watch', '-10 -10 875 560', $device);
+write_svg('rpn-calc.svg', 'Business Card RPN Calculator with Watch', '-10 -10 875 560', device($device_screen));
 
 # ================================================================ labels
 # "Extension" label for the text of the manual, in the colors of a GitHub label;
@@ -548,3 +626,43 @@ write_svg('rpn-calc.svg', 'Business Card RPN Calculator with Watch', '-10 -10 87
 write_svg('rpn-calc-extension.svg', 'Extension', '0 0 76 20',
     qq{  <rect class="ext" x="0.5" y="0.5" width="75" height="19" rx="9.5"/>\n}
   . qq{  <text class="exttx" x="38" y="14" textLength="58" lengthAdjust="spacingAndGlyphs">Extension</text>\n});
+
+# ================================================================ HP-21
+# the screens of the HP-21 firmware and the device with its watch screen; the
+# keyboards and the label above are the same for both firmware
+use_sketch('hp21', 'HPVMWoodstock.h');
+
+render_rtc(%watch);
+my $device_screen21 = pixels_path();
+screen_svg('rpn-calc-hp21-screen-watch.svg', 'Watch screen: 14:30:00, OCT 17/26, battery level, HP-21');
+
+flash_svg('rpn-calc-hp21-screen-charge.svg', 'Watch screen during the charge: the last bar of the battery indicator flashes', 'barflash',
+    sub { render_rtc(%watch, bars => 3) }, sub { render_rtc(%watch, bars => 2) }, [11, 'flashes']);
+
+# FIX 2 is the format after the power-on of the ROM, a result that FIX cannot show is in SCI
+render_calc21(x => display21(' 3.14'));
+my $fix_screen = screen(0, [15.5, 'fixed point']);
+render_calc21(x => display21(' 6.0221408 23'));
+screens_svg('rpn-calc-hp21-screen-number.svg', 'Calculator screens: 3.14 in fixed point notation, 6.0221408 x 10^23 in scientific notation',
+    $fix_screen, screen($scr_h + $scr_gap, [15.5, 'scientific']));
+
+render_calc21(x => display21(' 3.14'), memory => 1, radians => 1);
+screen_svg('rpn-calc-hp21-screen-indicators.svg', 'Calculator screen: 3.14, with the R and S indicators');
+
+# the ROM shows Error steadily, HPVM::Error() of the sketch shows the same
+render_calc21(x => display21(' Error'));
+screen_svg('rpn-calc-hp21-screen-error.svg', 'Calculator screen with an error: Error');
+
+render_calc21(y => display21(' 12.50'), x => display21(' 3.'), memory => 1);
+screen_svg('rpn-calc-hp21-screen-function.svg', 'Calculator screen with F active: Y on top, X below', [7.5, 'Y'], [23.5, 'X']);
+
+render_calc21(x => display21(' 30.'), menu => [ (menu_items('strMenuTrig'))[0..2] ]);
+screen_svg('rpn-calc-hp21-screen-menu.svg', 'Calculator screen with the TRIG menu', [7.5, 'X'], [23.5, 'menu']);
+
+sub menu21 { my $x = shift; sub { render_calc21(x => display21($x), menu => shift) } }
+menu_svg('rpn-calc-hp21-screen-menu-math.svg', 'MATH menu: line 1 y^x, square root, 1/x; line 2 LOG, LN, e^x; line 3 10^x, REC, POL; line 4 M-, Mx, M/',
+    'strMenuMath', menu21(' 2.'));
+menu_svg('rpn-calc-hp21-screen-menu-trig.svg', 'TRIG menu: line 1 SIN, COS, TAN; line 2 ASIN, ACOS, ATAN', 'strMenuTrig', menu21(' 30.'));
+menu_svg('rpn-calc-hp21-screen-menu-prog.svg', 'PROG menu: line 1 DSP, RAD, DEG; line 2 TIME, DATE', 'strMenuProg', menu21(' 0.00'));
+
+write_svg('rpn-calc-hp21-parts.svg', 'Business Card RPN Calculator with Watch: primary parts', '-10 -10 875 560', device($device_screen21) . $part_numbers);
