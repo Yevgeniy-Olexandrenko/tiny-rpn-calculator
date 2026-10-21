@@ -54,7 +54,7 @@ void renderRTCMode()
 	for (u08 i = bars, x = RTC_POS_INFO; i > 0; --i)
 	{ 
 		TXT::PrintChar(RTC_BATTERY_LEVEL, x, 1);
-		x += TXT::char_dx;
+		TXT::NextPos(x);
 	}
 
 	LCD::Flip();
@@ -236,11 +236,11 @@ void renderCalcNumber(const u08 * segs, u08 y)
 	{
 		u08 seg = segs[i];
 		TXT::PrintSeg(seg & ~TXT::SEG_DOT, x, y);
-		x += TXT::char_dx;
+		TXT::NextPos(x);
 		if (seg & TXT::SEG_DOT)
 		{
 			TXT::PrintSeg(TXT::SEG_DOT, x, y);
-			x += TXT::char_dx;
+			TXT::NextPos(x);
 		}
 	}
 }
@@ -363,8 +363,8 @@ int main()
 		// get time passed since last operation mode switch
 		u16 timeout = TMR::Millis;
 
-		// handle display brightness change
-		LCD::Brightness(mode == MODE_RTC || timeout >= DIMOUT_MILLIS ? 0x00 : 0xFF);
+		// handle display contrast change
+		LCD::Contrast(mode == MODE_RTC || timeout >= DIMOUT_MILLIS ? 0x00 : 0xFF);
 
 		// handle power down condition
 		if (timeout >= POWEROFF_MILLIS)

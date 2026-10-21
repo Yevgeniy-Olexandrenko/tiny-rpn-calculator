@@ -55,6 +55,7 @@ sub lcd_write {
 sub set_scale   { ($sx, $sy) = @_; $char_dx = $cur->{w} * $sx + 1 }
 sub set_font    { $cur = $font{shift()}; set_scale(1, 1) }
 sub set_inverse { $inverse = shift() ? 0xFF : 0x00 }
+sub next_pos    { $_[0] += $char_dx }   # TXT::NextPos(x), x is changed in place
 
 sub scale_y {
     my ($db, $si) = @_;
@@ -124,7 +125,7 @@ sub render_rtc {
     set_scale(2, 1);
     print_string('HP=35', 72, 2);
     my $x = 72;
-    for (1 .. $a{bars}) { print_char('=', $x, 1); $x += $char_dx }
+    for (1 .. $a{bars}) { print_char('=', $x, 1); next_pos($x) }
 }
 
 # code.h: renderCalcNumber(), renderCalcMenu(), renderCalcMode()
@@ -134,7 +135,7 @@ sub render_number {
     for my $i (0..14) {
         set_font('digits7x16') if $i == 12;
         print_seg($num_seg[$codes->[$i]], $x, $y);
-        $x += $char_dx;
+        next_pos($x);
     }
 }
 sub render_calc {

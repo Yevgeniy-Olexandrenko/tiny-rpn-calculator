@@ -55,7 +55,7 @@ void renderRTCMode()
 	for (u08 i = bars, x = RTC_POS_INFO; i > 0; --i)
 	{ 
 		TXT::PrintChar(RTC_BATTERY_LEVEL, x, 1);
-		x += TXT::char_dx;
+		TXT::NextPos(x);
 	}
 
 	LCD::Flip();
@@ -124,10 +124,11 @@ void renderTOTPMode(const TOTP::Key& key, u32 code, u08 left)
 	TXT::SetFont(menu5x8);
 	TXT::SetScale(TXT::x1, TXT::x2);
 	TXT::SetInverse(true);
-	for (u08 i = 0, x = TOTP_POS_LABEL; i < TOTP::LABEL_SIZE + 2; ++i, x += TXT::char_dx)
+	for (u08 i = 0, x = TOTP_POS_LABEL; i < TOTP::LABEL_SIZE + 2; ++i)
 	{
 		u08 ch = (i == 0 || i > TOTP::LABEL_SIZE ? ' ' : key.label[i - 1]);
 		TXT::PrintChar(ch, x, 2);
+		TXT::NextPos(x);
 	}
 	TXT::SetInverse(false);
 
@@ -355,11 +356,12 @@ void executeOperation(u08 operation)
 
 void renderCalcNumber(const u08 * numStr, u08 y)
 {
-	for (u08 i = 0, x = 0; i < sizeof(HPVM::Display); ++i, x += TXT::char_dx)
+	for (u08 i = 0, x = 0; i < sizeof(HPVM::Display); ++i)
 	{
 		if (i == 12) TXT::SetFont(digits7x16);
 		u08 seg = TXT::NumToSeg(numStr[i]);
 		TXT::PrintSeg(seg, x, y);
+		TXT::NextPos(x);
 	}
 }
 
@@ -480,8 +482,8 @@ int main()
 		// get time passed since last operation mode switch
 		u16 timeout = TMR::Millis;
 
-		// handle display brightness change
-		LCD::Brightness(mode == MODE_RTC || timeout >= DIMOUT_MILLIS ? 0x00 : 0xFF);
+		// handle display contrast change
+		LCD::Contrast(mode == MODE_RTC || timeout >= DIMOUT_MILLIS ? 0x00 : 0xFF);
 
 		// handle power down condition
 		if (timeout >= POWEROFF_MILLIS)

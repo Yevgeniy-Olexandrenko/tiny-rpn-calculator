@@ -508,7 +508,7 @@ namespace LCD
     void Init();                    // called by SYS::Init()
     void TurnOn();                  // display on
     void TurnOff();                 // display off, its RAM is kept
-    void Brightness(u08 level);     // contrast 0..255
+    void Contrast(u08 v);           // 0..255, 0 is the dimmest
 
     void Clear();                   // clears the hidden buffer
     void Flip();                    // shows the hidden buffer
@@ -543,7 +543,7 @@ LCD::EndWrite(0xFF, 10);
 LCD::Flip();
 ```
 
-`Brightness()` sets the contrast in 256 steps. At 0 the display is dim, but you can still read it. This is good for a watch display, and it saves energy.
+`Contrast()` sets the contrast of the display in 256 steps. On an OLED display the contrast sets the current through the pixels, so in practice it is the brightness. At 0 the display is dim, but you can still read it. This is good for a watch display, and it saves energy.
 
 ### 6.6 TXT: text
 
@@ -561,13 +561,13 @@ namespace TXT
 
     enum { x1 = 1, x2 = 2, x4 = 4 };          // scales
 
-    u08 char_dx;                              // character step, read only
-
     void SetFont(const Font& f);              // also sets the scale x1
     void SetScale(u08 sx, u08 sy);            // sx: 1 or more, sy: x1, x2, x4
     void SetInverse(b08 enable);              // dark text on a light ground
 
     void PrintChar(u08 ch, u08 x, u08 y);     // one character
+    void NextPos(u08& x);                     // x of the next character
+    void PrevPos(u08& x);                     // x of the previous character
     void PrintString(s, u08 x, u08 y);        // RAM, F() or D() string
     void PrintString(s, u08 i, u08 x, u08 y); // item i of an array
     void PrintBCD(u08 n, u08 x, u08 y);       // two BCD digits
@@ -587,15 +587,43 @@ namespace TXT
 }
 ```
 
-**Characters and positions.** `PrintChar()` draws the character and one empty column after it. Thus, the step between characters is the width × `sx` + 1 pixels. `TXT::char_dx` holds this value for the current font and scale. Use it to calculate the positions:
+**Characters and positions.** `PrintChar()` draws the character and one empty column after it. Thus, the step between characters is the width × `sx` + 1 pixels. The sketch does not need to calculate it: two functions move a position by the step of the current font and scale.
+
+- `TXT::NextPos(x)` moves `x` to the right, to the next character. Use it to draw a text from left to right.
+- `TXT::PrevPos(x)` moves `x` to the left, to the previous character. Use it to draw a text from right to left, for example a number that must end at a fixed position.
 
 ```cpp
-// number n = 0..999 as 3 digits at the right edge of the display
 TXT::SetFont(FNT::Font5x8);
-u08 x = LCD::WIDTH - 3 * TXT::char_dx;
-TXT::PrintChar('0' + n / 100,      x, 0);
-TXT::PrintChar('0' + n / 10 % 10,  x + TXT::char_dx, 0);
-TXT::PrintChar('0' + n % 10,       x + 2 * TXT::char_dx, 0);
+
+// number n = 0..999 from left to right, it starts at x = 0
+u08 x = 0;
+TXT::PrintChar('0' + n / 100, x, 0);
+TXT::NextPos(x);
+TXT::PrintChar('0' + n / 10 % 10, x, 0);
+TXT::NextPos(x);
+TXT::PrintChar('0' + n % 10, x, 0);
+
+// the same number from right to left, it ends at the right edge
+x = LCD::WIDTH;
+for (u08 i = 0; i < 3; ++i, n /= 10)
+{
+    TXT::PrevPos(x);
+    TXT::PrintChar('0' + n % 10, x, 1);
+}
+```
+
+From right to left the digits come from the lowest one: `n % 10`, then `n / 10`. Thus, a loop for any count of digits is simpler in this direction: it does not need the weight of the first digit (100 for three digits).
+
+The step belongs to the character that is drawn. Thus, call `NextPos()` after the character, and `PrevPos()` before it. Then each step is the step of the font and scale of its own character, also in a line with two fonts:
+
+```cpp
+u08 x = 0;
+TXT::SetFont(big);
+TXT::PrintChar('1', x, 0);
+TXT::NextPos(x);        // step of the big font
+TXT::SetFont(small);
+TXT::PrintChar('2', x, 0);
+TXT::NextPos(x);        // step of the small font
 ```
 
 A character that is not in the font shows as an empty place. For example, the built-in font starts at `!`, and a space shows as an empty place too.
@@ -897,7 +925,7 @@ void runFrame()
 **Show the display.** The HP-35 gives character codes, and the sketch draws them with its font:
 
 ```cpp
-for (u08 i = 0, x = 0; i < 15; ++i, x += TXT::char_dx)
+for (u08 i = 0, x = 0; i < 15; ++i)
 {
     u08 c = HPVM::Display[i];
     if      (c == HPVM::BLANK) c = ' ';
@@ -905,6 +933,7 @@ for (u08 i = 0, x = 0; i < 15; ++i, x += TXT::char_dx)
     else if (c == HPVM::DOT)   c = '.';
     else c += '0'; // DIGIT + digit
     TXT::PrintChar(c, x, 1);
+    TXT::NextPos(x);
 }
 ```
 

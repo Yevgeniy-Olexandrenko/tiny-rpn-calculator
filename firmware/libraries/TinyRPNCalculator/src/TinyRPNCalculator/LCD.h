@@ -68,11 +68,11 @@ namespace LCD
 		command(0xAE);
 	}
 
-	void Brightness(u08 brightness)
+	void Contrast(u08 v)
 	{ 
 		start_command();
 		I2C::Write(0x81);
-		I2C::Write(brightness);
+		I2C::Write(v);
 		I2C::Stop();
 	}
 

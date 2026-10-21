@@ -20,12 +20,13 @@ const char secret[] PROGMEM = "12345678901234567890";
 
 TOTP::Key key;
 
-// prints the number as the given count of decimal digits, with leading zeros
+// prints the number as the given count of decimal digits, with leading zeros,
+// from right to left: x is the position after the last digit
 void printNumber(u32 n, u08 digits, u08 x, u08 y)
 {
-	for (x += digits * TXT::char_dx; digits > 0; --digits, n /= 10)
+	for (; digits > 0; --digits, n /= 10)
 	{
-		x -= TXT::char_dx;
+		TXT::PrevPos(x);
 		TXT::PrintChar('0' + n % 10, x, y);
 	}
 }
@@ -39,12 +40,13 @@ void render()
 	u32 time = RTC::GetTimestamp(GMT_ZONE);
 	if (time)
 	{
+		// code at the right edge at scale x2, seconds left in the bottom line
 		TXT::SetScale(TXT::x2, TXT::x2);
-		printNumber(TOTP::GetCode(key, time / TOTP::PERIOD), 6, 0, 0);
+		printNumber(TOTP::GetCode(key, time / TOTP::PERIOD), 6, LCD::WIDTH, 0);
 
 		TXT::SetScale(TXT::x1, TXT::x1);
-		printNumber(TOTP::PERIOD - time % TOTP::PERIOD, 2, 0, 3);
-		TXT::PrintString(F("s left"), 18, 3);
+		TXT::PrintString(F("SECONDS LEFT"), 0, 3);
+		printNumber(TOTP::PERIOD - time % TOTP::PERIOD, 2, LCD::WIDTH, 3);
 	}
 	else
 	{

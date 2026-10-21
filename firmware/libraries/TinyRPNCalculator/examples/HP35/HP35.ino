@@ -46,7 +46,7 @@ void render()
 
 	// 15 positions of the HP-35 display at scale x1 by x2 in pages 1..2
 	TXT::SetScale(TXT::x1, TXT::x2);
-	for (u08 i = 0, x = 0; i < sizeof(HPVM::Display); ++i, x += TXT::char_dx)
+	for (u08 i = 0, x = 0; i < sizeof(HPVM::Display); ++i)
 	{
 		u08 c = HPVM::Display[i];
 		if (c == HPVM::BLANK) c = ' ';
@@ -54,6 +54,7 @@ void render()
 		else if (c == HPVM::DOT) c = '.';
 		else c += '0';
 		TXT::PrintChar(c, x, 1);
+		TXT::NextPos(x);
 	}
 
 	// shift indicator

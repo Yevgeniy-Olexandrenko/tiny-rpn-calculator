@@ -218,4 +218,14 @@ namespace TXT
 		PrintSeg(NumToSeg(n >> 4), x, y);
 		PrintSeg(NumToSeg(n & 15), x + char_dx, y);
 	}
+
+	void NextPos(u08& x)
+	{
+		x += char_dx;
+	}
+
+	void PrevPos(u08& x)
+	{
+		x -= char_dx;
+	}
 }

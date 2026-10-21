@@ -9,14 +9,16 @@
 #include <TinyRPNCalculator.h>
 
 #define POWEROFF_MILLIS 10000
-#define REDRAW_FRAMES   8 // 512 ms at 64 ms per frame
+#define REDRAW_FRAMES   8  // 512 ms at 64 ms per frame
+#define VALUE_END       60 // the values end here, the units follow
 
-// prints the number as the given count of decimal digits, with leading zeros
+// prints the number as the given count of decimal digits, with leading zeros,
+// from right to left: x is the position after the last digit
 void printNumber(u16 n, u08 digits, u08 x, u08 y)
 {
-	for (x += digits * TXT::char_dx; digits > 0; --digits, n /= 10)
+	for (; digits > 0; --digits, n /= 10)
 	{
-		x -= TXT::char_dx;
+		TXT::PrevPos(x);
 		TXT::PrintChar('0' + n % 10, x, y);
 	}
 }
@@ -27,18 +29,15 @@ void render(u08 key)
 	TXT::SetFont(FNT::Font5x8);
 
 	TXT::PrintString(F("KEY"), 0, 0);
-	if (key == KBD::NONE)
-		TXT::PrintString(F("--"), 36, 0);
-	else
-		printNumber(key, 2, 36, 0);
+	if (key != KBD::NONE) printNumber(key, 2, VALUE_END, 0);
 
 	TXT::PrintString(F("VCC"), 0, 1);
-	printNumber(PWR::Voltage(), 4, 36, 1);
-	TXT::PrintString(F("mV"), 66, 1);
+	printNumber(PWR::Voltage(), 4, VALUE_END, 1);
+	TXT::PrintString(F(" mV"), VALUE_END, 1);
 
 	TXT::PrintString(F("BAT"), 0, 2);
-	printNumber(PWR::Level(), 3, 36, 2);
-	TXT::PrintChar('%', 60, 2);
+	printNumber(PWR::Level(), 3, VALUE_END, 2);
+	TXT::PrintString(F(" %"), VALUE_END, 2);
 
 	if (PWR::Charging()) TXT::PrintString(F("CHARGING"), 0, 3);
 
