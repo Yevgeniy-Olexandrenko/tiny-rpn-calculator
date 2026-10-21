@@ -140,7 +140,7 @@ For the types of the parts, refer to [15](#15-technical-data).
 
 1. Connect a USB-C cable to the device.
 2. Connect the other end of the cable to a USB power supply or a computer. If the device is off, it turns on and shows the watch screen.
-3. Make sure that the last bar of the battery indicator flashes. The flashing bar shows that the battery charges.
+3. Make sure that the last bar of the battery indicator flashes. If the indicator shows no bars, one bar flashes. The flashing bar shows that the battery charges.
 4. Let the battery charge. When the charge is complete, the device turns on and shows the watch screen. The last bar does not flash.
 5. Disconnect the USB cable.
 

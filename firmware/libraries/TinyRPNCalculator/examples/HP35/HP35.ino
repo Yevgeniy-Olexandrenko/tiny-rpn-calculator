@@ -82,6 +82,11 @@ int main()
 			SYS::Down();
 			SYS::Wake(TMR::TIMEOUT_64MS);
 			render();
+
+			// the key that woke up the device is still pushed:
+			// remember it, so that it does not do an operation
+			last = KBD::Read();
+			continue;
 		}
 
 		// a new key push gives an operation to the VM, F changes the shift

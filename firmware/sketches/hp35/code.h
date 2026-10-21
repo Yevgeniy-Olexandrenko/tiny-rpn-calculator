@@ -49,9 +49,10 @@ void renderRTCMode()
 
 	TXT::SetScale(TXT::x2, TXT::x1);
 	TXT::PrintString(D(RTC_INFO_HP_LABEL), RTC_POS_INFO, 2);
-	// blink the last bar while charging, toggling it every 512 ms
+	// blink the last bar while charging, toggling it every 512 ms,
+	// with an empty battery one bar blinks
 	u08 bars = battery;
-	if (bars && (TMR::Millis & 0x200) && PWR::Charging()) --bars;
+	if ((TMR::Millis & 0x200) && PWR::Charging()) bars = (bars ? bars - 1 : 1);
 	for (u08 i = bars, x = RTC_POS_INFO; i > 0; --i)
 	{ 
 		TXT::PrintChar(RTC_BATTERY_LEVEL, x, 1);
