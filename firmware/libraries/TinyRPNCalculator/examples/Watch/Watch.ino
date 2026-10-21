@@ -42,17 +42,11 @@ void render()
 	LCD::Flip();
 }
 
-void powerUp()
-{
-	LCD::TurnOn();
-	TMR::Start(TMR::TIMEOUT_64MS);
-}
-
 int main()
 {
 	SYS::Init();
 	RTC::WriteTimeDate();
-	powerUp();
+	SYS::Wake(TMR::TIMEOUT_64MS);
 
 	u08 frame = 0;
 	while (true)
@@ -64,7 +58,7 @@ int main()
 		if (TMR::Millis >= POWEROFF_MILLIS)
 		{
 			SYS::Down();
-			powerUp();
+			SYS::Wake(TMR::TIMEOUT_64MS);
 			frame = 0;
 		}
 

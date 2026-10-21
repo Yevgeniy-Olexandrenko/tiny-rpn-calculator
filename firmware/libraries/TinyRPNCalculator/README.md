@@ -151,8 +151,7 @@ This sketch shows a text and then waits in a loop of frames:
 int main()
 {
     SYS::Init();
-    LCD::TurnOn();
-    TMR::Start(TMR::TIMEOUT_64MS);
+    SYS::Wake(TMR::TIMEOUT_64MS);
 
     LCD::Clear();
     TXT::SetFont(FNT::Font5x8);
@@ -171,7 +170,7 @@ int main()
 There are some things to note here:
 
 - The sketch defines its own `int main()`, not `setup()` and `loop()`. Thus, the Arduino core does not start its timer, and no timer interrupt wakes up the microcontroller between the frames. All the examples use this structure.
-- `SYS::Init()` must be the first call. It prepares all the modules, but it does not turn on the display and does not start the timer: the sketch does this when it is ready.
+- `SYS::Init()` must be the first call. It prepares all the modules, but it does not turn on the display and does not start the timer. `SYS::Wake()` does both, with the frame time of the sketch.
 - Text goes to a hidden screen buffer. The user sees it only after `LCD::Flip()` (refer to [6.5](#65-lcd-display)).
 - `TMR::Sync()` puts the microcontroller into sleep until the next frame. The device is in sleep for most of the time, and this saves the battery.
 
@@ -200,16 +199,10 @@ A sketch does its work in frames of a fixed time, for example 64 ms. In each fra
 The device has no ON/OFF switch, so the sketch must turn it off. The usual method is a timeout after the last key push:
 
 ```cpp
-void powerUp()
-{
-    LCD::TurnOn();
-    TMR::Start(TMR::TIMEOUT_64MS);
-}
-
 int main()
 {
     SYS::Init();
-    powerUp();
+    SYS::Wake(TMR::TIMEOUT_64MS);
 
     u08 last = KBD::Read();
     while (true)
@@ -223,7 +216,7 @@ int main()
         if (TMR::Millis >= 20000)
         {
             SYS::Down(); // sleeps until a key push
-            powerUp();
+            SYS::Wake(TMR::TIMEOUT_64MS);
 
             // the key that woke up the device is still pushed:
             // remember it, so that it does not do an operation
@@ -243,7 +236,7 @@ int main()
 }
 ```
 
-`SYS::Down()` stops the timer, turns off the display and stops the microcontroller in power-down sleep. In this mode the device uses almost no energy, but the RAM keeps all its data. When the user pushes a key, `SYS::Down()` returns, and the sketch continues with the same state. Only the display and the timer must be started again.
+`SYS::Down()` stops the timer, turns off the display and stops the microcontroller in power-down sleep. In this mode the device uses almost no energy, but the RAM keeps all its data. When the user pushes a key, `SYS::Down()` returns, and the sketch continues with the same state. Only the display and the timer are off: `SYS::Wake()` turns them on again.
 
 Not all keys can wake up the device. In power-down sleep the microcontroller sees only a logic level on PB4, and a pin is sure to read as high only above 0.6 × VCC. Only the keys of the two bottom rows (<kbd>±</kbd> <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> and <kbd>C</kbd> <kbd>0</kbd> <kbd>.</kbd> <kbd>↑</kbd>) give such a voltage. The other keys are read correctly by the ADC when the device is on, but they cannot turn it on.
 
@@ -380,12 +373,15 @@ Each module below starts with a block of pseudo-code: the public part of the mod
 ```cpp
 namespace SYS
 {
-    void Init();     // initializes all modules and the interrupts
-    void Down();     // power-down sleep until a key push or a CHRG change
+    void Init();      // initializes all modules and the interrupts
+    void Wake(u08 t); // display on, timer on with frame time t
+    void Down();      // power-down sleep until a key push or a CHRG change
 }
 ```
 
-`SYS` connects the other modules. Use `SYS::Init()` once, at the start of `main()`. It prepares ADC, I2C, LCD, KBD and PWR, and enables the pin-change wake-up and the interrupts. The display stays off and the timer stays stopped: the sketch starts them when it is ready.
+`SYS` connects the other modules. Use `SYS::Init()` once, at the start of `main()`. It prepares ADC, I2C, LCD, KBD and PWR, and enables the pin-change wake-up and the interrupts. The display stays off and the timer stays stopped.
+
+`SYS::Wake(t)` turns on the display and starts the frame timer with the frame time `t`, one of the `TMR::TIMEOUT_*` values (refer to [6.2](#62-tmr-frame-timer)). Call it when the sketch is ready to show something: after `SYS::Init()`, and after each `SYS::Down()`.
 
 `SYS::Down()` stops the timer, turns off the display and stops the MCU in power-down sleep. It sleeps again while the battery is empty. For its use, refer to [4.3](#43-frames-and-power).
 
@@ -791,22 +787,28 @@ namespace ADC
 {
     enum                                  // channels for Read()
     {
-        A0_PB5, A1_PB2, A2_PB4, A3_PB3,   // pins, reference VCC
+        A0_PB5, A1_PB2, A2_PB4, A3_PB3,   // pins: 10 bits in val
+        A0_PB5_8BIT, ..., A3_PB3_8BIT,    // pins: 8 bits in msb
         VCC,                              // 1.1 V bandgap, reference VCC
         TEMP                              // temperature, reference 1.1 V
     };
 
-    w16 Read(u08 channel);                // one 10-bit conversion
+    w16 Read(u08 channel);                // one conversion
     void Init();                          // called by SYS::Init()
 }
 ```
 
 `Read()` turns on the ADC, makes one conversion and turns off the ADC again, so the ADC uses no energy between the measurements. During the conversion the microcontroller sleeps in the ADC noise reduction mode: this gives a more stable result.
 
-The result is right-aligned: 0 to 1023 in `val`. If 8 bits are sufficient, add the `ADLAR` bit to the channel. The result is then left-aligned, and `msb` holds the 8 high bits:
+Each pin has two channels. Both measure against VCC, and the channel selects the format of the result:
+
+- `A0_PB5`..`A3_PB3`: the result is right-aligned, 0 to 1023 in `val`.
+- `A0_PB5_8BIT`..`A3_PB3_8BIT`: the result is left-aligned, and `msb` holds its 8 high bits, 0 to 255. These channels set the `ADLAR` bit of the ADC.
+
+If 8 bits are sufficient, use the 8-bit channel: a `u08` is smaller and faster than a `u16` on the AVR. The keyboard does this:
 
 ```cpp
-u08 level = ADC::Read(ADC::A2_PB4 | _BV(ADLAR)).msb; // 0..255
+u08 level = ADC::Read(ADC::A2_PB4_8BIT).msb; // 0..255
 ```
 
 The internal temperature sensor gives approximately 1 LSB per °C, about 300 at 25 °C. Its offset is different on each chip, so it needs a calibration. For the temperature, the real-time clock is a better choice.

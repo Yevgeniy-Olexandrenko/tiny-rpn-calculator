@@ -1,17 +1,21 @@
 // -----------------------------------------------------------------------------
-// Analog to Digital Converter (10 bit)
+// Analog to Digital Converter (8/10 bit)
 // -----------------------------------------------------------------------------
 
 namespace ADC
 {
 	enum
 	{
-		A0_PB5 = 0b0000,
-		A1_PB2 = 0b0001,
-		A2_PB4 = 0b0010,
-		A3_PB3 = 0b0011,
-		VCC    = 0b1100,
-		TEMP   = 0b1111 | _BV(REFS1),
+		A0_PB5 = 0x00,
+		A1_PB2 = 0x01,
+		A2_PB4 = 0x02,
+		A3_PB3 = 0x03,
+		A0_PB5_8BIT = A0_PB5 | _BV(ADLAR),
+		A1_PB2_8BIT = A1_PB2 | _BV(ADLAR),
+		A2_PB4_8BIT = A2_PB4 | _BV(ADLAR),
+		A3_PB3_8BIT = A3_PB3 | _BV(ADLAR),
+		VCC  = 0x0C,
+		TEMP = 0x0F | _BV(REFS1),
 	};
 
 	void Init()

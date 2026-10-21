@@ -47,8 +47,7 @@ void renderScreen(u08 screen)
 int main()
 {
 	SYS::Init();
-	LCD::TurnOn();
-	TMR::Start(TMR::TIMEOUT_64MS);
+	SYS::Wake(TMR::TIMEOUT_64MS);
 
 	u08 screen = 0xFF;
 	while (true)

@@ -18,8 +18,11 @@ namespace SYS
 		sei();
 	}
 
-	// pin-change interrupt from the selected pins just wakes up the mcu
-	EMPTY_INTERRUPT(PCINT0_vect);
+	void Wake(u08 t)
+	{
+		LCD::TurnOn();
+		TMR::Start(t);
+	}
 
 	void Down()
 	{
@@ -27,4 +30,8 @@ namespace SYS
 		LCD::TurnOff();
 		PWR::Down();
 	}
+
+	// pin-change interrupt from the 
+	// selected pins just wakes up the mcu
+	EMPTY_INTERRUPT(PCINT0_vect);
 }

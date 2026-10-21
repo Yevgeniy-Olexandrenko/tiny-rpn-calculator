@@ -77,8 +77,7 @@ void enterRTCMode()
 {
 	battery = (u08)((PWR::Level() + 10U) / 20U); // 0..100% -> 0..5 bars
 
-	LCD::TurnOn();
-	TMR::Start(TMR::TIMEOUT_64MS);
+	SYS::Wake(TMR::TIMEOUT_64MS);
 
 	oldkey    = KBD::Read();
 	slowPhase = 0xFF;

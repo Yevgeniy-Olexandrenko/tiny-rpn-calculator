@@ -44,16 +44,10 @@ void render(u08 key)
 	LCD::Flip();
 }
 
-void powerUp()
-{
-	LCD::TurnOn();
-	TMR::Start(TMR::TIMEOUT_64MS);
-}
-
 int main()
 {
 	SYS::Init();
-	powerUp();
+	SYS::Wake(TMR::TIMEOUT_64MS);
 
 	u08 last = KBD::NONE;
 	u08 frame = 0;
@@ -72,7 +66,7 @@ int main()
 		if (TMR::Millis >= POWEROFF_MILLIS)
 		{
 			SYS::Down();
-			powerUp();
+			SYS::Wake(TMR::TIMEOUT_64MS);
 			frame = 0;
 		}
 

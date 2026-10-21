@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------------
 
 #define KBD_PIN PB4
-#define KBD_ADC (ADC::A2_PB4 | _BV(ADLAR))
+#define KBD_ADC ADC::A2_PB4_8BIT
 
 // GND group
 #define KBD_RG1 680U

@@ -64,16 +64,10 @@ void render()
 	LCD::Flip();
 }
 
-void powerUp()
-{
-	LCD::TurnOn();
-	TMR::Start(TMR::TIMEOUT_64MS);
-}
-
 int main()
 {
 	SYS::Init();
-	powerUp();
+	SYS::Wake(TMR::TIMEOUT_64MS);
 
 	u08 last = KBD::NONE;
 	while (true)
@@ -86,7 +80,7 @@ int main()
 		if (TMR::Millis >= POWEROFF_MILLIS)
 		{
 			SYS::Down();
-			powerUp();
+			SYS::Wake(TMR::TIMEOUT_64MS);
 			render();
 		}
 
