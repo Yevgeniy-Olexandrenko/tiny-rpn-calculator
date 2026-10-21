@@ -152,6 +152,57 @@ b08 getBCD(const HPVM::reg& r, u08& out, u08 min, u08 max)
 	return false;
 }
 
+// the integer part of a number in the register layout: the digits of the
+// mantissa after the decimal point are cleared, a number below 1 is zero
+void truncate(HPVM::reg& r)
+{
+	// the exponent: sign digit r[2] (9 if negative), digits r[1] r[0]
+	if (r[2])
+		memset(r, 0, sizeof(HPVM::reg)); // below 1
+	else if (!r[1])
+		// exponent 0..9: the integer part has r[0] + 1 digits of 12..3
+		for (u08 i = 11 - r[0]; i > 2; --i) r[i] = 0;
+}
+
+// lifts Y to Z, puts r into Y and lets the ROM do the operation with Y
+// and X; the operation drops the stack again, so Y, Z, T do not change
+// (T is kept by the drop, as it is a copy of Z after a division)
+NOINLINE
+void operationWithY(const HPVM::reg& r, u08 op)
+{
+	using namespace HPVM;
+	memcpy(Z, Y, sizeof(reg));
+	memcpy(Y, r, sizeof(reg));
+	OpAndWait(op);
+}
+
+// Y mod X = Y - X * INT(Y / X), the ROM does the arithmetic, the sketch the
+// integer part and the operands; the remainder gets the sign of X (as MOD of
+// the HP-42S: -7 mod 3 = 2), the stack drops as after a division
+void moduloYX()
+{
+	using namespace HPVM;
+	reg x, y;
+	memcpy(x, C, sizeof(reg));
+	memcpy(y, Y, sizeof(reg));
+
+	// for X = 0 the ROM shows the error of the division; Y / X of 10^9
+	// or more has no digit after the decimal point in 10 digits, so the
+	// remainder is lost
+	OpAndWait(OpDIV_);
+	if (!x[12]) return;
+	if (!C[2] && (C[1] || C[0] >= 9))
+	{
+		Error();
+		return;
+	}
+
+	truncate(C);
+	operationWithY(x, OpMUL_);
+	operationWithY(y, OpSUB_);
+	if (C[12] && C[13] != x[13]) operationWithY(x, OpADD_);
+}
+
 void executeOperation(u08 operation)
 {
 	// the sketch reads and changes the registers of the VM directly,
@@ -181,6 +232,28 @@ void executeOperation(u08 operation)
 
 		case KEY_MEM:
 			isMem = true;
+			break;
+
+		case MATH_SQR:
+			// X * X, as ENTER and * on the HP-21: Y and Z are kept,
+			// T gets a copy of Z
+			HPVM::Operation(HPVM::OpPUSH);
+			HPVM::Operation(HPVM::OpMUL_);
+			break;
+
+		case MATH_ROOT:
+		{
+			// Y ^ (1 / X); for X = 0 only 1/x, so the ROM shows its error,
+			// Y ^ X of the ROM would continue after the error with 1.00;
+			// X is normalized: it is zero if its first mantissa digit is
+			b08 isZero = (HPVM::C[12] == 0);
+			HPVM::Operation(HPVM::OpINV_);
+			if (!isZero) HPVM::Operation(HPVM::OpPOW_);
+			break;
+		}
+
+		case MATH_MOD:
+			moduloYX();
 			break;
 
 		case KEY_ROTU:

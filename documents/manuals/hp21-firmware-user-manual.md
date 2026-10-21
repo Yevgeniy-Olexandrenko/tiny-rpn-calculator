@@ -508,7 +508,7 @@ After the operation, the calculator goes back to the usual display.
 
 ### 9.1 Use a menu
 
-A menu shows on the bottom line of the display. The top line shows X with small digits. Each menu has two or three lines of up to three items. The display shows one line at a time.
+A menu shows on the bottom line of the display. The top line shows X with small digits. Each menu has two to four lines of up to three items. The display shows one line at a time.
 
 <img src="images/rpn-calc-hp21-screen-menu.svg" alt="Calculator screen with a menu: X (30.) on the top line, the items SIN, COS and TAN on the bottom line">
 
@@ -532,31 +532,39 @@ In a menu, only these keys operate:
 
 ### 9.2 MATH menu: <kbd>F</kbd> <kbd>F</kbd>
 
-The MATH menu has three lines.
+The MATH menu has four lines. Line 4 is the line before line 1: push <kbd>E</kbd> to show it.
 
-<img src="images/rpn-calc-hp21-screen-menu-math.svg" alt="MATH menu. Line 1: yˣ, √x, 1/x. Line 2: LOG, LN, eˣ. Line 3: 10ˣ, REC, POL">
+<img src="images/rpn-calc-hp21-screen-menu-math.svg" alt="MATH menu. Line 1: x², √x, 1/x. Line 2: yˣ, ˣ√y, MOD. Line 3: eˣ, 10ˣ, POL. Line 4: LN, LOG, REC">
 
 | Keys in the menu | Item | HP-21 key | Function |
 | --- | :---: | --- | --- |
-| <kbd>1</kbd> | yˣ | <kbd>yˣ</kbd> | Y to the power X |
+| <kbd>1</kbd> | x² | — | <img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle"> X squared |
 | <kbd>2</kbd> | √x | <kbd>√x</kbd> | Square root of X |
 | <kbd>3</kbd> | 1/x | <kbd>1/x</kbd> | Reciprocal of X |
-| <kbd>±</kbd> <kbd>1</kbd> | LOG | <kbd>LOG</kbd> | Common logarithm of X |
-| <kbd>±</kbd> <kbd>2</kbd> | LN | <kbd>LN</kbd> | Natural logarithm of X |
-| <kbd>±</kbd> <kbd>3</kbd> | eˣ | <kbd>eˣ</kbd> | e to the power X |
-| <kbd>±</kbd> <kbd>±</kbd> <kbd>1</kbd> | 10ˣ | <kbd>10ˣ</kbd> | 10 to the power X |
-| <kbd>±</kbd> <kbd>±</kbd> <kbd>2</kbd> | REC | <kbd>→R</kbd> | Polar to rectangular coordinates (refer to [9.3](#93-polar-and-rectangular-coordinates)) |
+| <kbd>±</kbd> <kbd>1</kbd> | yˣ | <kbd>yˣ</kbd> | Y to the power X |
+| <kbd>±</kbd> <kbd>2</kbd> | ˣ√y | — | <img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle"> The root of order X of Y |
+| <kbd>±</kbd> <kbd>3</kbd> | MOD | — | <img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle"> The remainder of Y ÷ X |
+| <kbd>±</kbd> <kbd>±</kbd> <kbd>1</kbd> | eˣ | <kbd>eˣ</kbd> | e to the power X |
+| <kbd>±</kbd> <kbd>±</kbd> <kbd>2</kbd> | 10ˣ | <kbd>10ˣ</kbd> | 10 to the power X |
 | <kbd>±</kbd> <kbd>±</kbd> <kbd>3</kbd> | POL | <kbd>→P</kbd> | Rectangular to polar coordinates (refer to [9.3](#93-polar-and-rectangular-coordinates)) |
+| <kbd>E</kbd> <kbd>1</kbd> | LN | <kbd>LN</kbd> | Natural logarithm of X |
+| <kbd>E</kbd> <kbd>2</kbd> | LOG | <kbd>LOG</kbd> | Common logarithm of X |
+| <kbd>E</kbd> <kbd>3</kbd> | REC | <kbd>→R</kbd> | Polar to rectangular coordinates (refer to [9.3](#93-polar-and-rectangular-coordinates)) |
 
 > [!IMPORTANT]
-> <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (yˣ) calculates **Y to the power X**:
+> <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>1</kbd> (yˣ) calculates **Y to the power X**:
 > 1. Enter the number. Push <kbd>↑</kbd> to move it to Y.
 > 2. Enter the power. It stays in X.
-> 3. Push <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (yˣ).
+> 3. Push <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>1</kbd> (yˣ).
 >
-> For example, 2⁷ = 128: push <kbd>2</kbd> <kbd>↑</kbd> <kbd>7</kbd>, then <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (yˣ).
+> For example, 2⁷ = 128: push <kbd>2</kbd> <kbd>↑</kbd> <kbd>7</kbd>, then <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>1</kbd> (yˣ).
 >
 > The number in Y must be more than zero. The power in X can be any number. The result is not always exact in the last digit, because the HP-21 uses logarithms for this calculation.
+
+> [!NOTE]
+> - <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (x²) is the same as <kbd>↑</kbd> <kbd>F</kbd> <kbd>6</kbd> (×): Y and Z do not change, and T gets a copy of Z.
+> - <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>2</kbd> (ˣ√y) calculates Y to the power 1 ÷ X. For example, the cube root of 8: push <kbd>8</kbd> <kbd>↑</kbd> <kbd>3</kbd>, then <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>2</kbd> (ˣ√y). The display shows `2.00`. The same as for yˣ, Y must be more than zero. If X is zero, the calculator shows `Error`.
+> - <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>3</kbd> (MOD) calculates the remainder of Y ÷ X: Y − X × the integer part of Y ÷ X. The remainder has the sign of X, for example 10 mod 3 = 1, −7 mod 3 = 2, 7 mod −3 = −2. The stack drops as after <kbd>F</kbd> <kbd>9</kbd> (÷). If X is zero, or if Y ÷ X is 10⁹ or more, the calculator shows `Error`: for a larger quotient, the remainder needs more than the 10 digits of the calculator.
 
 ### 9.3 Polar and rectangular coordinates
 
@@ -564,7 +572,7 @@ REC and POL of the MATH menu convert the coordinates of a point. They use the an
 
 | Operation | Y before | X before | Y after | X after |
 | --- | --- | --- | --- | --- |
-| <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>±</kbd> <kbd>2</kbd> (REC) | Angle θ | Radius r | Coordinate y | Coordinate x |
+| <kbd>F</kbd> <kbd>F</kbd> <kbd>E</kbd> <kbd>3</kbd> (REC) | Angle θ | Radius r | Coordinate y | Coordinate x |
 | <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>±</kbd> <kbd>3</kbd> (POL) | Coordinate y | Coordinate x | Angle θ | Radius r |
 
 To look at the second result in Y, push <kbd>F</kbd>, or push <kbd>F</kbd> <kbd>.</kbd> (X↔Y). For an example, refer to [11](#11-examples), example 6.
@@ -710,10 +718,10 @@ Calculate 2⁷ and 8^(2/3).
 | :---: | --- | --- | --- | --- |
 | 1 | <kbd>2</kbd> <kbd>↑</kbd> | <kbd>2</kbd> <kbd>ENTER↑</kbd> | `2.00` | The number goes to Y |
 | 2 | <kbd>7</kbd> | <kbd>7</kbd> | `7.` | The power is in X |
-| 3 | <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (yˣ) | <kbd>yˣ</kbd> | `128.00` | 2⁷ |
+| 3 | <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>1</kbd> (yˣ) | <kbd>yˣ</kbd> | `128.00` | 2⁷ |
 | 4 | <kbd>8</kbd> <kbd>↑</kbd> | <kbd>8</kbd> <kbd>ENTER↑</kbd> | `8.00` | The number goes to Y |
 | 5 | <kbd>2</kbd> <kbd>↑</kbd> <kbd>3</kbd> <kbd>F</kbd> <kbd>9</kbd> (÷) | <kbd>2</kbd> <kbd>ENTER↑</kbd> <kbd>3</kbd> <kbd>÷</kbd> | `0.67` | The power 2/3 is in X |
-| 6 | <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (yˣ) | <kbd>yˣ</kbd> | `4.00` | 8^(2/3) |
+| 6 | <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>1</kbd> (yˣ) | <kbd>yˣ</kbd> | `4.00` | 8^(2/3) |
 | 7 | <kbd>F</kbd> <kbd>8</kbd> <kbd>1</kbd> (DSP) <kbd>.</kbd> <kbd>9</kbd> | <kbd>DSP</kbd> <kbd>.</kbd> <kbd>9</kbd> | `3.999999999` | FIX 9 shows all 10 digits. The calculator uses logarithms, thus the last digit is not exact. |
 | 8 | <kbd>F</kbd> <kbd>8</kbd> <kbd>1</kbd> (DSP) <kbd>.</kbd> <kbd>2</kbd> | <kbd>DSP</kbd> <kbd>.</kbd> <kbd>2</kbd> | `4.00` | FIX 2 again |
 
@@ -757,7 +765,7 @@ Convert the polar coordinates r = 8, θ = 120° to rectangular coordinates. Then
 | :---: | --- | --- | --- | --- |
 | 1 | <kbd>1</kbd> <kbd>2</kbd> <kbd>0</kbd> <kbd>↑</kbd> | <kbd>1</kbd> <kbd>2</kbd> <kbd>0</kbd> <kbd>ENTER↑</kbd> | `120.00` | The angle goes to Y |
 | 2 | <kbd>8</kbd> | <kbd>8</kbd> | `8.` | The radius is in X |
-| 3 | <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>±</kbd> <kbd>2</kbd> (REC) | <kbd>→R</kbd> | `-4.00` | x |
+| 3 | <kbd>F</kbd> <kbd>F</kbd> <kbd>E</kbd> <kbd>3</kbd> (REC) | <kbd>→R</kbd> | `-4.00` | x |
 | 4 | <kbd>F</kbd> <kbd>.</kbd> (X↔Y) | <kbd>x↔y</kbd> | `6.93` | y |
 | 5 | <kbd>3</kbd> <kbd>↑</kbd> | <kbd>3</kbd> <kbd>ENTER↑</kbd> | `3.00` | y goes to Y |
 | 6 | <kbd>4</kbd> | <kbd>4</kbd> | `4.` | x is in X |
@@ -813,7 +821,7 @@ The result is 9.4607305 × 10¹⁵ m.
 | The trigonometric functions give incorrect results. | The angle mode is not correct. | Look for the R indicator. Select RAD or DEG (refer to [8.8](#88-angles)). |
 | The calculator ignores a digit. | The mantissa has 10 digits (refer to [8.4](#84-enter-a-number)). | No action is necessary. |
 | <kbd>E</kbd> does not operate. | The mantissa has more than 8 digits before the decimal point. | Enter the number with a smaller mantissa (refer to [8.4](#84-enter-a-number)). |
-| <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (yˣ) gives an incorrect result. | The number and the power are in the wrong registers. | Enter the number first, then the power (refer to [9.2](#92-math-menu-f-f)). |
+| <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>1</kbd> (yˣ) gives an incorrect result. | The number and the power are in the wrong registers. | Enter the number first, then the power (refer to [9.2](#92-math-menu-f-f)). |
 | <kbd>F</kbd> <kbd>0</kbd> (LAST) does not repeat an arithmetic operation. | It repeats only menu operations. | Push the arithmetic keys again. |
 | A key does an incorrect function. | <kbd>F</kbd> is active (indicator F shows). | Look at the indicators before you push a key. |
 | A key does nothing, and the next key operates. | <kbd>F</kbd> <kbd>5</kbd> (MEM+) was active (indicator S in the top place, the bottom place empty). The key only stopped the memory arithmetic. | Push the key again (refer to [8.9](#89-memory-arithmetic)). |
@@ -910,9 +918,10 @@ The left column shows the keys that open each menu. In the open menu, <kbd>1</kb
 
 | Menu | Line | <kbd>1</kbd> | <kbd>2</kbd> | <kbd>3</kbd> |
 | --- | --- | :---: | :---: | :---: |
-| MATH<br><kbd>F</kbd> <kbd>F</kbd> | 1 | yˣ | √x | 1/x |
-| | 2: <kbd>±</kbd> | LOG | LN | eˣ |
-| | 3: <kbd>±</kbd> <kbd>±</kbd> | 10ˣ | REC | POL |
+| MATH<br><kbd>F</kbd> <kbd>F</kbd> | 1 | x² | √x | 1/x |
+| | 2: <kbd>±</kbd> | yˣ | ˣ√y | MOD |
+| | 3: <kbd>±</kbd> <kbd>±</kbd> | eˣ | 10ˣ | POL |
+| | 4: <kbd>E</kbd> | LN | LOG | REC |
 | TRIG<br><kbd>F</kbd> <kbd>7</kbd> | 1 | SIN | COS | TAN |
 | | 2: <kbd>±</kbd> | ASIN | ACOS | ATAN |
 | PROG<br><kbd>F</kbd> <kbd>8</kbd> | 1 | DSP | RAD | DEG |
@@ -935,8 +944,10 @@ Push <kbd>F</kbd> <kbd>5</kbd> (MEM+), then the key of the operation:
 | --- | --- | --- | --- |
 | <kbd>F</kbd> <kbd>8</kbd> <kbd>±</kbd> <kbd>1</kbd> (TIME) | Hours (0–23) | Minutes (0–59) | Seconds (0–59) |
 | <kbd>F</kbd> <kbd>8</kbd> <kbd>±</kbd> <kbd>2</kbd> (DATE) | Day (1–31) | Month (1–12) | Year (0–99) |
-| <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (yˣ) | — | Number (more than 0) | Power |
-| <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>±</kbd> <kbd>2</kbd> (REC) | — | Angle θ | Radius r |
+| <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>1</kbd> (yˣ) | — | Number (more than 0) | Power |
+| <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>2</kbd> (ˣ√y) | — | Number (more than 0) | Order of the root (not 0) |
+| <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>3</kbd> (MOD) | — | Dividend | Divisor (not 0) |
+| <kbd>F</kbd> <kbd>F</kbd> <kbd>E</kbd> <kbd>3</kbd> (REC) | — | Angle θ | Radius r |
 | <kbd>F</kbd> <kbd>F</kbd> <kbd>±</kbd> <kbd>±</kbd> <kbd>3</kbd> (POL) | — | Coordinate y | Coordinate x |
 
 **Display format and angles**

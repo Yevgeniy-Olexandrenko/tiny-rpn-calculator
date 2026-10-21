@@ -674,7 +674,7 @@ render_calc21(x => display21(' 30.'), menu => [ (menu_items('strMenuTrig'))[0..2
 screen_svg('rpn-calc-hp21-screen-menu.svg', 'Calculator screen with the TRIG menu', [7.5, 'X'], [23.5, 'menu']);
 
 sub menu21 { my $x = shift; sub { render_calc21(x => display21($x), menu => shift) } }
-menu_svg('rpn-calc-hp21-screen-menu-math.svg', 'MATH menu: line 1 y^x, square root, 1/x; line 2 LOG, LN, e^x; line 3 10^x, REC, POL',
+menu_svg('rpn-calc-hp21-screen-menu-math.svg', 'MATH menu: line 1 x^2, square root, 1/x; line 2 y^x, x-th root of y, MOD; line 3 e^x, 10^x, POL; line 4 LN, LOG, REC',
     'strMenuMath', menu21(' 2.'));
 menu_svg('rpn-calc-hp21-screen-menu-trig.svg', 'TRIG menu: line 1 SIN, COS, TAN; line 2 ASIN, ACOS, ATAN', 'strMenuTrig', menu21(' 30.'));
 menu_svg('rpn-calc-hp21-screen-menu-prog.svg', 'PROG menu: line 1 DSP, RAD, DEG; line 2 TIME, DATE, OFF', 'strMenuProg', menu21(' 0.00'));

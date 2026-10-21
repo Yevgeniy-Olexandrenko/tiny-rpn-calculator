@@ -96,8 +96,8 @@ const u08 menu5x8_bytes[] PROGMEM =
     // character '=' (0x3D)
     0x08, 0x08, 0x08, 0x08, 0x08,
 
-    // character '>' (0x3E)
-    0x2E, 0x28, 0x3E, 0x00, 0x00,
+    // character '>' (0x3E), a superscript 2 on hp21 (a superscript y on hp35)
+    0x3A, 0x2A, 0x2E, 0x00, 0x00,
 
     // character '?' (0x3F)
     0x10, 0x20, 0x7E, 0x02, 0x02,
@@ -343,7 +343,10 @@ enum
 	CONST_QE   = BASE - 18,
 	CONST_D2R  = BASE - 19,
 	CONST_MI   = BASE - 20,
-	CONST_IN   = BASE - 21
+	CONST_IN   = BASE - 21,
+	MATH_SQR   = BASE - 22,
+	MATH_ROOT  = BASE - 23,
+	MATH_MOD   = BASE - 24
 };
 
 const u08 mainOps[] DATAMEM =
@@ -359,9 +362,10 @@ const u08 mainOps[] DATAMEM =
 
 const u08 mathOps[] DATAMEM =
 {
-	HPVM::OpPOW_, HPVM::OpSQRT, HPVM::OpINV_,
-	HPVM::OpLOG_, HPVM::OpLN__, HPVM::OpEXP_,
-	HPVM::Op10X_, HPVM::Op2REC, HPVM::Op2POL
+	MATH_SQR,     HPVM::OpSQRT, HPVM::OpINV_,
+	HPVM::OpPOW_, MATH_ROOT,    MATH_MOD,
+	HPVM::OpEXP_, HPVM::Op10X_, HPVM::Op2POL,
+	HPVM::OpLN__, HPVM::OpLOG_, HPVM::Op2REC
 };
 
 const u08 trigOps[] DATAMEM =
@@ -414,9 +418,10 @@ const u08 strMonth[] DATAMEM =
 
 const u08 strMenuMath[] DATAMEM =
 	"\06"
-	" ;<   " " ?:   " " 1/:  "  // Y^X, SQRT(X), 1/X
-	" LOG  " " LN   " " @<   "   // LOG(X), LN(X), e^X
-	" 10<  " " REC  " " POL  "; // 10^X, To rectangular, To polar
+	" :>   " " ?:   " " 1/:  "  // X^2 ('>' is a superscript 2), SQRT(X), 1/X
+	" ;<   " " <?;  " " MOD  "   // Y^X, X-th root of Y, Y modulo X
+	" @<   " " 10<  " " POL  "   // e^X, 10^X, To polar
+	" LN   " " LOG  " " REC  "; // LN(X), LOG(X), To rectangular
 
 const u08 strMenuTrig[] DATAMEM = 
 	"\06"
