@@ -29,8 +29,8 @@ namespace PWR
 		// keeping any wake-up event pending until SLEEP is executed.
 		cli();
 
-		// Stop clocks of unused peripherals and select sleep mode.
-		power_all_disable();
+		// Select sleep mode, clocks of unused peripherals are already
+		// stopped by SYS::Init(), so a timer of the sketch keeps running.
 		set_sleep_mode(mode);
 		sleep_enable();
 

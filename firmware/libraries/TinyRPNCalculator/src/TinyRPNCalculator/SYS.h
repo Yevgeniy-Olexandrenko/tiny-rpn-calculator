@@ -13,6 +13,11 @@ namespace SYS
 	#if PCB_REVISION >= 15
 		PWR::Init();
 	#endif
+		// stop clocks of the peripherals after their setup, ADC::Read()
+		// turns the ADC clock on for a conversion, the timers and USI are
+		// not used by the library: a sketch can turn them on after this
+		power_all_disable();
+
 		GIFR = _BV(PCIF);     // clear pending pin-change interrupt
 		set_bit(GIMSK, PCIE); // enable pin-change interrupt
 		sei();

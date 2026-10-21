@@ -67,7 +67,7 @@ PB0, PB1 and PB2 have two names each. During programming they are the ICSP signa
 - **RESET** is used only for programming through the ICSP connector.
 - **VCC** is the battery voltage: there is no voltage regulator. VCC changes from approximately 4.2 V (full battery) to 3.5 V (empty battery). The XB5358D0 protection IC disconnects the battery below 2.9 V and above 4.25 V. The firmware keeps the device in sleep already at 3.5 V and less (refer to [4.3](#43-frames-and-power)).
 
-The library uses three interrupt vectors: `ADC_vect`, `WDT_vect` and `PCINT0_vect`. Do not define them in a sketch. Timer 0 and timer 1 are free: the library does not use them.
+The library uses three interrupt vectors: `ADC_vect`, `WDT_vect` and `PCINT0_vect`. Do not define them in a sketch. Timer 0, timer 1 and the USI are free: the library does not use them. `SYS::Init()` stops their clocks to save current. A sketch that uses one of them turns its clock on after `SYS::Init()`, for example with `power_timer0_enable()` from `<avr/power.h>`.
 
 ## 3. Installation
 
@@ -379,7 +379,7 @@ namespace SYS
 }
 ```
 
-`SYS` connects the other modules. Use `SYS::Init()` once, at the start of `main()`. It prepares ADC, I2C, LCD, KBD and PWR, and enables the pin-change wake-up and the interrupts. The display stays off and the timer stays stopped.
+`SYS` connects the other modules. Use `SYS::Init()` once, at the start of `main()`. It prepares ADC, I2C, LCD, KBD and PWR, stops the clocks of the peripherals that the library does not use (refer to [2](#2-hardware)), and enables the pin-change wake-up and the interrupts. The display stays off and the timer stays stopped.
 
 `SYS::Wake(t)` turns on the display and starts the frame timer with the frame time `t`, one of the `TMR::TIMEOUT_*` values (refer to [6.2](#62-tmr-frame-timer)). Call it when the sketch is ready to show something: after `SYS::Init()`, and after each `SYS::Down()`.
 
@@ -798,7 +798,7 @@ namespace ADC
 }
 ```
 
-`Read()` turns on the ADC, makes one conversion and turns off the ADC again, so the ADC uses no energy between the measurements. During the conversion the microcontroller sleeps in the ADC noise reduction mode: this gives a more stable result.
+`Read()` turns on the ADC, makes one conversion and turns off the ADC again, so the ADC uses no energy between the measurements. During the conversion the microcontroller sleeps in the ADC noise reduction mode: this gives a more stable result. `Init()` also turns off the analog comparator: the library does not use it, and the datasheet recommends to turn it off before idle and ADC noise reduction sleep.
 
 Each pin has two channels. Both measure against VCC, and the channel selects the format of the result:
 

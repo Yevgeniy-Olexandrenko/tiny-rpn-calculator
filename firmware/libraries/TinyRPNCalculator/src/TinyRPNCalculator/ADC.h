@@ -25,7 +25,9 @@ namespace ADC
 		       | _BV(ADPS2)  // prescaler 128 gives
 		       | _BV(ADPS1)  // 125 kHz ADC clock
 		       | _BV(ADPS0);
-		power_adc_disable();
+
+		// the analog comparator is not used, off it saves current in sleep
+		set_bit(ACSR, ACD);
 	}
 
 	NOINLINE
