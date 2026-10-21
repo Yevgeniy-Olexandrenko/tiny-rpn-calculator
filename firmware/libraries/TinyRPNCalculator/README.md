@@ -73,9 +73,14 @@ The library uses three interrupt vectors: `ADC_vect`, `WDT_vect` and `PCINT0_vec
 
 ### 3.1 Install the library
 
-On Windows, run [`TinyRPNCalculator_Install.bat`](../TinyRPNCalculator_Install.bat) as administrator. The script makes the symbolic link `Documents\Arduino\libraries\TinyRPNCalculator` to the library folder. The Arduino IDE then compiles the library directly from this folder, and every change in the library has an effect on the next build. Restart the IDE after the installation.
+On Windows, install the board package first (refer to [3.2](#32-install-the-board-package)). Then run [`TinyRPNCalculator_Install.bat`](../TinyRPNCalculator_Install.bat) as administrator. The script does two things:
 
-On other systems, copy the library folder to the `libraries` folder of your Arduino sketchbook, or make a symbolic link there.
+- It makes the symbolic link `Documents\Arduino\libraries\TinyRPNCalculator` to the library folder. The Arduino IDE then compiles the library directly from this folder, and every change in the library has an effect on the next build.
+- It adds export hooks to every installed version of ATTinyCore and TinyCore: a file `platform.local.txt` next to `platform.txt` of the package. Without the hooks, **Sketch → Export compiled binary** puts only the `.hex` file next to the sketch, and the `.eep` file stays in a temporary folder. With the hooks, the IDE also copies both files into the `build` folder of the sketch. The script does not change a `platform.local.txt` that has other settings. Run the script again after an update of the board package.
+
+Restart the IDE after the installation.
+
+On other systems, copy the library folder to the `libraries` folder of your Arduino sketchbook, or make a symbolic link there. To get the `.eep` file, add the same hooks to `platform.local.txt` with the copy command of your system, or take the file from the build folder that the IDE shows in verbose output.
 
 ### 3.2 Install the board package
 
@@ -128,7 +133,7 @@ avrdude -c usbasp -p t85 -B 32 -U lfuse:w:0xF1:m -U hfuse:w:0xD7:m -U efuse:w:0x
 
 A new microcontroller runs at 1 MHz before you write the fuses. The option `-B 32` makes the programmer slow enough for it.
 
-To program a sketch, select **Sketch → Export compiled binary**. The IDE puts the files into the `build` folder of the sketch. Then write the flash, and the EEPROM if the sketch uses `ENABLE_OPT_DATAMEM`:
+To program a sketch, select **Sketch → Export compiled binary**. With the export hooks of [3.1](#31-install-the-library), the IDE puts the `.hex` and `.eep` files into the `build` folder of the sketch. Then write the flash, and the EEPROM if the sketch uses `ENABLE_OPT_DATAMEM`:
 
 ```text
 avrdude -c usbasp -p t85 -U flash:w:MySketch.ino.hex:i -U eeprom:w:MySketch.ino.eep:i

@@ -788,7 +788,7 @@ The result is 9.460730473 × 10¹⁵ m.
 
 **Procedure:**
 
-1. Run `firmware/libraries/TinyRPNCalculator_Install.bat` as administrator.
+1. Run `firmware/libraries/TinyRPNCalculator_Install.bat` as administrator. Install the ATTinyCore board package before this step: the script installs the library and adds export hooks to the board package. Without the hooks, the IDE does not put the `.eep` file into the `build` folder (refer to step 5).
 2. Open `firmware/sketches/hp35/hp35.ino` in the Arduino IDE.
 3. Make sure that the sketch selects PCB rev 1.5:
    ```cpp

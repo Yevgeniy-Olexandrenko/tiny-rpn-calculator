@@ -3,3 +3,8 @@
 !**/build/*.ino.eep
 **/.*/*
 **/data/totp.local.txt
+
+# Arduino IDE export puts these files next to the sketch too, the copies
+# of the export hooks in build/ are the ones to commit
+/*/*.hex
+/*/*.lst
