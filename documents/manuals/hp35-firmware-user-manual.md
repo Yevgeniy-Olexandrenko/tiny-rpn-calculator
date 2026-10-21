@@ -512,6 +512,7 @@ In a menu, only these keys operate:
 > - Enter **whole numbers** in the range of the table. Do not enter a decimal fraction or an exponent.
 > - If a value is not correct, the operation does not change the clock and the time zone. The calculator shows an error (a flashing `0.`) and **clears the stack** (X, Y, Z, T). The memory does not change. Push <kbd>C</kbd> and do the procedure again.
 > - If the values are correct, the operation removes them from the stack. After the time and the date operations (TIME, DATE), the device shows the watch screen. After the time zone operation (ZONE), the device shows the TOTP codes. If there are no TOTP keys, the device stays in calculator mode.
+> - Set the date before the time. The date operation (DATE) starts the current second of the clock again, so the clock can lose up to 1 s. The time operation (TIME) then sets the time precisely.
 
 ### 10.1 Set the time
 
@@ -550,7 +551,7 @@ In a menu, only these keys operate:
 5. Make sure that the watch screen shows the correct date.
 
 > [!NOTE]
-> The date operation (DATE) does not change the time. The time operation (TIME) does not change the date.
+> The date operation (DATE) keeps the hours, the minutes and the seconds, but it can make the clock lose up to 1 s (refer to [10](#10-set-the-time-the-date-and-the-time-zone)). The time operation (TIME) does not change the date.
 
 ### 10.3 Set the time zone
 

@@ -737,6 +737,8 @@ RTC::Seconds = 0x00;
 RTC::WriteTimeDate(); // 12:30:00, the date does not change
 ```
 
+A change of only the date in the same way is not exact. The DS3231M starts the current second again when its seconds register is written, and `WriteTimeDate()` starts the write with the seconds. Thus, each such write makes the clock lose the part of the second that already went by, up to 1 s. Set the date before the time, or write only the date registers with the I2C module (refer to [6.9](#69-i2c-bus)).
+
 The variables start with the date and the time of the build. Thus, a sketch can call `WriteTimeDate()` right after the start to set the clock to the build time. This is easy, but the clock is then late by the time between the build and the start of the device.
 
 **Unix time.** `GetTimestamp()` gives the number of seconds from 1970-01-01 00:00 UTC, for example for one-time passwords. The clock keeps the local time, so you give the time zone in whole hours: `+3` for UTC+3. Time zones with 30 or 45 minutes are not possible.
