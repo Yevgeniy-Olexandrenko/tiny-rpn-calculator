@@ -196,7 +196,7 @@ bool Convert(const std::filesystem::path& inputPath, const std::filesystem::path
     std::ofstream file(outputPath);
     file << output.str();
     file.close();
-    if (!file) return Fail("Can't write the output file");
+    if (!file) return Fail("Can't write " + outputPath.string());
     return true;
 }
 
@@ -207,7 +207,7 @@ int main(int argc, char* argv[])
         std::filesystem::path app{ argv[0] };
         std::cerr << "Usage:" << std::endl;
         std::cerr << app.filename().string() << " <input_file>" << std::endl;
-        return -1;
+        return 1;
     }
 
     std::filesystem::path iFilePath{ argv[1] };
@@ -220,14 +220,14 @@ int main(int argc, char* argv[])
     {
         std::cerr << "Unsupported file type:" << std::endl;
         std::cerr << "Must be " << k_iFileExt << " instead of " << iFilePath.extension().string() << std::endl;
-        return -1;
+        return 1;
     }
 
     if (!Convert(iFilePath, oFilePath))
     {
         std::cerr << "Conversion FAILED:" << std::endl;
         std::cerr << iFilePath.filename().string() << " -> " << oFilePath.filename().string() << std::endl;
-        return -1;
+        return 1;
     }
 
     std::cout << "Conversion DONE:" << std::endl;

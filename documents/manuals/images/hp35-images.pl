@@ -30,6 +30,34 @@ my %font = (
 );
 $font{$_}{last} = $font{$_}{first} + @{$font{$_}{bytes}} / ($font{$_}{w} * $font{$_}{rows}) - 1 for keys %font;
 
+# layout #defines of data.h: integer expressions of other defines (computed with C
+# integer division), chars and strings; LCD::WIDTH and HPVM::CYCLES_PER_SEC are
+# constants of the library headers
+(my $lib_dir = $data_h) =~ s{[\\/][^\\/]+[\\/][^\\/]+$}{/../libraries/TinyRPNCalculator/src};
+sub lib_value {
+    my ($file, $re) = @_;
+    open my $lf, '<', "$lib_dir/$file" or die "$lib_dir/$file: $!";
+    my $text = do { local $/; <$lf> };
+    $text =~ $re or die "no $re in $file";
+    return $1;
+}
+my %lib = (
+    'LCD::WIDTH'           => lib_value('TinyRPNCalculator/LCD.h', qr/constexpr u08 WIDTH\s*=\s*(\d+);/),
+    'HPVM::CYCLES_PER_SEC' => int(lib_value('Extras/HPVMClassic.h', qr/CLOCK_RATE_KHZ\s*=\s*(\d+);/) * 1000 / (14 * 4)),
+);
+my %define;
+$define{$1} = $2 while $src =~ m{^#define\s+(\w+)\s+(.*?)\s*(?://.*)?\r?$}mg;
+sub def {
+    my $name = shift;
+    my $v = $define{$name} // die "no #define $name in $data_h";
+    return $1 if $v =~ /^'(.)'$/ or $v =~ /^"(.*)"$/;
+    $v =~ s/(\w+::\w+)/$lib{$1} \/\/ die "no value of $1"/ge;
+    $v =~ s/\b([A-Z][A-Z0-9_]*)\b/def($1)/ge;
+    my $n = eval "use integer; $v";
+    die "#define $name: $v: $@" unless defined $n;
+    return $n;
+}
+
 # items of a menu string: "\06" " SIN  " " COS  " ...
 sub menu_items {
     my $name = shift;
@@ -112,20 +140,20 @@ sub render_rtc {
     my (%a) = @_;
     lcd_clear();
     set_font('digits7x32');
-    print_char('i', 16, 0);
-    print_char('i', 40, 0);
-    print_seg_2($a{h},  0, 0);
-    print_seg_2($a{m}, 24, 0);
-    print_seg_2($a{s}, 48, 0);
+    print_char(def('RTC_TIME_COLON'), def('RTC_POS_COLON_HM'), 0);
+    print_char(def('RTC_TIME_COLON'), def('RTC_POS_COLON_MS'), 0);
+    print_seg_2($a{h}, def('RTC_POS_HOURS'),   0);
+    print_seg_2($a{m}, def('RTC_POS_MINUTES'), 0);
+    print_seg_2($a{s}, def('RTC_POS_SECONDS'), 0);
     set_font('menu5x8');
-    print_string($a{month}, 72, 0);
-    print_string(sprintf('%02d', $a{date}), 97, 0);
-    print_string(sprintf('%02d', $a{year}), 115, 0);
-    print_char('/', 109, 0);
+    print_string($a{month}, def('RTC_POS_MONTH'), 0);
+    print_string(sprintf('%02d', $a{date}), def('RTC_POS_DATE'), 0);
+    print_string(sprintf('%02d', $a{year}), def('RTC_POS_YEAR'), 0);
+    print_char(def('RTC_DATE_SLASH'), def('RTC_POS_SLASH'), 0);
     set_scale(2, 1);
-    print_string('HP=35', 72, 2);
-    my $x = 72;
-    for (1 .. $a{bars}) { print_char('=', $x, 1); next_pos($x) }
+    print_string(def('RTC_INFO_HP_LABEL'), def('RTC_POS_INFO'), 2);
+    my $x = def('RTC_POS_INFO');
+    for (1 .. $a{bars}) { print_char(def('RTC_BATTERY_LEVEL'), $x, 1); next_pos($x) }
 }
 
 # code.h: renderCalcNumber(), renderCalcMenu(), renderCalcMode()
@@ -142,18 +170,18 @@ sub render_calc {
     my (%a) = @_;   # x => display, y => display (F active), menu => [3 items], memory => 1
     lcd_clear();
     set_font('digits7x16');
-    print_char('j', 121, $a{menu} ? 0 : 2) if $a{memory};
+    print_char(def('FLAG_STORAGE'), def('FLAG_POS'), $a{menu} ? 0 : 2) if $a{memory};
     if ($a{y}) {
         render_number($a{y}, 0);
         render_number($a{x}, 2);
-        print_char('i', 121, 0);
+        print_char(def('FLAG_FUNCTION'), def('FLAG_POS'), 0);
     }
     elsif ($a{menu}) {
         render_number($a{x}, 0);
         set_font('menu5x8');
         set_scale(1, 2);
         set_inverse(1);
-        print_string($a{menu}[$_], 46 * $_, 2) for 0..2;
+        print_string($a{menu}[$_], def('MENU_POS_ITEM') * $_, 2) for 0 .. def('MENU_ITEMS_PER_LINE') - 1;
         set_inverse(0);
     }
     else {
@@ -169,15 +197,15 @@ sub render_totp {
     set_font('digits7x32');
     my $code = $a{code};
     for (my $i = 6; $i-- > 0;) {
-        print_seg($num_seg[$code % 10], 8 + ($i < 3 ? $i : $i + 1) * 8, 0);
+        print_seg($num_seg[$code % 10], def('TOTP_POS_CODE') + ($i < 3 ? $i : $i + 1) * def('TOTP_CHAR_W'), 0);
         $code = int($code / 10);
     }
     set_font('digits7x16');
-    print_seg_2($a{left}, 104, 0);
+    print_seg_2($a{left}, def('TOTP_POS_LEFT'), 0);
     set_font('menu5x8');
     set_scale(1, 2);
     set_inverse(1);
-    print_string(" $a{label} ", 92, 2);
+    print_string(" $a{label} ", def('TOTP_POS_LABEL'), 2);
     set_inverse(0);
 }
 
@@ -210,9 +238,9 @@ sub pixels_path {
 # ================================================================ styles
 # Flashing pixels are lit for the first half of the period. The HP-35 ROM toggles the
 # display of an error every 602 cycles (measured on HPVMClassic.h), the sketch runs
-# 3571 / 15 = 238 cycles in a frame of 64 ms (TMR::TIMEOUT_64MS); renderRTCMode() toggles
+# HPVM_CYCLES_PER_FRAME (238) cycles in a frame of 64 ms (TMR::TIMEOUT_64MS); renderRTCMode() toggles
 # the last bar of the battery indicator during the charge every 512 ms (TMR::Millis & 0x200).
-my $error_period  = int(2 * 602 / int(3571 / 15) * 64 + 0.5);
+my $error_period  = int(2 * 602 / def('HPVM_CYCLES_PER_FRAME') * 64 + 0.5);
 my $charge_period = 2 * 512;
 my %keyframes = (flash => '50% { opacity: 0; }');
 

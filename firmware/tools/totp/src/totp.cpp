@@ -252,6 +252,21 @@ bool ReadKeys(const std::filesystem::path& path, std::vector<Entry>& entries)
 		return false;
 	}
 
+	// an editor can save the file with a byte order mark: the UTF-8 one
+	// is skipped, UTF-16 is not supported (labels and secrets are ASCII)
+	char bom[3] = {};
+	input.read(bom, sizeof(bom));
+	if ((bom[0] == '\xFF' && bom[1] == '\xFE') || (bom[0] == '\xFE' && bom[1] == '\xFF'))
+	{
+		std::cerr << path.filename().string() << ": UTF-16 is not supported, save the file as UTF-8 or ANSI" << std::endl;
+		return false;
+	}
+	if (!(bom[0] == '\xEF' && bom[1] == '\xBB' && bom[2] == '\xBF'))
+	{
+		input.clear();
+		input.seekg(0);
+	}
+
 	std::string line;
 	for (int number = 1; std::getline(input, line); ++number)
 	{
@@ -576,7 +591,7 @@ int Usage(const char* app)
 	std::cerr << "Usage:" << std::endl;
 	std::cerr << name << " header <keys.txt> <area size> <totp.h>" << std::endl;
 	std::cerr << name << " eep <keys.txt> <input.eep> <output.eep>" << std::endl;
-	return -1;
+	return 1;
 }
 
 int main(int argc, char* argv[])
@@ -596,8 +611,9 @@ int main(int argc, char* argv[])
 		if (keysPath.filename().string().find(".local.") != std::string::npos)
 		{
 			std::cerr << "Keys of " << keysPath.filename().string() << " are private, use eep mode for them" << std::endl;
-			std::cerr << "Conversion FAILED" << std::endl;
-			return -1;
+			std::cerr << "Conversion FAILED:" << std::endl;
+			std::cerr << keysPath.filename().string() << " -> " << headerPath.filename().string() << std::endl;
+			return 1;
 		}
 
 		std::vector<uint8_t> area;
@@ -605,8 +621,9 @@ int main(int argc, char* argv[])
 			!BuildArea(entries, size, area) ||
 			!WriteHeader(headerPath, keysPath, entries, area))
 		{
-			std::cerr << "Conversion FAILED" << std::endl;
-			return -1;
+			std::cerr << "Conversion FAILED:" << std::endl;
+			std::cerr << keysPath.filename().string() << " -> " << headerPath.filename().string() << std::endl;
+			return 1;
 		}
 
 		std::cout << "Conversion DONE:" << std::endl;
@@ -623,8 +640,10 @@ int main(int argc, char* argv[])
 			!PatchEeprom(records, entries) ||
 			!WriteHex(outputPath, records))
 		{
-			std::cerr << "Conversion FAILED" << std::endl;
-			return -1;
+			std::cerr << "Conversion FAILED:" << std::endl;
+			std::cerr << keysPath.filename().string() << " + " << inputPath.filename().string();
+			std::cerr << " -> " << outputPath.filename().string() << std::endl;
+			return 1;
 		}
 
 		std::cout << "Conversion DONE:" << std::endl;

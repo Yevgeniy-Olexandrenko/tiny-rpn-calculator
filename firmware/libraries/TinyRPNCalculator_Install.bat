@@ -11,11 +11,24 @@ if %errorLevel% neq 0 (
 )
 
 rem 1. Link the library into the libraries folder of the Arduino sketchbook
-set "TARGET=%USERPROFILE%\Documents\Arduino\libraries\%LIB_NAME%"
+set "LIBRARIES=%USERPROFILE%\Documents\Arduino\libraries"
+set "TARGET=%LIBRARIES%\%LIB_NAME%"
 set "SOURCE=%~dp0%LIB_NAME%"
 
+if not exist "%LIBRARIES%" mkdir "%LIBRARIES%"
+
+rem rmdir without /s removes only a link or an empty folder, never a copy
 if exist "%TARGET%" rmdir "%TARGET%" 2>nul
-mklink /D "%TARGET%" "%SOURCE%"
+if exist "%TARGET%" (
+    echo Error: %TARGET% is a folder with files, not a link. Remove or rename it, then run this file again.
+    pause
+    exit /b 1
+)
+mklink /D "%TARGET%" "%SOURCE%" || (
+    echo Error: the link is not made.
+    pause
+    exit /b 1
+)
 echo.
 
 rem 2. Export hooks: "Sketch > Export compiled binary" of the Arduino IDE puts

@@ -2,7 +2,9 @@
 !**/build/*.ino.hex
 !**/build/*.ino.eep
 **/.*/*
-**/data/totp.local.txt
+# private files with real secrets, e.g. data/totp.local.txt (the totp tool
+# refuses *.local.* files in header mode)
+**/*.local.*
 
 # Arduino IDE export puts these files next to the sketch too, the copies
 # of the export hooks in build/ are the ones to commit

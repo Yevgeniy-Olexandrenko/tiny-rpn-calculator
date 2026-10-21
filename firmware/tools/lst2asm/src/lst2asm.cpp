@@ -42,9 +42,17 @@ bool Convert(const std::filesystem::path& inputPath, const std::filesystem::path
 {
 	// the output is not created when there is no input
 	std::ifstream input(inputPath);
-	if (!input) return false;
+	if (!input)
+	{
+		std::cerr << "Can't open " << inputPath.string() << std::endl;
+		return false;
+	}
 	std::ofstream output(outputPath);
-	if (!output) return false;
+	if (!output)
+	{
+		std::cerr << "Can't write " << outputPath.string() << std::endl;
+		return false;
+	}
 
 	bool isFuncDef = false;
 	bool isFuncLab = false;
@@ -86,6 +94,11 @@ bool Convert(const std::filesystem::path& inputPath, const std::filesystem::path
 	}
 	input.close();
 	output.close();
+	if (!output)
+	{
+		std::cerr << "Can't write " << outputPath.string() << std::endl;
+		return false;
+	}
 	return true;
 }
 
@@ -96,7 +109,7 @@ int main(int argc, char* argv[])
 		std::filesystem::path app{ argv[0] };
 		std::cerr << "Usage:" << std::endl;
 		std::cerr << app.filename().string() << " <input_file>" << std::endl;
-		return -1;
+		return 1;
 	}
 
 	std::filesystem::path iFilePath{ argv[1] };
@@ -109,14 +122,14 @@ int main(int argc, char* argv[])
 	{
 		std::cerr << "Unsupported file type:" << std::endl;
 		std::cerr << "Must be " << k_iFileExt << " instead of " << iFilePath.extension().string() << std::endl;
-		return -1;
+		return 1;
 	}
 
 	if (!Convert(iFilePath, oFilePath))
 	{
 		std::cerr << "Conversion FAILED:" << std::endl;
 		std::cerr << iFilePath.filename().string() << " -> " << oFilePath.filename().string() << std::endl;
-		return -1;
+		return 1;
 	}
 		
 	std::cout << "Conversion DONE:" << std::endl;
