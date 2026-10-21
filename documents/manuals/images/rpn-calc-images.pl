@@ -664,11 +664,12 @@ render_calc21(y => display21(' 12.50'), x => display21(' 3.'), memory => 1);
 screen_svg('rpn-calc-hp21-screen-function.svg', 'Calculator screen with F active: Y on top, X below', [7.5, 'Y'], [23.5, 'X']);
 
 # hp21 code.h: updateCalcMode() in the memory arithmetic (F 5): the keys of
-# the arithmetic operations 9 6 3 ↑ do them with the memory, others leave
+# the arithmetic operations 9 6 3 ↑ do them with the memory, . exchanges X and
+# the memory, others leave
 render_calc21(x => display21(' 12.50'), memory => 1, radians => 1, mem => 1);
 screen_svg('rpn-calc-hp21-screen-memory.svg', 'Calculator screen in the memory arithmetic: 12.50, the S indicator in the top place', [3.5, 'S']);
-write_svg('rpn-calc-hp21-keyboard-memory.svg', 'Keys that work in the memory arithmetic: 9, 6, 3, ↑', $kbd_viewbox,
-    keyboard() . dim_keys('the other keys end the memory arithmetic', map { my $r = $_; map { [$r, $_] } 0..2 } 0..3));
+write_svg('rpn-calc-hp21-keyboard-memory.svg', 'Keys that work in the memory arithmetic: 9, 6, 3, ↑ and the dot', $kbd_viewbox,
+    keyboard() . dim_keys('the other keys end the memory arithmetic', grep { $_->[0] != 3 || $_->[1] != 2 } map { my $r = $_; map { [$r, $_] } 0..2 } 0..3));
 
 render_calc21(x => display21(' 30.'), menu => [ (menu_items('strMenuTrig'))[0..2] ]);
 screen_svg('rpn-calc-hp21-screen-menu.svg', 'Calculator screen with the TRIG menu', [7.5, 'X'], [23.5, 'menu']);

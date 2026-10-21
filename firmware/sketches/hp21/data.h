@@ -346,7 +346,8 @@ enum
 	CONST_IN   = BASE - 21,
 	MATH_SQR   = BASE - 22,
 	MATH_ROOT  = BASE - 23,
-	MATH_MOD   = BASE - 24
+	MATH_MOD   = BASE - 24,
+	MEM_SWAP   = BASE - 25
 };
 
 const u08 mainOps[] DATAMEM =

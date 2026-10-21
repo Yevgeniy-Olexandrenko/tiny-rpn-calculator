@@ -480,7 +480,7 @@ The trigonometric functions (refer to [9.4](#94-trig-menu-f-7)) and the coordina
 
 ### 8.9 Memory arithmetic
 
-The HP-21 has four keys that do an arithmetic operation with the memory and X: <kbd>M+</kbd>, <kbd>M−</kbd>, <kbd>M×</kbd> and <kbd>M÷</kbd>. The result goes to the memory. X and the stack do not change. On this calculator, the keys of the four arithmetic operations do these operations after <kbd>F</kbd> <kbd>5</kbd> (MEM+):
+The HP-21 has four keys that do an arithmetic operation with the memory and X: <kbd>M+</kbd>, <kbd>M−</kbd>, <kbd>M×</kbd> and <kbd>M÷</kbd>. The result goes to the memory. X and the stack do not change. On this calculator, the keys of the four arithmetic operations do these operations after <kbd>F</kbd> <kbd>5</kbd> (MEM+). The <kbd>.</kbd> key exchanges X and the memory:
 
 1. Enter X.
 2. Push <kbd>F</kbd> <kbd>5</kbd> (MEM+). The S indicator shows in the top place, and the bottom place is empty.
@@ -488,7 +488,7 @@ The HP-21 has four keys that do an arithmetic operation with the memory and X: <
 
 <img src="images/rpn-calc-hp21-screen-memory.svg" alt="Calculator screen after F 5 (MEM+): X (12.50) and the S indicator in the top place">
 
-<img src="images/rpn-calc-hp21-keyboard-memory.svg" alt="Keyboard: the keys that operate after F 5 (MEM+): 9, 6, 3, ↑; the other keys are dim">
+<img src="images/rpn-calc-hp21-keyboard-memory.svg" alt="Keyboard: the keys that operate after F 5 (MEM+): 9, 6, 3, ., ↑; the other keys are dim">
 
 | Keys | Operation | HP-21 key | Function |
 | --- | :---: | --- | --- |
@@ -496,11 +496,13 @@ The HP-21 has four keys that do an arithmetic operation with the memory and X: <
 | <kbd>F</kbd> <kbd>5</kbd> <kbd>3</kbd> | M− | <kbd>M−</kbd> | Subtract X from the memory |
 | <kbd>F</kbd> <kbd>5</kbd> <kbd>6</kbd> | M× | <kbd>M×</kbd> | Multiply the memory by X |
 | <kbd>F</kbd> <kbd>5</kbd> <kbd>9</kbd> | M÷ | <kbd>M÷</kbd> | Divide the memory by X |
+| <kbd>F</kbd> <kbd>5</kbd> <kbd>.</kbd> | X↔M | — | <img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle"> Exchange X and the memory |
 
 After the operation, the calculator goes back to the usual display.
 
 > [!NOTE]
 > - After <kbd>F</kbd> <kbd>5</kbd> (MEM+), a different key, also <kbd>F</kbd>, only stops the memory arithmetic. No operation occurs.
+> - X↔M changes only X and the memory. The stack does not lift or drop. A number that you enter after X↔M lifts the stack, the same as after <kbd>F</kbd> <kbd>1</kbd> (RCL).
 > - To do the same operation with the memory again, push <kbd>F</kbd> <kbd>0</kbd> (LAST).
 > - For an example, refer to [11](#11-examples), example 4.
 
@@ -934,9 +936,9 @@ The left column shows the keys that open each menu. In the open menu, <kbd>1</kb
 
 Push <kbd>F</kbd> <kbd>5</kbd> (MEM+), then the key of the operation:
 
-| <kbd>↑</kbd> | <kbd>3</kbd> | <kbd>6</kbd> | <kbd>9</kbd> |
-| :---: | :---: | :---: | :---: |
-| M+ | M− | M× | M÷ |
+| <kbd>↑</kbd> | <kbd>3</kbd> | <kbd>6</kbd> | <kbd>9</kbd> | <kbd>.</kbd> |
+| :---: | :---: | :---: | :---: | :---: |
+| M+ | M− | M× | M÷ | X↔M |
 
 **Stack input for the operations**
 

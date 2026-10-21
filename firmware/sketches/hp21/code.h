@@ -234,6 +234,11 @@ void executeOperation(u08 operation)
 			isMem = true;
 			break;
 
+		case MEM_SWAP:
+			// a number entered after it lifts the stack, as after RCL
+			HPVM::ExchangeX(HPVM::M1);
+			break;
+
 		case MATH_SQR:
 			// X * X, as ENTER and * on the HP-21: Y and Z are kept,
 			// T gets a copy of Z
@@ -426,8 +431,8 @@ void updateCalcMode()
 		else if (isMem)
 		{
 			// the keys of the 4 arithmetic operations (shifted by F
-			// otherwise) do them with the memory, any other key only
-			// leaves the mode
+			// otherwise) do them with the memory, the dot exchanges X and
+			// the memory, any other key only leaves the mode
 			isMem = false;
 			u08 op = KEY_NOP;
 			switch (newKey)
@@ -436,6 +441,7 @@ void updateCalcMode()
 				case KBD::NUM6: op = HPVM::OpMMUL; break;
 				case KBD::NUM9: op = HPVM::OpMDIV; break;
 				case KBD::DUP:  op = HPVM::OpMADD; break;
+				case KBD::DOT:  op = MEM_SWAP;     break;
 			}
 			if (op != KEY_NOP) executeOperation(lastOp = op);
 		}

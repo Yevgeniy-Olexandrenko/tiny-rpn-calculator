@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="180 185 660 340" width="660" height="340" font-family="Segoe UI, Helvetica, Arial, sans-serif">
-  <title>Keys that work in the memory arithmetic: 9, 6, 3, ↑</title>
+  <title>Keys that work in the memory arithmetic: 9, 6, 3, ↑ and the dot</title>
   <style>
     .cap      { fill: #1f2328; }
     .dim      { opacity: 0.8; fill: #ffffff; }
@@ -61,5 +61,4 @@
   <rect class="dim" x="511" y="356" width="158" height="78"/>
   <rect class="dim" x="191" y="436" width="158" height="78"/>
   <rect class="dim" x="351" y="436" width="158" height="78"/>
-  <rect class="dim" x="511" y="436" width="158" height="78"/>
 </svg>

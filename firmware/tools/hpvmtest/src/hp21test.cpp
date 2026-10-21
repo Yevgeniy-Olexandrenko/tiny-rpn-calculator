@@ -400,6 +400,21 @@ int main(int argc, char** argv)
 		expect("constant lifted to Y", reg2str(HPVM::Y), "02997924580008");
 	}
 
+	// ExchangeX(): X <-> a register, the stack does not move, the number
+	// entry ends first, a number entered after it lifts the stack
+	{
+		HPVM::reg r = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0 }; // 7.
+		keys("CLR DSP . 2 1 ENTER 2 ENTER 3 *"); HPVM::ExchangeX(r);
+		expect("exchange: X = 7", seg2str(HPVM::Display, sizeof(HPVM::Display)), " 7.00");
+		expect("exchange: r = 6", reg2str(r), "06000000000000");
+		expect("exchange: Y = 1", reg2str(HPVM::Y), "01000000000000");
+		keys("CLR 1 2"); HPVM::ExchangeX(r);
+		expect("exchange in entry: X = 6", seg2str(HPVM::Display, sizeof(HPVM::Display)), " 6.00");
+		expect("exchange in entry: r = 12", reg2str(r), "01200000000001");
+		check("digit after exchange", "5", " 5.");
+		expect("exchange lifted to Y", reg2str(HPVM::Y), "06000000000000");
+	}
+
 	// Reset(): the power-on state (FIX 2, memory clear), also while the ROM is
 	// busy with a key; the F2 input (DEG/RAD switch) is kept
 	keys("CLR DSP 4 5 STO 2 ENTER 3");

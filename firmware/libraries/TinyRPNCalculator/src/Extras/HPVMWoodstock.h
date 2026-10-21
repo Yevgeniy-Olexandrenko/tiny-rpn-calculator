@@ -19,6 +19,7 @@ namespace HPVM
 	void OpAndWait(u08 op); // key press and wait for its result
 	void WaitIdle(); // runs the ROM until it waits for a key
 	void DisplayY(u08 (&disp)[sizeof(Display)]); // Y rendered as Display
+	void ExchangeX(u08 (&r)[14]); // X <-> a register, as an operation of the ROM
 	void Constant(const u08* k); // enters a number of 7 bytes (PROGMEM) into X
 	void Error(); // clears the stack, shows the error
 	void Reset(); // power-on state, the ROM starts again
@@ -227,22 +228,33 @@ namespace HPVM
 		s[STATUS_BIT_LIFT] = lift;
 	}
 
+	// exchanges X and r (a register of the sketch, or the memory of the
+	// model) the way an operation of the ROM does it: x<>y ends the number
+	// entry (the ROM writes X from the digits of the entry) and moves X to
+	// Y, Y and r are exchanged, x<>y moves the new X back and the ROM draws
+	// it; the stack does not move, the stack lift is on as after a result
+	void ExchangeX(reg& r)
+	{
+		OpAndWait(OpSWAP);
+		reg_move(Y, r, 0, 13, SWAP);
+		OpAndWait(OpSWAP);
+	}
+
 	// enters a constant the way a number key does it: pi of the ROM (the
 	// model provides OpPI__) lifts the stack by the rules of the ROM and ends
-	// the number entry, then X gets the 14 digits of k (PROGMEM, 2 digits in
-	// a byte, the mantissa sign first, the register layout of X) and the ROM
-	// redraws it in the display format with x<>y twice of DisplayY()
+	// the number entry, then X is exchanged with the 14 digits of k (PROGMEM,
+	// 2 digits in a byte, the mantissa sign first, the register layout of X)
 	void Constant(const u08* k)
 	{
 		OpAndWait(OpPI__);
+		reg r;
 		for (u08 i = 0; i < 7; ++i)
 		{
 			u08 b = MEM::ProgRead(k + i);
-			C[13 - 2 * i] = b >> 4;
-			C[12 - 2 * i] = b & 0x0F;
+			r[13 - 2 * i] = b >> 4;
+			r[12 - 2 * i] = b & 0x0F;
 		}
-		u08 disp[sizeof(Display)];
-		DisplayY(disp);
+		ExchangeX(r);
 	}
 
 	// puts the calculator into the error state the way its ROM shows it:
