@@ -234,7 +234,8 @@ To change the mode, use these keys:
 | TOTP | <kbd>E</kbd> or <kbd>±</kbd> | TOTP (previous or next key) |
 | TOTP | A digit from <kbd>1</kbd> to the number of keys | TOTP (the key with this number) |
 | TOTP | Other keys | Calculator |
-| Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>±</kbd> <kbd>1</kbd> (TOTP) or <kbd>3</kbd> (ZONE) | TOTP |
+| Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>±</kbd> <kbd>1</kbd> (TOTP) | TOTP |
+| Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>3</kbd> (ZONE) | TOTP |
 | Calculator | <kbd>F</kbd> <kbd>8</kbd> <kbd>1</kbd> (TIME) or <kbd>2</kbd> (DATE) | Watch |
 | All modes | No key for 20 s | Device is off |
 
@@ -309,7 +310,7 @@ In watch mode, the display is always dim. For the keys that change the mode, ref
 
 ### 8.1 RPN and the stack
 
-The calculator uses RPN (Reverse Polish Notation). You enter the numbers first, then the operation. Thus, you do not need parentheses or an <kbd>=</kbd> key.
+The calculator uses RPN (Reverse Polish Notation). You enter the numbers first, then the operation. Thus, you do not need parentheses or an equals key.
 
 In 1924, Jan Łukasiewicz made a notation for logic that puts the operators before the operands (Polish notation). RPN is the reverse form: the operators are after the operands. HP used RPN with a stack of registers in its calculators. The first was the HP 9100A (1968). With RPN, you push fewer keys, and you make fewer mistakes.
 
@@ -362,7 +363,7 @@ The example shows 6.02214076 × 10²³.
 - If a result is too small, the display shows `0.`.
 
 > [!NOTE]
-> During a calculation, the display is blank. Some functions, for example the sine and the power, take up to 0.7 s.
+> During a calculation, the display is blank. Some functions, for example the sine and the power, take up to 0.9 s.
 
 ### 8.3 Enter a number
 
@@ -410,7 +411,7 @@ When you push <kbd>F</kbd>, the display changes:
 > [!NOTE]
 > You cannot cancel <kbd>F</kbd>. The next key always does its shifted function. If you pushed <kbd>F</kbd> by mistake, push <kbd>F</kbd> again (this opens the MATH menu). Then push <kbd>C</kbd> to close the menu. In a menu, <kbd>C</kbd> does not clear X (refer to [9.1](#91-use-a-menu)).
 >
-> <kbd>F</kbd> also ends the entry of a number. After <kbd>F</kbd> <kbd>F</kbd> <kbd>C</kbd>, the next digit starts a new number.
+> <kbd>F</kbd> also ends the entry of a number. After <kbd>F</kbd> <kbd>F</kbd> <kbd>C</kbd>, the next digit starts a new number, and the number that you entered moves to Y.
 
 ### 8.6 Errors
 
@@ -790,7 +791,7 @@ The result is 9.460730473 × 10¹⁵ m.
 
 1. Run `firmware/libraries/TinyRPNCalculator_Install.bat` as administrator. Install the ATTinyCore board package before this step: the script installs the library and adds export hooks to the board package. Without the hooks, the IDE does not put the `.eep` file into the `build` folder (refer to step 5).
 2. Open `firmware/sketches/hp35/hp35.ino` in the Arduino IDE.
-3. Make sure that the sketch selects PCB rev 1.5:
+3. In `hp35.ino`, set the PCB revision to 1.5:
    ```cpp
    #define  PCB_REVISION        15
    ```

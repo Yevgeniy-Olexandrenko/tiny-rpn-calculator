@@ -243,12 +243,12 @@ int main()
 
 `SYS::Down()` stops the timer, turns off the display and stops the microcontroller in power-down sleep. In this mode the device uses almost no energy, but the RAM keeps all its data. When the user pushes a key, `SYS::Down()` returns, and the sketch continues with the same state. Only the display and the timer are off: `SYS::Wake()` turns them on again.
 
-Not all keys can wake up the device. In power-down sleep the microcontroller sees only a logic level on PB4, and a pin is sure to read as high only above 0.6 × VCC. Only the keys of the two bottom rows (<kbd>±</kbd> <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> and <kbd>C</kbd> <kbd>0</kbd> <kbd>.</kbd> <kbd>↑</kbd>) give such a voltage. The other keys are read correctly by the ADC when the device is on, but they cannot turn it on.
+Not all keys can wake up the device. In power-down sleep the microcontroller sees only a logic level on PB4. The keys of the two bottom rows (<kbd>±</kbd> <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> and <kbd>C</kbd> <kbd>0</kbd> <kbd>.</kbd> <kbd>↑</kbd>) give approximately 0.5 × VCC and more, and the pin reads them as high. The keys of the two top rows give less than 0.5 × VCC, so they cannot turn on the device. The ADC reads all keys correctly when the device is on.
 
-A change on the CHRG pin also wakes up the device: when the user connects or disconnects the USB cable, and when the charge is complete. If the sketch shows the charge, it can check `PWR::Charging()` after the wake-up.
+A change on the CHRG pin also wakes up the device. The charger pulls the pin low only while it charges. Thus, the pin changes when the charge starts (the user connects the USB cable), when the charge is complete, and when the user disconnects the cable during the charge. A disconnection after the end of the charge does not change the pin and does not wake up the device. If the sketch shows the charge, it can check `PWR::Charging()` after the wake-up.
 
 > [!NOTE]
-> `SYS::Down()` does not return while the battery voltage is at 3.5 V (`PWR::BAT_EMPTY`) or less. A key push with an empty battery wakes up the microcontroller for a moment, and it goes back to sleep. This protects the battery from a deep discharge.
+> `SYS::Down()` does not return while the battery voltage is at 3.5 V (`PWR::BAT_EMPTY`) or less. A key push or a CHRG change with an empty battery wakes up the microcontroller for a moment, and it goes back to sleep. This protects the battery from a deep discharge, but only if the sketch calls `SYS::Down()` after a time without keys. A sketch that never goes to power-down sleep, for example the Display example, discharges the battery until the protection IC disconnects it at 2.9 V.
 
 ### 4.4 Constant data
 
@@ -439,7 +439,7 @@ namespace PWR
 
     void Idle();                    // idle sleep until an interrupt
     void Down();                    // power-down sleep, use SYS::Down()
-    void Init();                    // CHRG pin, called by SYS::Init()
+    void Init();                    // CHRG pin, PCB_REVISION 15 only, called by SYS::Init()
 }
 ```
 
@@ -760,8 +760,9 @@ namespace I2C
     void StartWrite(u08 addr);    // start + 7-bit address for a write
     void StartRead(u08 addr);     // (repeated) start + address, read
     void Write(u08 data);         // writes a byte
-    void ReadAck(u08& data);      // reads a byte, more bytes follow
-    void ReadNack(u08& data);     // reads the last byte
+    void Read(u08& data, b08 ack); // reads a byte, ack if more follow
+    void ReadAck(u08& data);      // Read(data, true): more bytes follow
+    void ReadNack(u08& data);     // Read(data, false): the last byte
     void Stop();                  // stop condition
 }
 ```
@@ -893,7 +894,7 @@ namespace HPVM
     void Error();                                 // clears stack, shows error
 
     using reg = u08[14];                          // 14 BCD digits
-    reg A, B, C, ...;                             // registers, C is X
+    reg& A, B, C, ...;                            // registers, C is X
 
     // HP-35 (Classic): 15 places of character codes
     enum { DIGIT, BLANK = 0x10, DASH, DOT };      // DIGIT + digit 0..9
@@ -907,6 +908,19 @@ namespace HPVM
 ```
 
 **Operations.** The model header gives a name to each key of the original calculator: `OpNUM7`, `OpSIN_`, `OpPUSH` (<kbd>ENTER↑</kbd>) and so on. A shifted function is `FlSHFT` + the operation of its key, for example `OpASIN`. For these, `Operation()` pushes the shift key first.
+
+**Model header.** To add a calculator of the same CPU family, write a model header with these names. The CPU header uses them:
+
+| Name | Use |
+| --- | --- |
+| `rom_l`, `rom_h` | The ROM: the low 2 bits of each word (4 words in a byte) and the high 8 bits |
+| `key_tokens` | The key code of the ROM for each operation |
+| `Op*` operations, `OpSHFT`, `FlSHFT` | The keys, the shift key and the flag of the shifted functions |
+| `BP_IDLE` | The ROM address of the loop that waits for a key |
+| `STATUS_BIT_IDLE` | Classic only: the status bit that is set together with `BP_IDLE` in the idle state |
+| `STATUS_BIT_LIFT` | The status bit for "stack lift is on", used by `DisplayY()` |
+| `OpSWAP`, `OpINV_` | x↔y for `DisplayY()`, 1/x for `Error()` |
+| `char_gen` | Woodstock only: the 7-segment pattern of each digit value |
 
 **Run in real time.** `Operation()` only gives the key to the ROM, and the ROM does the work in the next `Cycle()` calls. To run the calculator at the speed of the original, give it the cycles of one frame in each frame. A redraw of the display takes time, so draw at most once per frame: when the display changes, stop, and keep the rest of the cycles for the next frame:
 
@@ -1004,9 +1018,10 @@ namespace SHA1
 
 namespace TOTP
 {
-    constexpr u08 PERIOD     = 30;                      // seconds
-    constexpr u08 LABEL_SIZE = 4;
-    constexpr u08 KEY_MAX    = 32;
+    constexpr u08 PERIOD         = 30;                  // seconds
+    constexpr u08 SIGNATURE_SIZE = 5;                   // "TOTP" + area size
+    constexpr u08 LABEL_SIZE     = 4;
+    constexpr u08 KEY_MAX        = 32;
 
     struct Key
     {
@@ -1076,7 +1091,7 @@ The size in the signature includes the signature itself, so the area can have up
 - `TMR::Millis` has 16 bits and wraps after 65535 ms. For longer times, count the minutes yourself or use the real-time clock.
 - The RTC module supports only the years 2000 to 2099, the 24-hour format and time zones in whole hours.
 - The I2C module does not examine the ACK bit.
-- The library takes some global names: the module namespaces, the types `b08`..`w16`, the macros `set_bit`, `clr_bit`, `isb_set`, `isb_clr`, `F`, `FPSTR`, `D`, `DPSTR`, `DSTR`, `DATAMEM`, `NOINLINE` and the `I2C_*`, `KBD_*`, `LCD_*`, `PWR_*` macros.
+- The library takes some global names: the module namespaces, the types `b08`..`w16`, the macros `set_bit`, `clr_bit`, `isb_set`, `isb_clr`, `F`, `FPSTR`, `D`, `DPSTR`, `DSTR`, `DATAMEM`, `NOINLINE`, the `I2C_*`, `KBD_*`, `LCD_*`, `PWR_*` macros and, from `BuildTime.h` (the RTC module always includes it), the `BUILD_*` and `COMPUTE_BUILD_*` macros.
 
 ## 9. License
 
