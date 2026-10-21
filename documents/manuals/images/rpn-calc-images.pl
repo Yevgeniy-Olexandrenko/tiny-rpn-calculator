@@ -245,14 +245,16 @@ sub render_number21 {
     }
 }
 sub render_calc21 {
-    my (%a) = @_;   # as render_calc(), radians => 1
+    my (%a) = @_;   # as render_calc(), radians => 1, mem => 1 (the memory arithmetic)
     lcd_clear();
     set_font('digits7x16');
-    # the top place: F, else R, else S in a menu; the bottom place: S
+    # the top place: F, else S in the memory arithmetic, else R, else S in a menu;
+    # the bottom place: S out of a menu and of the memory arithmetic
     if    ($a{y})                     { print_char(def('FLAG_FUNCTION'), def('FLAG_POS'), 0) }
+    elsif ($a{mem})                   { print_char(def('FLAG_STORAGE'),  def('FLAG_POS'), 0) }
     elsif ($a{radians})               { print_char(def('FLAG_RADIANS'),  def('FLAG_POS'), 0) }
     elsif ($a{menu} && $a{memory})    { print_char(def('FLAG_STORAGE'),  def('FLAG_POS'), 0) }
-    print_char(def('FLAG_STORAGE'), def('FLAG_POS'), 2) if $a{memory} && !$a{menu};
+    print_char(def('FLAG_STORAGE'), def('FLAG_POS'), 2) if $a{memory} && !$a{menu} && !$a{mem};
     if ($a{y}) {
         render_number21($a{y}, 0);
         render_number21($a{x}, 2);
@@ -661,11 +663,18 @@ screen_svg('rpn-calc-hp21-screen-error.svg', 'Calculator screen with an error: E
 render_calc21(y => display21(' 12.50'), x => display21(' 3.'), memory => 1);
 screen_svg('rpn-calc-hp21-screen-function.svg', 'Calculator screen with F active: Y on top, X below', [7.5, 'Y'], [23.5, 'X']);
 
+# hp21 code.h: updateCalcMode() in the memory arithmetic (F 5): the keys of
+# the arithmetic operations 9 6 3 ↑ do them with the memory, others leave
+render_calc21(x => display21(' 12.50'), memory => 1, radians => 1, mem => 1);
+screen_svg('rpn-calc-hp21-screen-memory.svg', 'Calculator screen in the memory arithmetic: 12.50, the S indicator in the top place', [3.5, 'S']);
+write_svg('rpn-calc-hp21-keyboard-memory.svg', 'Keys that work in the memory arithmetic: 9, 6, 3, ↑', $kbd_viewbox,
+    keyboard() . dim_keys('the other keys end the memory arithmetic', map { my $r = $_; map { [$r, $_] } 0..2 } 0..3));
+
 render_calc21(x => display21(' 30.'), menu => [ (menu_items('strMenuTrig'))[0..2] ]);
 screen_svg('rpn-calc-hp21-screen-menu.svg', 'Calculator screen with the TRIG menu', [7.5, 'X'], [23.5, 'menu']);
 
 sub menu21 { my $x = shift; sub { render_calc21(x => display21($x), menu => shift) } }
-menu_svg('rpn-calc-hp21-screen-menu-math.svg', 'MATH menu: line 1 y^x, square root, 1/x; line 2 LOG, LN, e^x; line 3 10^x, REC, POL; line 4 M-, Mx, M/',
+menu_svg('rpn-calc-hp21-screen-menu-math.svg', 'MATH menu: line 1 y^x, square root, 1/x; line 2 LOG, LN, e^x; line 3 10^x, REC, POL',
     'strMenuMath', menu21(' 2.'));
 menu_svg('rpn-calc-hp21-screen-menu-trig.svg', 'TRIG menu: line 1 SIN, COS, TAN; line 2 ASIN, ACOS, ATAN', 'strMenuTrig', menu21(' 30.'));
 menu_svg('rpn-calc-hp21-screen-menu-prog.svg', 'PROG menu: line 1 DSP, RAD, DEG; line 2 TIME, DATE', 'strMenuProg', menu21(' 0.00'));

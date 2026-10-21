@@ -332,7 +332,8 @@ enum
 	PROG_RAD  = BASE - 7,
 	PROG_DEG  = BASE - 8,
 	PROG_TIME = BASE - 9,
-	PROG_DATE = BASE - 10
+	PROG_DATE = BASE - 10,
+	KEY_MEM   = BASE - 11
 };
 
 const u08 mainOps[] DATAMEM =
@@ -342,7 +343,7 @@ const u08 mainOps[] DATAMEM =
 	HPVM::OpNUM8, HPVM::OpNUM9, HPVM::OpDOT_, HPVM::OpPUSH, HPVM::OpCLX_, HPVM::OpCHS_, HPVM::OpEEX_, KEY_FUNC,
 
 	// F-shifted operations
-	KEY_LAST,     HPVM::OpRCL_, HPVM::OpSTO_, HPVM::OpSUB_, HPVM::OpPI__, HPVM::OpMADD, HPVM::OpMUL_, MENU_TRIG,
+	KEY_LAST,     HPVM::OpRCL_, HPVM::OpSTO_, HPVM::OpSUB_, HPVM::OpPI__, KEY_MEM,      HPVM::OpMUL_, MENU_TRIG,
 	MENU_PROG,    HPVM::OpDIV_, HPVM::OpSWAP, HPVM::OpADD_, HPVM::OpCLR_, HPVM::OpROT_, KEY_ROTU,     MENU_MATH
 };
 
@@ -350,8 +351,7 @@ const u08 mathOps[] DATAMEM =
 {
 	HPVM::OpPOW_, HPVM::OpSQRT, HPVM::OpINV_,
 	HPVM::OpLOG_, HPVM::OpLN__, HPVM::OpEXP_,
-	HPVM::Op10X_, HPVM::Op2REC, HPVM::Op2POL,
-	HPVM::OpMSUB, HPVM::OpMMUL, HPVM::OpMDIV
+	HPVM::Op10X_, HPVM::Op2REC, HPVM::Op2POL
 };
 
 const u08 trigOps[] DATAMEM =
@@ -379,8 +379,7 @@ const u08 strMenuMath[] DATAMEM =
 	"\06"
 	" ;<   " " ?:   " " 1/:  "  // Y^X, SQRT(X), 1/X
 	" LOG  " " LN   " " @<   "   // LOG(X), LN(X), e^X
-	" 10<  " " REC  " " POL  "   // 10^X, To rectangular, To polar
-	" M=   " " M:   " " M/   "; // Storage arithmetic: M-, M*, M/
+	" 10<  " " REC  " " POL  "; // 10^X, To rectangular, To polar
 
 const u08 strMenuTrig[] DATAMEM = 
 	"\06"

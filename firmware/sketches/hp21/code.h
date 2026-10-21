@@ -97,13 +97,14 @@ void setupAndEnterRTCMode()
 
 b08 isFunc;
 b08 isMenu;
+b08 isMem; // storage arithmetic: the next key selects the operation with M1
 
 Menu menu;
 u08  select;
 
 u16 cycles;
 u08 hidden[sizeof(HPVM::Display)];
-u08 lastOp = KEY_NOP; // nothing to repeat before the first menu operation
+u08 lastOp = KEY_NOP; // nothing to repeat before the first menu or storage arithmetic operation
 
 void enterMenu(u08 type)
 {
@@ -158,7 +159,8 @@ void executeOperation(u08 operation)
 
 	isFunc = false;
 	isMenu = false;
-	// repeat the last menu operation, including extended ones
+	isMem  = false;
+	// repeat the last menu or storage arithmetic operation, extended ones too
 	if (operation == KEY_LAST) operation = lastOp;
 
 	switch (operation)
@@ -170,6 +172,10 @@ void executeOperation(u08 operation)
 		case KEY_FUNC:
 			HPVM::DisplayY(hidden);
 			isFunc = true;
+			break;
+
+		case KEY_MEM:
+			isMem = true;
 			break;
 
 		case KEY_ROTU:
@@ -274,8 +280,9 @@ void renderCalcMode()
 	LCD::Clear();
 	TXT::SetFont(digits7x16);
 
-	// indicators at the right edge: the top place shows F, else R, else S
-	// in a menu (the menu covers the bottom place), the bottom place shows S
+	// indicators at the right edge: the top place shows F, else S in the
+	// storage arithmetic mode, else R, else S in a menu (the menu covers
+	// the bottom place), the bottom place shows S out of these two modes
 	b08 isStorage = false;
 	for (u08 i = 0; i < sizeof(HPVM::M1); ++i)
 	{
@@ -283,11 +290,13 @@ void renderCalcMode()
 	}
 	if (isFunc)
 		TXT::PrintChar(FLAG_FUNCTION, FLAG_POS, 0);
+	else if (isMem)
+		TXT::PrintChar(FLAG_STORAGE, FLAG_POS, 0);
 	else if (HPVM::F2)
 		TXT::PrintChar(FLAG_RADIANS, FLAG_POS, 0);
 	else if (isMenu && isStorage)
 		TXT::PrintChar(FLAG_STORAGE, FLAG_POS, 0);
-	if (!isMenu && isStorage)
+	if (!isMenu && !isMem && isStorage)
 		TXT::PrintChar(FLAG_STORAGE, FLAG_POS, 2);
 
 	if (isFunc)
@@ -329,6 +338,22 @@ void updateCalcMode()
 					executeOperation(lastOp = op);
 					break;
 			}
+		}
+		else if (isMem)
+		{
+			// the keys of the 4 arithmetic operations (shifted by F
+			// otherwise) do them with the memory, any other key only
+			// leaves the mode
+			isMem = false;
+			u08 op = KEY_NOP;
+			switch (newKey)
+			{
+				case KBD::NUM3: op = HPVM::OpMSUB; break;
+				case KBD::NUM6: op = HPVM::OpMMUL; break;
+				case KBD::NUM9: op = HPVM::OpMDIV; break;
+				case KBD::DUP:  op = HPVM::OpMADD; break;
+			}
+			if (op != KEY_NOP) executeOperation(lastOp = op);
 		}
 		else
 		{

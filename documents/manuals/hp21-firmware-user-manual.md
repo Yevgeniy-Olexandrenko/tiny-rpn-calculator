@@ -268,7 +268,7 @@ Each key has two functions:
 | <kbd>F</kbd> <kbd>C</kbd> | AC | <kbd>CLR</kbd> | Clear the stack (X, Y, Z, T) |
 | <kbd>F</kbd> <kbd>2</kbd> | STO | <kbd>STO</kbd> | Copy X to the memory |
 | <kbd>F</kbd> <kbd>1</kbd> | RCL | <kbd>RCL</kbd> | Copy the memory to X |
-| <kbd>F</kbd> <kbd>5</kbd> | MEM+ | <kbd>M+</kbd> | Add X to the memory |
+| <kbd>F</kbd> <kbd>5</kbd> | MEM+ | <kbd>M+</kbd> <kbd>M−</kbd> <kbd>M×</kbd> <kbd>M÷</kbd> | Start an operation with the memory and X (refer to [8.9](#89-memory-arithmetic)) |
 | <kbd>F</kbd> <kbd>4</kbd> | CONST | <kbd>π</kbd> | Enter π |
 | <kbd>F</kbd> <kbd>0</kbd> | LAST | — | <img src="images/rpn-calc-extension.svg" alt="Extension" align="absmiddle"> Do the last menu operation again |
 | <kbd>F</kbd> <kbd>F</kbd> | MATH | — | Open the MATH menu |
@@ -276,7 +276,7 @@ Each key has two functions:
 | <kbd>F</kbd> <kbd>8</kbd> | PROG | — | Open the PROG menu |
 
 > [!NOTE]
-> - <kbd>F</kbd> <kbd>0</kbd> (LAST) repeats only an operation that you selected in a menu (MATH, TRIG or PROG). It does not repeat the operations of the keyboard, for example <kbd>F</kbd> <kbd>↑</kbd> (+). If you did not use a menu operation before, it does nothing.
+> - <kbd>F</kbd> <kbd>0</kbd> (LAST) repeats only an operation that you selected in a menu (MATH, TRIG or PROG) or an operation with the memory (refer to [8.9](#89-memory-arithmetic)). It does not repeat the operations of the keyboard, for example <kbd>F</kbd> <kbd>↑</kbd> (+). If you did not use a menu operation before, it does nothing.
 > - <kbd>F</kbd> <kbd>C</kbd> (AC) does not clear the memory. To clear the memory, push <kbd>C</kbd> <kbd>F</kbd> <kbd>2</kbd> (STO). This also clears X.
 
 ## 7. Watch mode
@@ -417,7 +417,7 @@ Indicators show on the right side of the display:
 | **S** (box with the letter S, from "Store") | The memory contains a value that is not zero. |
 | **R** (box with the letter R, from "Radians") | The angle mode is radians (refer to [8.8](#88-angles)). |
 
-The indicators have two places at the right edge. **S** uses the bottom place. The top place shows **F** when <kbd>F</kbd> is active, otherwise **R**. In a menu, the menu covers the bottom place: if R does not show, S shows in the top place.
+The indicators have two places at the right edge. **S** uses the bottom place. The top place shows **F** when <kbd>F</kbd> is active, otherwise **R**. In a menu, the menu covers the bottom place: if R does not show, S shows in the top place. During an operation with the memory, the top place shows S and the bottom place is empty (refer to [8.9](#89-memory-arithmetic)).
 
 <img src="images/rpn-calc-hp21-screen-indicators.svg" alt="Calculator screen: 3.14 and the R and S indicators">
 
@@ -443,7 +443,7 @@ When you push <kbd>F</kbd>, the display changes:
 
 These operations are not possible:
 
-- Division by zero: Y ÷ X, and the memory divided by X (M/), when X is zero.
+- Division by zero: Y ÷ X, and the memory divided by X (M÷), when X is zero.
 - Reciprocal (1/x) of zero.
 - Square root of a negative number.
 - Logarithm (LOG, LN) when X is zero or negative.
@@ -471,11 +471,37 @@ The trigonometric functions (refer to [9.4](#94-trig-menu-f-7)) and the coordina
 - You can change the angle mode at any time. The numbers in the stack do not change.
 - The angle mode stays when the device is off. After a reset, it is degrees (refer to [4.5](#45-power-jumper-and-reset)).
 
+### 8.9 Memory arithmetic
+
+The HP-21 has four keys that do an arithmetic operation with the memory and X: <kbd>M+</kbd>, <kbd>M−</kbd>, <kbd>M×</kbd> and <kbd>M÷</kbd>. The result goes to the memory. X and the stack do not change. On this calculator, the keys of the four arithmetic operations do these operations after <kbd>F</kbd> <kbd>5</kbd> (MEM+):
+
+1. Enter X.
+2. Push <kbd>F</kbd> <kbd>5</kbd> (MEM+). The S indicator shows in the top place, and the bottom place is empty.
+3. Push the key of the operation. Do not push <kbd>F</kbd> before it.
+
+<img src="images/rpn-calc-hp21-screen-memory.svg" alt="Calculator screen after F 5 (MEM+): X (12.50) and the S indicator in the top place">
+
+<img src="images/rpn-calc-hp21-keyboard-memory.svg" alt="Keyboard: the keys that operate after F 5 (MEM+): 9, 6, 3, ↑; the other keys are dim">
+
+| Keys | Operation | HP-21 key | Function |
+| --- | :---: | --- | --- |
+| <kbd>F</kbd> <kbd>5</kbd> <kbd>↑</kbd> | M+ | <kbd>M+</kbd> | Add X to the memory |
+| <kbd>F</kbd> <kbd>5</kbd> <kbd>3</kbd> | M− | <kbd>M−</kbd> | Subtract X from the memory |
+| <kbd>F</kbd> <kbd>5</kbd> <kbd>6</kbd> | M× | <kbd>M×</kbd> | Multiply the memory by X |
+| <kbd>F</kbd> <kbd>5</kbd> <kbd>9</kbd> | M÷ | <kbd>M÷</kbd> | Divide the memory by X |
+
+After the operation, the calculator goes back to the usual display.
+
+> [!NOTE]
+> - After <kbd>F</kbd> <kbd>5</kbd> (MEM+), a different key, also <kbd>F</kbd>, only stops the memory arithmetic. No operation occurs.
+> - To do the same operation with the memory again, push <kbd>F</kbd> <kbd>0</kbd> (LAST).
+> - For an example, refer to [11](#11-examples), example 4.
+
 ## 9. Menus
 
 ### 9.1 Use a menu
 
-A menu shows on the bottom line of the display. The top line shows X with small digits. Each menu has two or four lines of up to three items. The display shows one line at a time.
+A menu shows on the bottom line of the display. The top line shows X with small digits. Each menu has two or three lines of up to three items. The display shows one line at a time.
 
 <img src="images/rpn-calc-hp21-screen-menu.svg" alt="Calculator screen with a menu: X (30.) on the top line, the items SIN, COS and TAN on the bottom line">
 
@@ -498,9 +524,9 @@ In a menu, only these keys operate:
 
 ### 9.2 MATH menu: <kbd>F</kbd> <kbd>F</kbd>
 
-The MATH menu has four lines. Line 4 is the line before line 1: push <kbd>E</kbd> to show it.
+The MATH menu has three lines.
 
-<img src="images/rpn-calc-hp21-screen-menu-math.svg" alt="MATH menu. Line 1: yˣ, √x, 1/x. Line 2: LOG, LN, eˣ. Line 3: 10ˣ, REC, POL. Line 4: M−, M×, M/">
+<img src="images/rpn-calc-hp21-screen-menu-math.svg" alt="MATH menu. Line 1: yˣ, √x, 1/x. Line 2: LOG, LN, eˣ. Line 3: 10ˣ, REC, POL">
 
 | Keys in the menu | Item | HP-21 key | Function |
 | --- | :---: | --- | --- |
@@ -513,9 +539,6 @@ The MATH menu has four lines. Line 4 is the line before line 1: push <kbd>E</kbd
 | <kbd>±</kbd> <kbd>±</kbd> <kbd>1</kbd> | 10ˣ | <kbd>10ˣ</kbd> | 10 to the power X |
 | <kbd>±</kbd> <kbd>±</kbd> <kbd>2</kbd> | REC | <kbd>→R</kbd> | Polar to rectangular coordinates (refer to [9.3](#93-polar-and-rectangular-coordinates)) |
 | <kbd>±</kbd> <kbd>±</kbd> <kbd>3</kbd> | POL | <kbd>→P</kbd> | Rectangular to polar coordinates (refer to [9.3](#93-polar-and-rectangular-coordinates)) |
-| <kbd>E</kbd> <kbd>1</kbd> | M− | <kbd>M−</kbd> | Subtract X from the memory |
-| <kbd>E</kbd> <kbd>2</kbd> | M× | <kbd>M×</kbd> | Multiply the memory by X |
-| <kbd>E</kbd> <kbd>3</kbd> | M/ | <kbd>M÷</kbd> | Divide the memory by X |
 
 > [!IMPORTANT]
 > <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (yˣ) calculates **Y to the power X**:
@@ -526,9 +549,6 @@ The MATH menu has four lines. Line 4 is the line before line 1: push <kbd>E</kbd
 > For example, 2⁷ = 128: push <kbd>2</kbd> <kbd>↑</kbd> <kbd>7</kbd>, then <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (yˣ).
 >
 > The number in Y must be more than zero. The power in X can be any number. The result is not always exact in the last digit, because the HP-21 uses logarithms for this calculation.
-
-> [!NOTE]
-> M−, M× and M/ change only the memory, the same as <kbd>F</kbd> <kbd>5</kbd> (MEM+). X and the stack do not change.
 
 ### 9.3 Polar and rectangular coordinates
 
@@ -666,18 +686,18 @@ Calculate 2⁷ and 8^(2/3).
 </details>
 
 <details>
-<summary><b>Example 4: Sum and mean value in the memory (MEM+, M/)</b></summary>
+<summary><b>Example 4: Sum and mean value in the memory (M+, M÷)</b></summary>
 
 Add 12.5, 7.25 and 30 in the memory. Then divide the sum by 3.
 
 | Step | Keys | HP-21 keys | Result |
 | :---: | --- | --- | --- |
 | 1 | <kbd>C</kbd> <kbd>F</kbd> <kbd>2</kbd> (STO) | <kbd>CLx</kbd> <kbd>STO</kbd> | Memory = 0 |
-| 2 | <kbd>1</kbd> <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> <kbd>F</kbd> <kbd>5</kbd> (MEM+) | <kbd>1</kbd> <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> <kbd>M+</kbd> | Memory = 12.5 |
-| 3 | <kbd>7</kbd> <kbd>.</kbd> <kbd>2</kbd> <kbd>5</kbd> <kbd>F</kbd> <kbd>5</kbd> (MEM+) | <kbd>7</kbd> <kbd>.</kbd> <kbd>2</kbd> <kbd>5</kbd> <kbd>M+</kbd> | Memory = 19.75 |
-| 4 | <kbd>3</kbd> <kbd>0</kbd> <kbd>F</kbd> <kbd>5</kbd> (MEM+) | <kbd>3</kbd> <kbd>0</kbd> <kbd>M+</kbd> | Memory = 49.75 |
+| 2 | <kbd>1</kbd> <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> <kbd>F</kbd> <kbd>5</kbd> <kbd>↑</kbd> (M+) | <kbd>1</kbd> <kbd>2</kbd> <kbd>.</kbd> <kbd>5</kbd> <kbd>M+</kbd> | Memory = 12.5 |
+| 3 | <kbd>7</kbd> <kbd>.</kbd> <kbd>2</kbd> <kbd>5</kbd> <kbd>F</kbd> <kbd>5</kbd> <kbd>↑</kbd> (M+) | <kbd>7</kbd> <kbd>.</kbd> <kbd>2</kbd> <kbd>5</kbd> <kbd>M+</kbd> | Memory = 19.75 |
+| 4 | <kbd>3</kbd> <kbd>0</kbd> <kbd>F</kbd> <kbd>5</kbd> <kbd>↑</kbd> (M+) | <kbd>3</kbd> <kbd>0</kbd> <kbd>M+</kbd> | Memory = 49.75 |
 | 5 | <kbd>F</kbd> <kbd>1</kbd> (RCL) | <kbd>RCL</kbd> | X = `49.75` |
-| 6 | <kbd>3</kbd> <kbd>F</kbd> <kbd>F</kbd> <kbd>E</kbd> <kbd>3</kbd> (M/) | <kbd>3</kbd> <kbd>M÷</kbd> | Memory = 16.58333333 |
+| 6 | <kbd>3</kbd> <kbd>F</kbd> <kbd>5</kbd> <kbd>9</kbd> (M÷) | <kbd>3</kbd> <kbd>M÷</kbd> | Memory = 16.58333333 |
 | 7 | <kbd>F</kbd> <kbd>1</kbd> (RCL) | <kbd>RCL</kbd> | X = `16.58` |
 
 </details>
@@ -762,6 +782,7 @@ The result is 9.4607305 × 10¹⁵ m.
 | <kbd>F</kbd> <kbd>F</kbd> <kbd>1</kbd> (yˣ) gives an incorrect result. | The number and the power are in the wrong registers. | Enter the number first, then the power (refer to [9.2](#92-math-menu-f-f)). |
 | <kbd>F</kbd> <kbd>0</kbd> (LAST) does not repeat an arithmetic operation. | It repeats only menu operations. | Push the arithmetic keys again. |
 | A key does an incorrect function. | <kbd>F</kbd> is active (indicator F shows). | Look at the indicators before you push a key. |
+| A key does nothing, and the next key operates. | <kbd>F</kbd> <kbd>5</kbd> (MEM+) was active (indicator S in the top place, the bottom place empty). The key only stopped the memory arithmetic. | Push the key again (refer to [8.9](#89-memory-arithmetic)). |
 
 ## 13. Firmware installation
 
@@ -858,11 +879,18 @@ The left column shows the keys that open each menu. In the open menu, <kbd>1</kb
 | MATH<br><kbd>F</kbd> <kbd>F</kbd> | 1 | yˣ | √x | 1/x |
 | | 2: <kbd>±</kbd> | LOG | LN | eˣ |
 | | 3: <kbd>±</kbd> <kbd>±</kbd> | 10ˣ | REC | POL |
-| | 4: <kbd>E</kbd> | M− | M× | M/ |
 | TRIG<br><kbd>F</kbd> <kbd>7</kbd> | 1 | SIN | COS | TAN |
 | | 2: <kbd>±</kbd> | ASIN | ACOS | ATAN |
 | PROG<br><kbd>F</kbd> <kbd>8</kbd> | 1 | DSP | RAD | DEG |
 | | 2: <kbd>±</kbd> | TIME | DATE | — |
+
+**Memory arithmetic**
+
+Push <kbd>F</kbd> <kbd>5</kbd> (MEM+), then the key of the operation:
+
+| <kbd>↑</kbd> | <kbd>3</kbd> | <kbd>6</kbd> | <kbd>9</kbd> |
+| :---: | :---: | :---: | :---: |
+| M+ | M− | M× | M÷ |
 
 **Stack input for the operations**
 
