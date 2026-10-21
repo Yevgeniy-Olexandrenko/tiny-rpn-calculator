@@ -65,7 +65,7 @@ PB0, PB1 and PB2 have two names each. During programming they are the ICSP signa
 - **KBD** is the output of the resistor network of the keyboard. The ADC reads it on channel ADC2. A key push also wakes up the microcontroller through this pin.
 - **CHRG** is the STAT output of the MCP73832 charger. It is an open-drain output: the charger pulls it low while it charges the battery. A change of the status also wakes up the microcontroller.
 - **RESET** is used only for programming through the ICSP connector.
-- **VCC** is the battery voltage: there is no voltage regulator. VCC changes from approximately 4.2 V (full battery) to 3.5 V (empty battery).
+- **VCC** is the battery voltage: there is no voltage regulator. VCC changes from approximately 4.2 V (full battery) to 3.5 V (empty battery). The XB5358D0 protection IC disconnects the battery below 2.9 V and above 4.25 V. The firmware keeps the device in sleep already at 3.5 V and less (refer to [4.3](#43-frames-and-power)).
 
 The library uses three interrupt vectors: `ADC_vect`, `WDT_vect` and `PCINT0_vect`. Do not define them in a sketch. Timer 0 and timer 1 are free: the library does not use them.
 

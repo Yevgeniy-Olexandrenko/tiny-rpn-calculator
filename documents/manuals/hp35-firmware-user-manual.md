@@ -194,6 +194,9 @@ If the battery voltage is 3.5 V or less, the device does not turn on. This preve
 2. Let the battery charge for some minutes.
 3. Turn on the device (refer to [4.3](#43-automatic-power-off-and-power-on)).
 
+> [!IMPORTANT]
+> Charge an empty battery soon. The real-time clock continues to use the battery. If the voltage falls more, the battery protection disconnects the battery (refer to [15](#15-technical-data)). The clock then stops, and the firmware does a reset when the battery charges again (refer to [4.5](#45-power-jumper-and-reset)).
+
 ### 4.5 POWER jumper and reset
 
 The POWER jumper connects the battery to the circuit. The real-time clock gets power from the same battery.
@@ -201,7 +204,7 @@ The POWER jumper connects the battery to the circuit. The real-time clock gets p
 > [!IMPORTANT]
 > If the microcontroller restarts, the firmware does a reset. The microcontroller restarts in these conditions:
 > - You open and then close the POWER jumper.
-> - The battery becomes fully discharged.
+> - The battery protection disconnects a fully discharged battery (refer to [4.4](#44-empty-battery)).
 > - An ICSP programmer writes or reads the device (also for the EEPROM only).
 >
 > The reset does these steps:
@@ -832,8 +835,8 @@ The result is 9.460730473 × 10¹⁵ m.
 | Display | OLED 0.91 inch, 128 × 32, [SSD1306](../../datasheets/SSD1306.pdf), I²C |
 | Real-time clock | [DS3231M](../../datasheets/DS3231M.pdf), I²C, temperature-compensated, accuracy ±5 ppm (±0.432 s each day) from −45 °C to +85 °C |
 | Keyboard | 16 keys on one analog input (resistor ladder) |
-| Battery | Rechargeable lithium-ion coin battery, 3.5 V to 4.2 V: [LIR1620](../../datasheets/LIR1620.pdf) (20 mAh, default) or LIR1632 |
-| Battery protection | XB5358D0 |
+| Battery | Rechargeable lithium-ion coin battery, 3.5 V to 4.2 V: [LIR1620](../../datasheets/LIR1620.pdf) (20 mAh, default) or [LIR1632](../../datasheets/LIR1632.pdf) (30 mAh) |
+| Battery protection | [XB5358D0](../../datasheets/XB5358D0.pdf): disconnects the battery at more than 4.25 V (overcharge), at less than 2.9 V (overdischarge), at overcurrent and at a short circuit |
 | Charger | [MCP73832](../../datasheets/MCP73831.pdf), 4.2 V, 15 mA, from USB-C (5 V) |
 | Schematic | [Tiny-RPN-Calculator-rev1.5_Schematic.pdf](../../hardware/pcb-rev1.5/Tiny-RPN-Calculator-rev1.5_Schematic.pdf) |
 

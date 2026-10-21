@@ -14,7 +14,7 @@ The hardware platform of the device has the name Tiny RPN Calculator (PCB rev 1.
 - 0.91-inch OLED display, 128 × 32 pixels, with the [SSD1306](datasheets/SSD1306.pdf) controller.
 - [DS3231M](datasheets/DS3231M.pdf) real-time clock. It keeps the time and the date when the device is off.
 - 16 keys on one analog input of the microcontroller.
-- [LIR1620](datasheets/LIR1620.pdf) (default) or LIR1632 rechargeable lithium-ion coin battery, with an XB5358D0 protection IC.
+- [LIR1620](datasheets/LIR1620.pdf) (default) or [LIR1632](datasheets/LIR1632.pdf) rechargeable lithium-ion coin battery, with an [XB5358D0](datasheets/XB5358D0.pdf) protection IC.
 - [MCP73832](datasheets/MCP73831.pdf) charger. It charges the battery through the USB-C connector.
 
 The device has no ON/OFF switch. The firmware turns the device off when you do not use it. A key in the two bottom rows turns it on again.
